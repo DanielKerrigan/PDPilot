@@ -1,14 +1,18 @@
-import { createContext, useContext, useEffect, useState, DependencyList } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  DependencyList,
+} from 'react';
 import { WidgetModel } from '@jupyter-widgets/base';
-import {WidgetModelState} from "../widget"
+import { WidgetModelState } from '../widget';
 export const WidgetModelContext = createContext<WidgetModel | undefined>(
   undefined
 );
 
-
 // TYPES AND INTERFACES
 //============================================================================================
-
 
 interface ModelCallback {
   (model: WidgetModel, event: Backbone.EventHandler): void;
@@ -22,7 +26,7 @@ interface ModelCallback {
  * @param name property name in the Python model object.
  * @returns model state and set state function.
  */
- export function useModelState<T extends keyof WidgetModelState>(
+export function useModelState<T extends keyof WidgetModelState>(
   name: T
 ): [WidgetModelState[T], (val: WidgetModelState[T], options?: any) => void] {
   const model = useModel();

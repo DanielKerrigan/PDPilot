@@ -4,8 +4,10 @@
 # Copyright (c) Rachel Kalafos.
 # Distributed under the terms of the Modified BSD License.
 
-from .example import ExampleWidget
 from ._version import __version__, version_info
+from .pdp_ranker import PdpRanker
+from .data_loader import load_bike_data
+
 
 def _jupyter_labextension_paths():
     """Called by Jupyter Lab Server to detect if it is a valid labextension and

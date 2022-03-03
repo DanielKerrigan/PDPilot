@@ -6,7 +6,7 @@ import {
   DOMWidgetView,
   ISerializers,
 } from '@jupyter-widgets/base';
-import ReactWidget from "./ReactWidget"
+import ReactWidget from './ReactWidget';
 import React from 'react';
 import ReactDOM from 'react-dom';
 
@@ -16,24 +16,24 @@ import { MODULE_NAME, MODULE_VERSION } from './version';
 import '../css/widget.css';
 
 // Your widget state goes here. Make sure to update the corresponding
-// Python state in example.py
+// Python state in pdp_ranker.py
 const defaultModelProperties = {
-  value: 'Hello World',
-}
+  regression_model: 'random_forest',
+};
 
-export type WidgetModelState = typeof defaultModelProperties
+export type WidgetModelState = typeof defaultModelProperties;
 
-export class ExampleModel extends DOMWidgetModel {
+export class RankerModel extends DOMWidgetModel {
   defaults() {
     return {
       ...super.defaults(),
-      _model_name: ExampleModel.model_name,
-      _model_module: ExampleModel.model_module,
-      _model_module_version: ExampleModel.model_module_version,
-      _view_name: ExampleModel.view_name,
-      _view_module: ExampleModel.view_module,
-      _view_module_version: ExampleModel.view_module_version,
-      ...defaultModelProperties
+      _model_name: RankerModel.model_name,
+      _model_module: RankerModel.model_module,
+      _model_module_version: RankerModel.model_module_version,
+      _view_name: RankerModel.view_name,
+      _view_module: RankerModel.view_module,
+      _view_module_version: RankerModel.view_module_version,
+      ...defaultModelProperties,
     };
   }
 
@@ -42,15 +42,15 @@ export class ExampleModel extends DOMWidgetModel {
     // Add any extra serializers here
   };
 
-  static model_name = 'ExampleModel';
+  static model_name = 'RankerModel';
   static model_module = MODULE_NAME;
   static model_module_version = MODULE_VERSION;
-  static view_name = 'ExampleView'; // Set to null if no view
+  static view_name = 'RankerView'; // Set to null if no view
   static view_module = MODULE_NAME; // Set to null if no view
   static view_module_version = MODULE_VERSION;
 }
 
-export class ExampleView extends DOMWidgetView {
+export class RankerView extends DOMWidgetView {
   render() {
     this.el.classList.add('custom-widget');
 
