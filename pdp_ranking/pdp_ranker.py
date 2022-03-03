@@ -44,7 +44,7 @@ class PdpRanker(DOMWidget):
         data_x, data_y = load_bike_data()
 
         # Create a regression model
-        model = self.supported_models.get(self.regression_model, "random_forest")
+        model = self.supported_models.get(self.regression_model, RandomForestRegressor)
         model().fit(data_x, data_y)
 
         # Retrieve the partial dependence of the given feature
