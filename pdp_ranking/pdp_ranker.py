@@ -7,16 +7,13 @@
 """
 TODO: Add module docstring
 """
-
+import pandas as pd
 from ipywidgets import DOMWidget
 from traitlets import Unicode
 from ._frontend import module_name, module_version
 
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.inspection import partial_dependence
-
-from .data_loader import load_bike_data
 
 
 class PdpRanker(DOMWidget):
@@ -32,22 +29,15 @@ class PdpRanker(DOMWidget):
 
     # Your widget state goes here. Make sure to update the corresponding
     # JavaScript widget state (defaultModelProperties) in widget.ts
-    regression_model = Unicode('').tag(sync=True)
+    regression_model = Unicode(RandomForestRegressor()).tag(sync=False)
+    dataset = Unicode(pd.DataFrame()).tag(sync=False)
 
-    supported_models = {
-        "random_forest": RandomForestRegressor,
-        "gradient_boost": GradientBoostingRegressor
-    }
+    def __init__(self, model, dataset, **kwargs):
+        super().__init__(**kwargs)
+        self.regression_model = model
+        self.dataset = dataset
 
     def generate_pdp(self, feature: str):
-        # Load the bike data
-        data_x, data_y = load_bike_data()
-
-        # Create a regression model
-        model = self.supported_models.get(self.regression_model, RandomForestRegressor)
-        model().fit(data_x, data_y)
-
         # Retrieve the partial dependence of the given feature
-        pdp, axes = partial_dependence(model, data_x, [feature])
+        pdp, axes = partial_dependence(self.regression_model, self.dataset, [feature])
         return pdp, axes
-

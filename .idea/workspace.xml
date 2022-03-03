@@ -2,130 +2,14 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="5541da97-91b0-412c-aae0-75197594379d" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.coveragerc" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.eslintignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.eslintrc.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.github/workflows/build.yml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/pdp-ranking.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.npmignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.prettierignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.prettierrc" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/LICENSE.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/MANIFEST.in" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Untitled.ipynb" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/babel.config.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/codecov.yml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/css/widget.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/data/bike-sharing-dataset/Readme.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/data/bike-sharing-dataset/day.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/data/bike-sharing-dataset/hour.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/Makefile" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/environment.yml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/make.bat" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/source/_static/embed-bundle.js.LICENSE.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/source/_static/helper.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/source/conf.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/source/develop-install.rst" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/source/examples/index.rst" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/source/examples/introduction.nblink" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/source/index.rst" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/source/installing.rst" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/source/introduction.rst" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/introduction.ipynb" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/regression_and_pdp.ipynb" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/widget.ipynb" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/install.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/jest.config.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pdp_ranking.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pdp_ranking/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pdp_ranking/_frontend.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pdp_ranking/_version.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pdp_ranking/data_loader.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pdp_ranking/example.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pdp_ranking/nbextension/extension.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pdp_ranking/pdp_ranker.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pdp_ranking/tests/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pdp_ranking/tests/conftest.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pdp_ranking/tests/test_example.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pdp_ranking/tests/test_nbextension_path.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pyproject.toml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pytest.ini" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/readthedocs.yml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/setup.cfg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/ReactWidget.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/__tests__/index.spec.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/__tests__/utils.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/extension.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/hooks/widget-model.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/index.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/plugin.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/version.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/widget.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tsconfig.eslint.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tsconfig.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/webpack.config.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/yarn.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/.coveragerc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/.eslintignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/.eslintrc.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/.github/workflows/build.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/.npmignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/.prettierignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/.prettierrc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/LICENSE.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/MANIFEST.in" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/README.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/babel.config.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/codecov.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/css/widget.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/docs/Makefile" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/docs/environment.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/docs/make.bat" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/docs/source/_static/helper.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/docs/source/conf.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/docs/source/develop-install.rst" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/docs/source/examples/index.rst" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/docs/source/examples/introduction.nblink" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/docs/source/index.rst" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/docs/source/installing.rst" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/docs/source/introduction.rst" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/examples/introduction.ipynb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/install.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/jest.config.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/package.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/pdp_ranking.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/pdp_ranking/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/pdp_ranking/_frontend.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/pdp_ranking/_version.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/pdp_ranking/example.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/pdp_ranking/nbextension/extension.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/pdp_ranking/tests/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/pdp_ranking/tests/conftest.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/pdp_ranking/tests/test_example.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/pdp_ranking/tests/test_nbextension_path.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/pyproject.toml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/pytest.ini" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/readthedocs.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/setup.cfg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/setup.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/src/ReactWidget.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/src/__tests__/index.spec.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/src/__tests__/utils.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/src/extension.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/src/hooks/widget-model.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/src/index.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/src/plugin.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/src/version.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/src/widget.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/tsconfig.eslint.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/tsconfig.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pdp-ranking/webpack.config.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/regression_and_pdp.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/examples/regression_and_pdp.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/widget.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/examples/widget.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pdp_ranking/pdp_ranker.py" beforeDir="false" afterPath="$PROJECT_DIR$/pdp_ranking/pdp_ranker.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pyproject.toml" beforeDir="false" afterPath="$PROJECT_DIR$/pyproject.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ReactWidget.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/ReactWidget.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/yarn.lock" beforeDir="false" afterPath="$PROJECT_DIR$/yarn.lock" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -136,6 +20,7 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Python Script" />
+        <option value="TypeScript JSX File" />
       </list>
     </option>
   </component>
@@ -200,7 +85,7 @@
       <option name="presentableId" value="Default" />
       <updated>1646242183929</updated>
       <workItem from="1646242185911" duration="3560000" />
-      <workItem from="1646325694075" duration="9875000" />
+      <workItem from="1646325694075" duration="14778000" />
     </task>
     <servers />
   </component>
