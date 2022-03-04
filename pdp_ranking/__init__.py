@@ -6,7 +6,6 @@
 
 from ._version import __version__, version_info
 from .pdp_ranker import PdpRanker
-from .data_loader import load_bike_data
 
 
 def _jupyter_labextension_paths():

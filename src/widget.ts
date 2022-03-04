@@ -17,11 +17,23 @@ import '../css/widget.css';
 
 // Your widget state goes here. Make sure to update the corresponding
 // Python state in pdp_ranker.py
-const defaultModelProperties = {
-  regression_model: 'random_forest',
+
+export type WidgetModelState = {
+  features: string[],
+  selected_feature: number,
+  pdp_data: {
+    x: number,
+    y: number
+  }[]
 };
 
-export type WidgetModelState = typeof defaultModelProperties;
+const defaultModelProperties: WidgetModelState = {
+  features: [],
+  selected_feature: 0,
+  pdp_data: []
+};
+
+// export type WidgetModelState = typeof defaultModelProperties;
 
 export class RankerModel extends DOMWidgetModel {
   defaults() {

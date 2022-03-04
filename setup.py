@@ -92,11 +92,9 @@ setup_args = dict(
     include_package_data = True,
     python_requires=">=3.6",
     install_requires = [
-        'jupyter_packaging==0.7.9',
         'ipywidgets>=7.0.0',
-        'pandas==1.4.0',
-        'sklearn',
-        'matplotlib'
+        'pandas>=1.4.1',
+        'scikit-learn>=1.0.2'
     ],
     extras_require = {
         'test': [
