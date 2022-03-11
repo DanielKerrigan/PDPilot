@@ -41,6 +41,7 @@ class PdpRanker(DOMWidget):
         super().__init__(**kwargs)
         self.model = model
         self.dataset = dataset
+        # TODO: Need to distinguish features from labels
         self.features = list(dataset.columns)
         self.generate_pdp(self.selected_feature)
 
