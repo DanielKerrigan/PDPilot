@@ -20,16 +20,17 @@ import '../css/widget.css';
 
 export type WidgetModelState = {
   features: string[],
-  selected_feature: number,
+  selected_features: number[],
   pdp_data: {
     x: number,
-    y: number
+    y: number,
+    value: number
   }[]
 };
 
 const defaultModelProperties: WidgetModelState = {
   features: [],
-  selected_feature: 0,
+  selected_features: [4,5],
   pdp_data: []
 };
 

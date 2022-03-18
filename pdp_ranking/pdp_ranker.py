@@ -11,8 +11,11 @@ from ipywidgets import DOMWidget
 from traitlets import Unicode, List, Int, observe
 from ._frontend import module_name, module_version
 
+from itertools import product
 from sklearn.inspection import partial_dependence
 
+from .output_widget_handler import OutputWidgetHandler
+import logging
 
 class PdpRanker(DOMWidget):
     """
@@ -32,7 +35,7 @@ class PdpRanker(DOMWidget):
     features = List([]).tag(sync=True)
 
     # feature that the user has selected to view the PDP of
-    selected_feature = Int(0).tag(sync=True)
+    selected_features = List([4,5]).tag(sync=True)
 
     # info to show in pdp
     pdp_data = List([]).tag(sync=True)
@@ -41,18 +44,33 @@ class PdpRanker(DOMWidget):
         super().__init__(**kwargs)
         self.model = model
         self.dataset = dataset
+        # Logging
+        self.logger = logging.getLogger()
+        self.logger.setLevel(logging.DEBUG)
+        self.handler = OutputWidgetHandler()
+        self.logger.addHandler(self.handler)
         # TODO: Need to distinguish features from labels
         self.features = list(dataset.columns)
-        self.generate_pdp(self.selected_feature)
+        self.generate_pdp(self.selected_features)
 
     # this function runs when the selected_feature is changed
-    @observe('selected_feature')
-    def change_selected_feature(self, change):
+    @observe('selected_features')
+    def change_selected_features(self, change):
+        self.logger.info(f'selected_features changed to {change.new}')
         self.generate_pdp(change.new)
 
-    def generate_pdp(self, feature):
+    def generate_pdp(self, features):
         # Retrieve the partial dependence of the given feature
-        result = partial_dependence(self.model, self.dataset, [feature], kind='average')
-        y = list(result['average'][0])
-        x = list(result['values'][0])
-        self.pdp_data = [{'x': x, 'y': y} for (x, y) in zip(x, y)]
+        result = partial_dependence(self.model, self.dataset, [tuple(features)], kind='average')
+
+        if len(features) == 1:
+          y = list(result['average'][0])
+          x = list(result['values'][0])
+          self.pdp_data = [{'x': x, 'y': y, 'value': 0} for (x, y) in zip(x, y)]
+        elif len(features) == 2:
+          grid = product(*result['values'])
+          averages = result['average'][0].flatten()
+          self.pdp_data = [
+            {'x': x, 'y': y, 'value': value}
+            for (x, y), value in zip(grid, averages)
+          ]
