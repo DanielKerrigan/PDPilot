@@ -49,7 +49,6 @@ class PdpRanker(DOMWidget):
         self.logger.setLevel(logging.DEBUG)
         self.handler = OutputWidgetHandler()
         self.logger.addHandler(self.handler)
-        # TODO: Need to distinguish features from labels
         self.features = list(dataset.columns)
         self.generate_pdp(self.selected_features)
 
