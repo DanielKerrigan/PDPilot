@@ -18,6 +18,8 @@ DATASETS_TO_RUN = [
 FEATURES_STEP = 3
 # The name for the file to export the generated times
 EXPORT_CSV_FILE = "pdp_gen_times.csv"
+# The percentage of the full dataset to use. I.e. .5 = 50%
+PERCENTAGE_OF_ROWS = 1
 # The columns to be saved to the CSV file
 TO_SAVE_COLUMNS = [
     "dataset",
@@ -35,6 +37,8 @@ def load_data(
     """ Load the data from the given path. """
     dataframe = pd.read_csv(data_path)
     dataframe = dataframe[features + [target]]
+    # Cut down the dataframe by a percentage
+    dataframe = dataframe.sample(frac=PERCENTAGE_OF_ROWS)
     dataframe.dropna(axis=0, inplace=True)
     
     data_x = dataframe[features]
@@ -73,9 +77,9 @@ def run():
                         for second_feature in range(num_features):
                             pdps_generated += 1
                             if first_feature == second_feature:
-                                partial_dependence(model, data_x, [(first_feature)], kind='average', grid_resolution=grid_res)
+                                partial_dependence(model, data_x, [tuple(first_feature)], kind='average', grid_resolution=grid_res)
                             else:
-                                partial_dependence(model, data_x, [(first_feature, second_feature)], kind='average', grid_resolution=grid_res)
+                                partial_dependence(model, data_x, [tuple(first_feature, second_feature)], kind='average', grid_resolution=grid_res)
                     total_time = time.time() - start_time
                     # TODO: Add sampling of dataset / percentage of dataset being used
                     new_row = {
@@ -89,8 +93,10 @@ def run():
                     }
                     to_save = to_save.append(new_row, ignore_index=True)
     
-    # Save the data
-    to_save.to_csv(EXPORT_CSV_FILE)
+    # Append the new data to the file
+    previous_data = pd.read_csv(EXPORT_CSV_FILE)
+    new_data = pd.concat([previous_data, to_save], ignore_index=True)
+    new_data.to_csv(EXPORT_CSV_FILE)
 
 
 if __name__ == "__main__":
