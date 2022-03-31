@@ -21,7 +21,7 @@ EXPORT_CSV_FILE = "pdp_gen_times.csv"
 # The percentage of the full dataset to use. I.e. .5 = 50%
 PERCENTAGE_OF_ROWS = 1
 # The columns to be saved to the CSV file
-TO_SAVE_COLUMNS = [
+METRICS_COLUMNS = [
     "dataset",
     "num_rows",
     "features",
@@ -51,7 +51,7 @@ def load_data(
 
 
 def run():
-    to_save = pd.DataFrame(columns=TO_SAVE_COLUMNS)
+    to_save = pd.DataFrame(columns=METRICS_COLUMNS)
     for data_key in DATASETS_TO_RUN:
         print(f"Processing {data_key}")
         data_info = DATASETS[data_key]

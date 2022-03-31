@@ -95,7 +95,9 @@ setup_args = dict(
         'ipywidgets>=7.0.0',
         'pandas>=1.4.1',
         'scikit-learn>=1.0.2',
-        'scipy>=1.2'
+        'scipy>=1.2',
+        'matplotlib',
+        'numpy'
     ],
     extras_require = {
         'test': [

@@ -33,6 +33,13 @@ Install the python. This will also build the TS package.
 ```bash
 pip install -e ".[test, examples]"
 ```
+
+If using the Apple M1 chip, you may need to run these commands:
+```bash
+conda install openblas
+conda install scikit-learn
+```
+
 which 
 When developing your extensions, you need to manually enable your extensions with the
 notebook / lab frontend. For lab, this is done by the command:
