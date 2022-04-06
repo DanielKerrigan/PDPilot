@@ -17,7 +17,7 @@ DATASETS_TO_RUN = [
 # The step for number of features to test per run
 FEATURES_STEP = 3
 # The method to be used for pdp generation
-PDP_METHOD = "partial_grid_res"
+PDP_METHOD = "parallelization"
 # The name for the file to export the generated times
 EXPORT_CSV_FILE = "pdp_gen_times.csv"
 # The percentage of the full dataset to use. I.e. .5 = 50%
@@ -37,7 +37,7 @@ def calculate_pdp(
     second_feature: int,
     model: any,
     data_x: pd.DataFrame,
-    grid_res: float = 100.0
+    grid_res: float = 100
 ):
     if first_feature == second_feature:
         partial_dependence(model, data_x, [first_feature], kind='average', grid_resolution=grid_res)
@@ -88,9 +88,8 @@ def run():
                         for second_feature in range(num_features):
                             pdp_args.append((first_feature, second_feature, model, data_x))
                     start_time = time.time()  
-                    # with Pool(5) as pool:
-                    #     print(type(pdp_args[0][3]))
-                    #     pool.starmap(func=calculate_pdp, iterable=tuple(pdp_args))
+                    with Pool(5) as pool:
+                        pool.starmap(func=calculate_pdp, iterable=tuple(pdp_args))
                     total_time = time.time() - start_time
                     new_row = {
                         "dataset": data_info["data_path"],
