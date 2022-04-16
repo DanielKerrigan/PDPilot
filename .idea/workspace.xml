@@ -2,8 +2,19 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="5541da97-91b0-412c-aae0-75197594379d" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/timer_tools/time_generation.py" beforeDir="false" afterPath="$PROJECT_DIR$/timer_tools/time_generation.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/timer_tools/timer_script.py" beforeDir="false" />
+      <change afterPath="$PROJECT_DIR$/timer_tools/time_plots/method_vs_time_bike_day.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/timer_tools/time_plots/method_vs_time_bike_hour.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/timer_tools/time_plots/method_vs_time_house.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/widget.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/examples/widget.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pdp_ranking/pdp_ranker.py" beforeDir="false" afterPath="$PROJECT_DIR$/pdp_ranking/pdp_ranker.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ReactWidget.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/ReactWidget.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/widget.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/widget.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/timer_tools/plot_times.py" beforeDir="false" afterPath="$PROJECT_DIR$/timer_tools/plot_times.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/timer_tools/time_plots/method_vs_time.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/yarn.lock" beforeDir="false" afterPath="$PROJECT_DIR$/yarn.lock" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -15,6 +26,7 @@
       <list>
         <option value="Python Script" />
         <option value="TypeScript JSX File" />
+        <option value="TypeScript File" />
       </list>
     </option>
   </component>
@@ -48,7 +60,7 @@
     <property name="nodejs.jest.jest_package" value="$PROJECT_DIR$/node_modules/jest" />
     <property name="nodejs_package_manager_path" value="npm" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
-    <property name="ts.external.directory.path" value="$PROJECT_DIR$/node_modules/typescript/lib" />
+    <property name="ts.external.directory.path" value="$APPLICATION_HOME_DIR$/plugins/JavaScriptLanguage/jsLanguageServicesImpl/external" />
     <property name="vue.rearranger.settings.migration" value="true" />
   </component>
   <component name="RunManager">
@@ -83,7 +95,16 @@
       <workItem from="1646325694075" duration="14778000" />
       <workItem from="1648065268558" duration="493000" />
       <workItem from="1648757539244" duration="514000" />
+      <workItem from="1649907927257" duration="15617000" />
     </task>
+    <task id="LOCAL-00001" summary="Played around with generating all pdp's to start.">
+      <created>1649951752830</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1649951752830</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -103,5 +124,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
+    <MESSAGE value="Played around with generating all pdp's to start." />
+    <option name="LAST_COMMIT_MESSAGE" value="Played around with generating all pdp's to start." />
   </component>
 </project>

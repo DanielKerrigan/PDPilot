@@ -10,6 +10,8 @@ interface WidgetProps {
 function ReactWidget(props: WidgetProps) {
   const [features] = useModelState('features');
   const [pdp_data] = useModelState('pdp_data');
+  const [single_pdps_ranked] = useModelState('single_pdps_ranked');
+  console.log(single_pdps_ranked)
   const [selectedFeatures, setSelectedFeatures] = useModelState('selected_features');
 
   const visData = { table: pdp_data.map(d => ({...d})) };
@@ -73,6 +75,15 @@ function ReactWidget(props: WidgetProps) {
   return (
     <div className="Widget">
       <div>
+        {single_pdps_ranked.map((data) => (
+            <div>
+              <h3>Features: {data.features}</h3>
+              <h4>Ranking Metric: {data.ranking_metric}</h4>
+              <VegaLite spec={lineChartSpec} data={{table: data.pdp_graph_data.map(d => ({...d})) }}/>
+            </div>
+            )
+        )}
+
         <label>
           First feature:
           <select value={selectedFeatures[0]} onChange={onFirstFeatureChange}>

@@ -75,7 +75,7 @@ def plot_method_vs_time(data: pd.DataFrame):
     """
     data = data[
         (data["grid_resolution"] == 100.0) &
-        (data["dataset"] == "../data/bike-sharing-dataset/day.csv")
+        (data["dataset"] == "../data/home-data/train.csv")
     ]
     groups = data.groupby(["dataset", "pdp_method"])
     for key, group_df in groups:
@@ -86,9 +86,9 @@ def plot_method_vs_time(data: pd.DataFrame):
     
     plt.xlabel("Features")
     plt.ylabel("Seconds")
-    plt.title("Time to generate PDP's - Bike Sharing (Day)")
+    plt.title("Time to generate PDP's - Home Dataset")
     plt.legend(loc="upper right")
-    plt.savefig("time_plots/method_vs_time.png")
+    plt.savefig("time_plots/method_vs_time_house.png")
 
 def run():
     time_data = pd.read_csv(DATA_PATH)
