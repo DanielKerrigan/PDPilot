@@ -1,19 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="5541da97-91b0-412c-aae0-75197594379d" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/timer_tools/time_plots/method_vs_time_bike_day.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/timer_tools/time_plots/method_vs_time_bike_hour.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/timer_tools/time_plots/method_vs_time_house.png" afterDir="false" />
+    <list default="true" id="5541da97-91b0-412c-aae0-75197594379d" name="Changes" comment="Played around with generating all pdp's to start.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/examples/widget.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/examples/widget.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pdp_ranking/pdp_ranker.py" beforeDir="false" afterPath="$PROJECT_DIR$/pdp_ranking/pdp_ranker.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ReactWidget.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/ReactWidget.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/widget.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/widget.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/timer_tools/plot_times.py" beforeDir="false" afterPath="$PROJECT_DIR$/timer_tools/plot_times.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/timer_tools/time_plots/method_vs_time.png" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/yarn.lock" beforeDir="false" afterPath="$PROJECT_DIR$/yarn.lock" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -96,6 +90,8 @@
       <workItem from="1648065268558" duration="493000" />
       <workItem from="1648757539244" duration="514000" />
       <workItem from="1649907927257" duration="15617000" />
+      <workItem from="1650145603214" duration="10412000" />
+      <workItem from="1650404487758" duration="5858000" />
     </task>
     <task id="LOCAL-00001" summary="Played around with generating all pdp's to start.">
       <created>1649951752830</created>

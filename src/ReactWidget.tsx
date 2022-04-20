@@ -1,20 +1,30 @@
-import React, { ChangeEvent } from 'react';
+import React, { ChangeEvent, useState } from 'react';
 import { WidgetModel } from '@jupyter-widgets/base';
 import { useModelState, WidgetModelContext} from './hooks/widget-model';
 import { VegaLite, VisualizationSpec } from 'react-vega';
+import {Col, Form, Row } from 'react-bootstrap';
+
 
 interface WidgetProps {
   model: WidgetModel;
 }
 
 function ReactWidget(props: WidgetProps) {
+  // The features that a user can select from the dataset
   const [features] = useModelState('features');
-  const [pdp_data] = useModelState('pdp_data');
-  const [single_pdps_ranked] = useModelState('single_pdps_ranked');
-  console.log(single_pdps_ranked)
-  const [selectedFeatures, setSelectedFeatures] = useModelState('selected_features');
+  // The feature chosen to display a single PDP for.
+  const [selectedSingleFeature, setSelectedSingleFeature] = useModelState('selected_single_feature');
+  // The feature chosen to display a single PDP for.
+  const [selectedDoubleFeatures, setSelectedDoubleFeatures] = useModelState('selected_double_features');
 
-  const visData = { table: pdp_data.map(d => ({...d})) };
+  // Toggle values used on the front end to show/hide plots
+  const [showDoublePlots, setShowDoublePlots] = useState(false);
+
+  const [selectedSinglePdp] = useModelState('selected_single_pdp');
+  const singleVisData = { table: selectedSinglePdp.map(d => ({...d})) };
+
+  const [selectedDoublePdp] = useModelState('selected_double_pdp');
+  const doubleVisData = { table: selectedDoublePdp.map(d => ({...d})) };
 
   const lineChartSpec: VisualizationSpec = {
     width: 400,
@@ -37,7 +47,7 @@ function ReactWidget(props: WidgetProps) {
         type: 'ordinal',
         axis: {
           format: '.3~f',
-          values: [...new Set(pdp_data.map(d => d.x))].filter((_, i) => i % 5 === 0)
+          values: [...new Set(selectedDoublePdp.map(d => d.x))].filter((_, i) => i % 5 === 0)
         }
       },
       y: {
@@ -45,7 +55,7 @@ function ReactWidget(props: WidgetProps) {
         type: 'ordinal',
         axis: {
           format: '.3~f',
-          values: [...new Set(pdp_data.map(d => d.y))].filter((_, i) => i % 5 === 0)
+          values: [...new Set(selectedDoublePdp.map(d => d.y))].filter((_, i) => i % 5 === 0)
         }
       },
       color: {
@@ -56,57 +66,99 @@ function ReactWidget(props: WidgetProps) {
     data: { name: 'table' }
   };
 
+  function onSingleFeatureChange(e: ChangeEvent<HTMLSelectElement>) {
+    setSelectedSingleFeature(+e.target.value);
+  }
+
   function onFirstFeatureChange(e: ChangeEvent<HTMLSelectElement>) {
-    const features = selectedFeatures.slice();
+    const features = selectedDoubleFeatures.slice();
     features[0] = +e.target.value;
-    setSelectedFeatures(features)
+    setSelectedDoubleFeatures(features)
   }
 
   function onSecondFeatureChange(e: ChangeEvent<HTMLSelectElement>) {
     const i = +e.target.value;
+    setSelectedDoubleFeatures([selectedDoubleFeatures[0], i])
+  }
 
-    if (i === -1) {
-      setSelectedFeatures(selectedFeatures.slice(0, 1));
-    } else {
-      setSelectedFeatures([selectedFeatures[0], i])
+  const toggleValue = (
+      e: ChangeEvent<HTMLInputElement>,
+      value: boolean,
+      setValue: { (value: React.SetStateAction<boolean>): void; (arg0: boolean): void; }
+  ) => {
+        setValue( !value )
     }
+
+  function renderToolbar() {
+    return(
+        <div>
+          <Col style={{backgroundColor: "lightBlue"}} className="mb-3">
+            <Row className="mb-3">
+              <Col>
+                <Form.Switch
+                  label="Show 2D PDP's"
+                  type={"switch"}
+                  id={"single-double-toggle"}
+                  onChange={(e) => toggleValue(e, showDoublePlots, setShowDoublePlots)}
+                />
+              </Col>
+            </Row>
+          </Col>
+        </div>
+    )
+  }
+
+  function renderSingleFeatures() {
+    return(
+        <div>
+        <label>
+          Single PDP Feature:
+          <select value={selectedSingleFeature} onChange={onSingleFeatureChange}>
+            {features.map((feature: string, i: number) => (
+                <option value={i}>{feature}</option>
+            ))}
+          </select>
+        </label>
+        <VegaLite spec={lineChartSpec} data={singleVisData} />
+      </div>
+    )
+  }
+
+  function renderDoubleFeatures() {
+    return(
+              <div>
+        <div>
+          <label>
+            Double PDP Feature #1:
+            <select value={selectedDoubleFeatures[0]} onChange={onFirstFeatureChange}>
+              {features.map((feature: string, i: number) => (
+                  <option value={i}>{feature}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <div>
+          <label>
+            Double PDP Feature #2:
+            <select value={selectedDoubleFeatures[1]} onChange={onSecondFeatureChange}>
+              {features.map((feature: string, i: number) => (
+                  <option value={i}>{feature}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <div>
+          <VegaLite spec={heatMapSpec} data={doubleVisData}/>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="Widget">
-      <div>
-        {single_pdps_ranked.map((data) => (
-            <div>
-              <h3>Features: {data.features}</h3>
-              <h4>Ranking Metric: {data.ranking_metric}</h4>
-              <VegaLite spec={lineChartSpec} data={{table: data.pdp_graph_data.map(d => ({...d})) }}/>
-            </div>
-            )
-        )}
-
-        <label>
-          First feature:
-          <select value={selectedFeatures[0]} onChange={onFirstFeatureChange}>
-            {features.map((feature: string, i: number) => (
-              <option value={i}>{feature}</option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <div>
-        <label>
-          Second feature:
-          <select value={selectedFeatures.length === 1 ? -1 : selectedFeatures[1]} onChange={onSecondFeatureChange}>
-            <option value={-1}>none</option>
-            {features.map((feature: string, i: number) => (
-              <option value={i}>{feature}</option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <div>
-        <VegaLite spec={selectedFeatures.length === 1 ? lineChartSpec : heatMapSpec} data={visData}/>
-      </div>
+      {renderToolbar()}
+      {!showDoublePlots && renderSingleFeatures()}
+      {showDoublePlots && renderDoubleFeatures()}
     </div>
   );
 }

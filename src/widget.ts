@@ -19,29 +19,26 @@ import '../css/widget.css';
 // Python state in pdp_ranker.py
 export type WidgetModelState = {
   features: string[],
-  selected_features: number[],
-  pdp_data: {
+  selected_single_feature: number,
+  selected_double_features: number[],
+  selected_single_pdp: {
     x: number,
     y: number,
     value: number
   }[],
-  single_pdps_ranked: {
-    features: number[],
-    // @ts-ignore
-    pdp_graph_data: {
-      x: number,
-      y: number,
-      value: number
-    }[],
-    ranking_metric: number
-  }[]
+  selected_double_pdp: {
+    x: number,
+    y: number,
+    value: number
+  }[],
 };
 
 const defaultModelProperties: WidgetModelState = {
   features: [],
-  selected_features: [4,5],
-  pdp_data: [],
-  single_pdps_ranked: [],
+  selected_single_feature: 0,
+  selected_double_features: [0,1],
+  selected_single_pdp: [],
+  selected_double_pdp: []
 };
 
 // export type WidgetModelState = typeof defaultModelProperties;

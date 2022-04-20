@@ -8,11 +8,11 @@
 TODO: Add module docstring
 """
 from ipywidgets import DOMWidget
-from traitlets import Unicode, List, Int, observe
+from traitlets import Unicode, List, Dict, Int, observe
 from ._frontend import module_name, module_version
 
 import statistics
-from itertools import product, combinations_with_replacement
+from itertools import product, combinations
 from sklearn.inspection import partial_dependence
 
 from .output_widget_handler import OutputWidgetHandler
@@ -35,14 +35,17 @@ class PdpRanker(DOMWidget):
     # features in the dataset
     features = List([]).tag(sync=True)
 
-    # feature that the user has selected to view the PDP of
-    selected_features = List([4,5]).tag(sync=True)
+    # The selected feature for single PDP's
+    selected_single_feature = Int(0).tag(sync=True)
 
-    # info to show in pdp
-    pdp_data = List([]).tag(sync=True)
+    # The selected features for double PDP's
+    selected_double_features = List([0, 1]).tag(sync=True)
 
-    # Data ranking all single PDP's
-    single_pdps_ranked = List([]).tag(sync=True)
+    # The data for the selected single PDP
+    selected_single_pdp = List([]).tag(sync=True)
+
+    # The data for the selected double PDP
+    selected_double_pdp = List([]).tag(sync=True)
 
     def __init__(self, model, dataset, **kwargs):
         super().__init__(**kwargs)
@@ -54,33 +57,76 @@ class PdpRanker(DOMWidget):
         self.handler = OutputWidgetHandler()
         self.logger.addHandler(self.handler)
         self.features = list(dataset.columns)
-        self.pdp_data = self.generate_pdp(self.selected_features)
-        self.single_pdps_ranked = self.rank_single_pdps()
 
-    # this function runs when the selected_feature is changed
-    @observe('selected_features')
-    def change_selected_features(self, change):
-        self.logger.info(f'selected_features changed to {change.new}')
-        self.pdp_data = self.generate_pdp(change.new)
+        # Generate all of the possible PDP's and store for retrieval
+        self.all_single_pdps = self.generate_single_pdp_data()
+        self.all_double_pdps = self.generate_double_pdp_data()
 
-    def rank_single_pdps(self):
-        pdp_metric_data = []
-        # for first_feature, second_feature in combinations_with_replacement(range(len(self.features)), 2):
-        #     features = list({first_feature, second_feature})
-        for feature in range(len(self.features)):
-            features = [feature]
-            pdp = partial_dependence(self.model, self.dataset, [tuple(features)], kind='average')
-            ranking_metric = self.calculate_ranking_metric(pdp)
-            pdp_metric_data.append({
-                "features": features,
-                "pdp_graph_data": self.generate_pdp(features),
-                "ranking_metric": ranking_metric
+        # Set the values based on selected features
+        self.set_single_pdp_data()
+        self.set_double_pdp_data()
+
+    @observe('selected_single_feature')
+    def change_selected_single_feature(self, change):
+        """This function runs when the selected single feature changes, and updates the single pdp data."""
+        self.logger.info(f'selected_single_feature changed to {change.new}')
+        self.set_single_pdp_data()
+
+    @observe('selected_double_features')
+    def change_selected_double_features(self, change):
+        """This function runs when the selected double features change, and updates the double pdp data."""
+        self.logger.info(f'selected_double_features changed to {change.new}')
+        self.set_double_pdp_data()
+
+    def set_single_pdp_data(self):
+        selected_pdp = next((pdp for pdp in self.all_single_pdps if pdp["feature_index"] == self.selected_single_feature), None)
+        self.selected_single_pdp = selected_pdp["pdp_graph_data"]
+
+    def set_double_pdp_data(self):
+        selected_pdp = next((pdp for pdp in self.all_double_pdps if pdp["features"] == self.selected_double_features), None)
+        self.selected_double_pdp = selected_pdp["pdp_graph_data"]
+
+    def generate_single_pdp_data(self):
+        single_pdp_data = []
+        for i, feature in enumerate(self.features):
+            pdp = partial_dependence(self.model, self.dataset, [i], kind="average")
+            ranking_metric = self.calculate_single_pdp_ranking_metric(pdp)
+            single_pdp_data.append({
+                "feature_index": i,
+                "feature_name": feature,
+                "ranking_metric": ranking_metric,
+                "pdp_graph_data": self.generate_pdp([i]),
             })
-        return list(sorted(pdp_metric_data, key=lambda x: x['ranking_metric'], reverse=True))
+        return sorted(single_pdp_data, key=lambda x: x["ranking_metric"], reverse=True)
 
-    def calculate_ranking_metric(self, pdp):
+    def generate_double_pdp_data(self):
+        double_pdp_data = []
+        for combo in combinations(range(len(self.features)), 2):
+            pdp = partial_dependence(self.model, self.dataset, [combo], kind="average")
+            ranking_metric = self.calculate_double_pdp_ranking_metric(pdp)
+            double_pdp_data.append({
+                "features": sorted(list(combo)),
+                "ranking_metric": ranking_metric,
+                "pdp_graph_data": self.generate_pdp(list(combo))
+            })
+        return double_pdp_data
+
+    @staticmethod
+    def calculate_single_pdp_ranking_metric(pdp):
+        """
+        Calculates the standard deviation of the y value points to
+        determine how "interesting" a single PDP is.
+        """
         y = list(pdp['average'][0])
         return statistics.stdev(y)
+
+    @staticmethod
+    def calculate_double_pdp_ranking_metric(pdp):
+        """
+        Calculates the standard deviation of the averages
+        """
+        averages = pdp['average'][0].flatten()
+        return statistics.stdev(averages)
 
     def generate_pdp(self, features):
         # Retrieve the partial dependence of the given feature
