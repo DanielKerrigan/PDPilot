@@ -2,11 +2,16 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="5541da97-91b0-412c-aae0-75197594379d" name="Changes" comment="Played around with generating all pdp's to start.">
+      <change afterPath="$PROJECT_DIR$/pdp_ranking/utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/pdp-ranking.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/pdp-ranking.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/source/_static/embed-bundle.js.LICENSE.txt" beforeDir="false" afterPath="$PROJECT_DIR$/docs/source/_static/embed-bundle.js.LICENSE.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/examples/widget.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/examples/widget.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pdp_ranking/pdp_ranker.py" beforeDir="false" afterPath="$PROJECT_DIR$/pdp_ranking/pdp_ranker.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ReactWidget.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/ReactWidget.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/index.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/widget.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/widget.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/yarn.lock" beforeDir="false" afterPath="$PROJECT_DIR$/yarn.lock" afterDir="false" />
     </list>
@@ -18,9 +23,9 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="Python Script" />
         <option value="TypeScript JSX File" />
         <option value="TypeScript File" />
+        <option value="Python Script" />
       </list>
     </option>
   </component>
@@ -35,6 +40,9 @@
       <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
     </file-type-list>
   </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
   <component name="ProjectId" id="25q6Ha79wtaRSrUeLdhO3PVo9lL" />
   <component name="ProjectLevelVcsManager">
     <ConfirmationsSetting value="2" id="Add" />
@@ -43,20 +51,20 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">
-    <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
-    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
-    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
-    <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
-    <property name="node.js.detected.package.eslint" value="true" />
-    <property name="node.js.selected.package.eslint" value="(autodetect)" />
-    <property name="nodejs.jest.jest_package" value="$PROJECT_DIR$/node_modules/jest" />
-    <property name="nodejs_package_manager_path" value="npm" />
-    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
-    <property name="ts.external.directory.path" value="$APPLICATION_HOME_DIR$/plugins/JavaScriptLanguage/jsLanguageServicesImpl/external" />
-    <property name="vue.rearranger.settings.migration" value="true" />
-  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "last_opened_file_path": "/Users/rkalafos/pdp-ranking",
+    "node.js.detected.package.eslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "nodejs_package_manager_path": "yarn",
+    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable",
+    "ts.external.directory.path": "/Users/rkalafos/pdp-ranking/node_modules/typescript/lib",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
   <component name="RunManager">
     <configuration name="Example" type="JavaScriptTestRunnerJest" temporary="true" nameIsGenerated="true">
       <node-interpreter value="project" />
@@ -91,7 +99,12 @@
       <workItem from="1648757539244" duration="514000" />
       <workItem from="1649907927257" duration="15617000" />
       <workItem from="1650145603214" duration="10412000" />
-      <workItem from="1650404487758" duration="5858000" />
+      <workItem from="1650404487758" duration="6054000" />
+      <workItem from="1650418747248" duration="4473000" />
+      <workItem from="1650565398656" duration="803000" />
+      <workItem from="1650566247621" duration="1868000" />
+      <workItem from="1650568303515" duration="3675000" />
+      <workItem from="1651703832144" duration="380000" />
     </task>
     <task id="LOCAL-00001" summary="Played around with generating all pdp's to start.">
       <created>1649951752830</created>
@@ -116,7 +129,6 @@
         </entry>
       </map>
     </option>
-    <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="VcsManagerConfiguration">
     <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />

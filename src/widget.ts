@@ -18,27 +18,27 @@ import '../css/widget.css';
 // Your widget state goes here. Make sure to update the corresponding
 // Python state in pdp_ranker.py
 export type WidgetModelState = {
-  features: string[],
-  selected_single_feature: number,
-  selected_double_features: number[],
+  features: string[];
+  selected_single_feature: number;
+  selected_double_features: number[];
   selected_single_pdp: {
-    x: number,
-    y: number,
-    value: number
-  }[],
+    x: number;
+    y: number;
+    value: number;
+  }[];
   selected_double_pdp: {
-    x: number,
-    y: number,
-    value: number
-  }[],
+    x: number;
+    y: number;
+    value: number;
+  }[];
 };
 
 const defaultModelProperties: WidgetModelState = {
   features: [],
   selected_single_feature: 0,
-  selected_double_features: [0,1],
+  selected_double_features: [0, 1],
   selected_single_pdp: [],
-  selected_double_pdp: []
+  selected_double_pdp: [],
 };
 
 // export type WidgetModelState = typeof defaultModelProperties;

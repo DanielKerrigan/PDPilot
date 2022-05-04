@@ -8,15 +8,16 @@
 TODO: Add module docstring
 """
 from ipywidgets import DOMWidget
-from traitlets import Unicode, List, Dict, Int, observe
+from traitlets import Unicode, List, Int, observe
 from ._frontend import module_name, module_version
 
-import statistics
-from itertools import product, combinations
-from sklearn.inspection import partial_dependence
+from multiprocessing import Pool
+from itertools import combinations
+from .utils import generate_single_pdp, generate_double_pdp
 
 from .output_widget_handler import OutputWidgetHandler
 import logging
+
 
 class PdpRanker(DOMWidget):
     """
@@ -87,59 +88,17 @@ class PdpRanker(DOMWidget):
         self.selected_double_pdp = selected_pdp["pdp_graph_data"]
 
     def generate_single_pdp_data(self):
-        single_pdp_data = []
-        for i, feature in enumerate(self.features):
-            pdp = partial_dependence(self.model, self.dataset, [i], kind="average")
-            ranking_metric = self.calculate_single_pdp_ranking_metric(pdp)
-            single_pdp_data.append({
-                "feature_index": i,
-                "feature_name": feature,
-                "ranking_metric": ranking_metric,
-                "pdp_graph_data": self.generate_pdp([i]),
-            })
+        # Generate tuples of all the required args for single pdp data
+        pdp_args = [(i, feature, self.model, self.dataset) for i, feature in enumerate(self.features)]
+        # Multiprocess the data
+        with Pool(5) as pool:
+            single_pdp_data = pool.starmap(func=generate_single_pdp, iterable=tuple(pdp_args))
+
         return sorted(single_pdp_data, key=lambda x: x["ranking_metric"], reverse=True)
 
     def generate_double_pdp_data(self):
-        double_pdp_data = []
-        for combo in combinations(range(len(self.features)), 2):
-            pdp = partial_dependence(self.model, self.dataset, [combo], kind="average")
-            ranking_metric = self.calculate_double_pdp_ranking_metric(pdp)
-            double_pdp_data.append({
-                "features": sorted(list(combo)),
-                "ranking_metric": ranking_metric,
-                "pdp_graph_data": self.generate_pdp(list(combo))
-            })
+        # Generate tuples of all the required args for single pdp data
+        pdp_args = [(combo, self.model, self.dataset) for combo in combinations(range(len(self.features)), 2)]
+        with Pool(5) as pool:
+            double_pdp_data = pool.starmap(func=generate_double_pdp, iterable=tuple(pdp_args))
         return double_pdp_data
-
-    @staticmethod
-    def calculate_single_pdp_ranking_metric(pdp):
-        """
-        Calculates the standard deviation of the y value points to
-        determine how "interesting" a single PDP is.
-        """
-        y = list(pdp['average'][0])
-        return statistics.stdev(y)
-
-    @staticmethod
-    def calculate_double_pdp_ranking_metric(pdp):
-        """
-        Calculates the standard deviation of the averages
-        """
-        averages = pdp['average'][0].flatten()
-        return statistics.stdev(averages)
-
-    def generate_pdp(self, features):
-        # Retrieve the partial dependence of the given feature
-        result = partial_dependence(self.model, self.dataset, [tuple(features)], kind='average')
-
-        if len(features) == 1:
-          y = list(result['average'][0])
-          x = list(result['values'][0])
-          return [{'x': x, 'y': y, 'value': 0} for (x, y) in zip(x, y)]
-        elif len(features) == 2:
-          grid = product(*result['values'])
-          averages = result['average'][0].flatten()
-          return [
-            {'x': x, 'y': y, 'value': value}
-            for (x, y), value in zip(grid, averages)
-          ]
