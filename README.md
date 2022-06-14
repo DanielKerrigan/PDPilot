@@ -1,46 +1,40 @@
+# pdp-explorer
 
-# pdp-ranking
+[![Build Status](https://travis-ci.org/nyuvis/pdp-explorer.svg?branch=master)](https://travis-ci.org/nyuvis/pdpexplorer)
+[![codecov](https://codecov.io/gh/nyuvis/pdp-explorer/branch/master/graph/badge.svg)](https://codecov.io/gh/nyuvis/pdp-explorer)
 
-[![Build Status](https://travis-ci.org/nyuvis/pdp-ranking.svg?branch=master)](https://travis-ci.org/nyuvis/pdp_ranking)
-[![codecov](https://codecov.io/gh/nyuvis/pdp-ranking/branch/master/graph/badge.svg)](https://codecov.io/gh/nyuvis/pdp-ranking)
-
-
-A custom Jupyter Widget Library for ranking and visualizing partial dependency plots
+A Jupyter widget for exploring partial dependence plots.
 
 ## Installation
 
 You can install using `pip`:
 
 ```bash
-pip install pdp_ranking
+pip install pdpexplorer
 ```
 
 If you are using Jupyter Notebook 5.2 or earlier, you may also need to enable
 the nbextension:
+
 ```bash
-jupyter nbextension enable --py [--sys-prefix|--user|--system] pdp_ranking
+jupyter nbextension enable --py [--sys-prefix|--user|--system] pdpexplorer
 ```
 
 ## Development Installation
 
 Create a dev environment:
+
 ```bash
-conda create -n pdp_ranking-dev -c conda-forge nodejs yarn python jupyterlab
-conda activate pdp_ranking-dev
+conda create -n pdpexplorer-dev -c conda-forge nodejs yarn python jupyterlab
+conda activate pdpexplorer-dev
 ```
 
 Install the python. This will also build the TS package.
+
 ```bash
-pip install -e ".[test, examples]"
+pip install -e .
 ```
 
-If using the Apple M1 chip, you may need to run these commands:
-```bash
-conda install openblas
-conda install scikit-learn
-```
-
-which 
 When developing your extensions, you need to manually enable your extensions with the
 notebook / lab frontend. For lab, this is done by the command:
 
@@ -52,8 +46,8 @@ yarn run build
 For classic notebook, you need to run:
 
 ```
-jupyter nbextension install --sys-prefix --symlink --overwrite --py pdp_ranking
-jupyter nbextension enable --sys-prefix --py pdp_ranking
+jupyter nbextension install --sys-prefix --symlink --overwrite --py pdpexplorer
+jupyter nbextension enable --sys-prefix --py pdpexplorer
 ```
 
 Note that the `--symlink` flag doesn't work on Windows, so you will here have to run
@@ -62,13 +56,22 @@ you might also need another flag instead of `--sys-prefix`, but we won't cover t
 of those flags here.
 
 ### How to see your changes
-#### Typescript:
+### Jupyter Notebook:
+For Jupyter Notebook you can just watch for JS changes:
+
+```bash
+yarn watch
+```
+
+#### Jupyter Lab:
 If you use JupyterLab to develop then you can watch the source directory and run JupyterLab at the same time in different
 terminals to watch for changes in the extension's source and automatically rebuild the widget.
 
 ```bash
 # Watch the source directory in one terminal, automatically rebuilding when needed
-yarn run watch
+yarn watch
+# Watch to rebuild JupyterLab
+jupyter labextension watch
 # Run JupyterLab in another terminal
 jupyter lab
 ```

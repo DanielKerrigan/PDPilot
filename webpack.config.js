@@ -1,12 +1,19 @@
 const path = require('path');
 const version = require('./package.json').version;
+const SveltePreprocess = require('svelte-preprocess');
 
 // Custom webpack rules
 const rules = [
   { test: /\.ts$/, loader: 'ts-loader' },
-  { test: /\.[t|j]sx$/, loader: 'babel-loader' },
   { test: /\.js$/, loader: 'source-map-loader' },
-  { test: /\.css$/, use: ['style-loader', 'css-loader']}
+  { test: /\.css$/, use: ['style-loader', 'css-loader']},
+    {
+    test: /\.svelte$/,
+    loader: 'svelte-loader',
+    options: {
+      preprocess: SveltePreprocess(),
+    }
+  },
 ];
 
 // Packages that shouldn't be bundled but loaded at runtime
@@ -14,10 +21,32 @@ const externals = ['@jupyter-widgets/base'];
 
 const resolve = {
   // Add '.ts' and '.tsx' as resolvable extensions.
-  extensions: [".webpack.js", ".web.js", ".ts", ".js", '.tsx', 'jsx']
+  extensions: [".webpack.js", ".web.js", ".ts", ".js", ".svelte"],
+  mainFields: ['svelte', 'browser', 'module', 'main']
 };
 
 module.exports = [
+  /**
+   * Lab extension
+   *
+   * This builds the lib/ folder with the JupyterLab extension.
+   */
+  {
+    entry: './src/plugin.ts',
+    output: {
+      filename: 'index.js',
+      path: path.resolve(__dirname, 'lib'),
+      libraryTarget: 'amd',
+      publicPath: '',
+    },
+    module: {
+      rules: rules
+    },
+    externals,
+    resolve,
+  },
+
+
   /**
    * Notebook extension
    *
@@ -28,20 +57,19 @@ module.exports = [
     entry: './src/extension.ts',
     output: {
       filename: 'index.js',
-      path: path.resolve(__dirname, 'pdp_ranking', 'nbextension'),
+      path: path.resolve(__dirname, 'pdpexplorer', 'nbextension'),
       libraryTarget: 'amd',
       publicPath: '',
     },
     module: {
       rules: rules
     },
-    devtool: 'source-map',
     externals,
     resolve,
   },
 
   /**
-   * Embeddable pdp-ranking bundle
+   * Embeddable pdp-explorer bundle
    *
    * This bundle is almost identical to the notebook extension bundle. The only
    * difference is in the configuration of the webpack public path for the
@@ -56,10 +84,9 @@ module.exports = [
         filename: 'index.js',
         path: path.resolve(__dirname, 'dist'),
         libraryTarget: 'amd',
-        library: "pdp-ranking",
-        publicPath: 'https://unpkg.com/pdp-ranking@' + version + '/dist/'
+        library: "pdp-explorer",
+        publicPath: 'https://unpkg.com/pdp-explorer@' + version + '/dist/'
     },
-    devtool: 'source-map',
     module: {
         rules: rules
     },
@@ -78,13 +105,12 @@ module.exports = [
     output: {
       filename: 'embed-bundle.js',
       path: path.resolve(__dirname, 'docs', 'source', '_static'),
-      library: "pdp-ranking",
+      library: "pdp-explorer",
       libraryTarget: 'amd'
     },
     module: {
       rules: rules
     },
-    devtool: 'source-map',
     externals,
     resolve,
   }

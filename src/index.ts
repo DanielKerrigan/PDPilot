@@ -1,5 +1,5 @@
-// Copyright (c) Rachel Kalafos
+// Copyright (c) Daniel Kerrigan
 // Distributed under the terms of the Modified BSD License.
-import 'bootstrap/dist/css/bootstrap.min.css';
+
 export * from './version';
 export * from './widget';

@@ -1,14 +1,14 @@
 include LICENSE.txt
 include README.md
 
-include pyproject.toml
+include setupbase.py
 include pytest.ini
 include .coverage.rc
 
 include tsconfig.json
 include package.json
 include webpack.config.js
-include pdp_ranking/labextension/*.tgz
+include pdpexplorer/labextension/*.tgz
 
 # Documentation
 graft docs
@@ -20,16 +20,10 @@ prune docs/dist
 # Examples
 graft examples
 
-# Tests
-graft tests
-prune tests/build
-
 # Javascript files
-graft pdp_ranking/nbextension
+graft pdpexplorer/nbextension
 graft src
-graft css
 prune **/node_modules
-prune coverage
 prune lib
 
 # Patterns to exclude from any directory

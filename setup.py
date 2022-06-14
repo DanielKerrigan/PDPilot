@@ -17,16 +17,13 @@ from jupyter_packaging import (
     ensure_targets,
     combine_commands,
     get_version,
-    skip_if_exists
 )
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 
-
-
 # The name of the project
-name = 'pdp_ranking'
+name = 'pdpexplorer'
 
 # Get the version
 version = get_version(pjoin(name, '_version.py'))
@@ -35,7 +32,7 @@ version = get_version(pjoin(name, '_version.py'))
 # Representative files that should exist after a successful build
 jstargets = [
     pjoin(HERE, name, 'nbextension', 'index.js'),
-    pjoin(HERE, name, 'labextension', 'package.json'),
+    pjoin(HERE, 'lib', 'index.js'),
 ]
 
 
@@ -48,36 +45,39 @@ package_data_spec = {
 
 
 data_files_spec = [
-    ('share/jupyter/nbextensions/pdp_ranking', 'pdp_ranking/nbextension', '**'),
-    ('share/jupyter/labextensions/pdp-ranking', 'pdp_ranking/labextension', '**'),
-    ('share/jupyter/labextensions/pdp-ranking', '.', 'install.json'),
-    ('etc/jupyter/nbconfig/notebook.d', '.', 'pdp_ranking.json'),
+    ('share/jupyter/nbextensions/pdpexplorer',
+     'pdpexplorer/nbextension', '**'),
+    ('share/jupyter/labextensions/pdp-explorer',
+     'pdpexplorer/labextension', '**'),
+    ('share/jupyter/labextensions/pdp-explorer',
+     '.', 'install.json'),
+    ('etc/jupyter/nbconfig/notebook.d', '.',
+     'pdpexplorer.json'),
 ]
 
 
 cmdclass = create_cmdclass('jsdeps', package_data_spec=package_data_spec,
-    data_files_spec=data_files_spec)
-npm_install = combine_commands(
+                           data_files_spec=data_files_spec)
+cmdclass['jsdeps'] = combine_commands(
     install_npm(HERE, build_cmd='build:prod'),
     ensure_targets(jstargets),
 )
-cmdclass['jsdeps'] = skip_if_exists(jstargets, npm_install)
 
 
 setup_args = dict(
-    name            = name,
-    description     = 'A custom Jupyter Widget Library for ranking and visualizing partial dependency plots',
-    version         = version,
-    scripts         = glob(pjoin('scripts', '*')),
-    cmdclass        = cmdclass,
-    packages        = find_packages(),
-    author          = 'Rachel Kalafos',
-    author_email    = 'rachel.kalafos@gmail.com',
-    url             = 'https://github.com/nyuvis/pdp-ranking',
-    license         = 'BSD',
-    platforms       = "Linux, Mac OS X, Windows",
-    keywords        = ['Jupyter', 'Widgets', 'IPython'],
-    classifiers     = [
+    name=name,
+    description='A Jupyter widget for exploring partial dependence plots.',
+    version=version,
+    scripts=glob(pjoin('scripts', '*')),
+    cmdclass=cmdclass,
+    packages=find_packages(),
+    author='Daniel Kerrigan',
+    author_email='kerrigan.d@northeastern.edu',
+    url='https://github.com/nyuvis/pdp-explorer',
+    license='BSD',
+    platforms="Linux, Mac OS X, Windows",
+    keywords=['Jupyter', 'Widgets', 'IPython'],
+    classifiers=[
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: BSD License',
@@ -89,22 +89,14 @@ setup_args = dict(
         'Programming Language :: Python :: 3.7',
         'Framework :: Jupyter',
     ],
-    include_package_data = True,
+    include_package_data=True,
     python_requires=">=3.6",
-    install_requires = [
+    install_requires=[
         'ipywidgets>=7.0.0',
-        'pandas>=1.4.1',
         'scikit-learn>=1.0.2',
-        'scipy>=1.2',
-        'matplotlib',
-        'numpy'
+        'pandas>=1.4.2',
     ],
-    extras_require = {
-        'test': [
-            'pytest>=4.6',
-            'pytest-cov',
-            'nbval',
-        ],
+    extras_require={
         'examples': [
             # Any requirements for the examples to run
         ],
@@ -119,7 +111,7 @@ setup_args = dict(
             'sphinx_rtd_theme',
         ],
     },
-    entry_points = {
+    entry_points={
     },
 )
 
