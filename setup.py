@@ -106,16 +106,6 @@ setup_args = dict(
           'pylint',
           'black'
         ],
-        'docs': [
-            'jupyter_sphinx',
-            'nbsphinx',
-            'nbsphinx-link',
-            'pytest_check_links',
-            'pypandoc',
-            'recommonmark',
-            'sphinx>=1.5',
-            'sphinx_rtd_theme',
-        ],
     },
     entry_points={
     },
