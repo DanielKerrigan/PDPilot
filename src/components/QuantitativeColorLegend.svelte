@@ -7,7 +7,7 @@
  <script lang="ts">
   import * as d3 from 'd3';
   import { onMount } from 'svelte';
-import { scaleCanvas } from '../VisUtils';
+  import { scaleCanvas } from '../VisUtils';
 
   export let width: number;
   export let height: number;
@@ -58,27 +58,36 @@ import { scaleCanvas } from '../VisUtils';
   $: ticks = x.ticks(colorWidth / 60);
 </script>
 
-<div style="height: {height}px;">
-  <canvas bind:this={canvas}/>
-  <svg {width} {height}>
-    {#each ticks as tick}
-      <g transform="translate({x(tick)},{margin.top})">
-        <line y1={0} y2={colorHeight} stroke="black"/>
-        <text
-          y={colorHeight + spaceBetweenColorAndTick}
-          dominant-baseline="hanging"
-          text-anchor="middle"
-          font-size={tickHeight}
-        >
-          {format(tick)}
-        </text>
-      </g>
-    {/each}
-  </svg>
+<div class="legend-container">
+  <div class="legend-title">Avg. Prediction</div>
+  <div class="color-container" style="height: {height}px;">
+    <canvas bind:this={canvas}/>
+    <svg {width} {height}>
+      {#each ticks as tick}
+        <g transform="translate({x(tick)},{margin.top})">
+          <line y1={0} y2={colorHeight} stroke="black"/>
+          <text
+            y={colorHeight + spaceBetweenColorAndTick}
+            dominant-baseline="hanging"
+            text-anchor="middle"
+            font-size={tickHeight}
+          >
+            {format(tick)}
+          </text>
+        </g>
+      {/each}
+    </svg>
+  </div>
 </div>
 
+
 <style>
-  div {
+  .legend-container {
+    display: flex;
+    align-items: center;
+  }
+
+  .color-container {
     position: relative;
   }
 

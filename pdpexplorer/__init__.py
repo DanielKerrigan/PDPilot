@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# Copyright (c) Daniel Kerrigan.
-# Distributed under the terms of the Modified BSD License.
-
 from .pdpexplorer import PDPExplorerWidget
 from ._version import __version__, version_info
 

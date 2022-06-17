@@ -53,8 +53,8 @@
 <div class="group-container" class:hide-plots={!expanded} style="min-height: {headerHeight}px;">
   <div class="header" style="height: {headerHeight}px;">
     <div>
-      {#if !expanded}
-        <button on:click={expand}>
+      {#if expanded}
+        <button on:click={collapse}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             class="icon icon-tabler icon-tabler-chevron-down"
@@ -67,7 +67,7 @@
           </svg>
         </button>
       {:else}
-        <button on:click={collapse}>
+        <button on:click={expand}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             class="icon icon-tabler icon-tabler-chevron-right"
@@ -138,7 +138,7 @@
       class="grid"
       style="grid-template-columns: repeat({numCols}, 1fr); grid-template-rows: repeat({numRows}, 1fr);"
     >
-      {#each pageCharts as pdp (pdp.x_feature)}
+      {#each pageCharts as pdp (pdp.id)}
         <PDP pdp={pdp} predictionExtent={predictionExtent} color={color}/>
       {/each}
     </div>

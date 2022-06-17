@@ -1,6 +1,3 @@
-// Copyright (c) Daniel Kerrigan
-// Distributed under the terms of the Modified BSD License.
-
 import type { Application, IPlugin } from '@phosphor/application';
 
 import type { Widget } from '@phosphor/widgets';

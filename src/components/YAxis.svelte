@@ -2,18 +2,23 @@
   import * as d3 from 'd3';
   import Label from './Label.svelte';
 
-  export let scale: d3.ScaleContinuousNumeric<number,number> | d3.ScaleBand<string>;
-  export let width: number;
-  export let height: number;
-  export let margin: { top: number, right: number, bottom: number, left: number };
+  export let scale: d3.ScaleContinuousNumeric<number,number> | d3.ScaleBand<string|number> | d3.ScalePoint<string|number>;
   export let label: string;
   export let x: number = 0;
   export let y: number = 0;
   export let format = d3.format('~s');
-  export let showGrid: boolean = false;
-  export let showTickLabels: boolean = true;
+  export let gridWidth: number = 0;
+  export let showLabels: boolean = true;
+  export let fontSize: number = 10;
+  export let tickSize: number = 5;
 
-  $: x2 = showGrid ? (width - margin.left - margin.right) : 0;
+  const gapBetweenTickAndTickLabel: number = 2;
+  const gapBetweenTicksAndAxisLabel: number = 30;
+  const lineHeight: number = 1.2;
+
+  $: minimum = Math.min(scale.range()[0], scale.range()[scale.range().length - 1]);
+  $: maximum = Math.max(scale.range()[0], scale.range()[scale.range().length - 1]);
+  $: height = maximum - minimum;
 </script>
 
 <g transform="translate({x},{y})">
@@ -21,27 +26,40 @@
     {#if 'bandwidth' in scale}
       {#each scale.domain() as tick}
         <g transform="translate(0,{scale(tick)})">
-          <line x1={-5} x2={x2} y1={scale.bandwidth() / 2} y2={scale.bandwidth() / 2} stroke="black"/>
-          {#if showTickLabels}
+          <line
+            y1={scale.bandwidth() / 2}
+            y2={scale.bandwidth() / 2}
+            x1={-tickSize}
+            x2={gridWidth}
+            stroke="black"
+          />
+          {#if showLabels}
             <Label
-              width={scale.bandwidth()}
-              height={10}
-              x={-15}
-              y={0}
+              width={scale.bandwidth() || scale.step()}
+              height={fontSize * lineHeight}
+              x={-(tickSize + fontSize + gapBetweenTickAndTickLabel)}
+              y={scale.bandwidth() === 0 ? -scale.step() / 2 : 0}
               bold={false}
-              label={tick}
-              fontSize={10}
+              label={`${tick}`}
+              fontSize={fontSize}
               rotate={true}
             />
           {/if}
         </g>
       {/each}
     {:else}
-      {#each scale.ticks(height / 20) as tick}
+      {#each scale.ticks(height / 30) as tick}
         <g transform="translate(0,{scale(tick)})">
-          <line x1={-5} x2={x2} stroke="black"/>
-          {#if showTickLabels}
-            <text x={-6} text-anchor="end" dominant-baseline="middle">{format(tick)}</text>
+          <line x1={-tickSize} x2={gridWidth} stroke="black"/>
+          {#if showLabels}
+            <text
+              x={-tickSize - gapBetweenTickAndTickLabel}
+              text-anchor="end"
+              dominant-baseline="middle"
+              font-size={fontSize}
+            >
+              {format(tick)}
+            </text>
           {/if}
         </g>
       {/each}
@@ -50,17 +68,15 @@
 
   <Label
     width={height}
-    height={20}
-    x={-margin.left}
-    y={0}
+    height={fontSize * lineHeight}
+    x={-(tickSize + gapBetweenTickAndTickLabel + fontSize + gapBetweenTicksAndAxisLabel)}
+    y={minimum}
     bold={true}
     label={label}
     rotate={true}
+    fontSize={fontSize}
   />
 </g>
 
 <style>
-  text {
-    font-size: 10px;
-  }
 </style>

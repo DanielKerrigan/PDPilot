@@ -1,12 +1,13 @@
 <script lang="ts">
-  import type {QuantitativeDoublePDPData} from '../types';
+  import type {CategoricalDoublePDPData} from '../types';
   import * as d3 from 'd3';
   import XAxis from './XAxis.svelte';
   import YAxis from './YAxis.svelte';
   import { onMount } from 'svelte';
-  import { drawQuantitativeHeatmap, scaleCanvas } from '../VisUtils';
+  import { scaleCanvas } from '../VisUtils';
+  import { drawCategoricalHeatmap } from '../CanvasDrawing';
 
-  export let pdp: QuantitativeDoublePDPData;
+  export let pdp: CategoricalDoublePDPData;
   export let width: number;
   export let height: number;
   export let color: d3.ScaleSequential<string, string>;
@@ -16,12 +17,12 @@
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
 
-  $: x = d3.scaleLinear()
-    .domain(d3.extent(pdp.values, d => d.x) as [number, number])
+  $: x = d3.scaleBand<string|number>()
+    .domain(pdp.x_axis)
     .range([margin.left, width - margin.right]);
 
-  $: y = d3.scaleLinear()
-    .domain(d3.extent(pdp.values, d => d.y) as [number, number])
+  $: y = d3.scaleBand<string|number>()
+    .domain(pdp.y_axis)
     .range([height - margin.bottom, margin.top]);
 
   onMount(() => {
@@ -29,7 +30,7 @@
   });
 
   $: if (ctx) scaleCanvas(canvas, ctx, width, height);
-  $: if (ctx && x !== undefined && y !== undefined) drawQuantitativeHeatmap(pdp, ctx, width, height, x, y, color);
+  $: if (ctx && x !== undefined && y !== undefined) drawCategoricalHeatmap(pdp, ctx, width, height, x, y, color);
 </script>
 
 <div>
@@ -37,21 +38,13 @@
   <svg width={width} height={height}>
     <XAxis
       scale={x}
-      width={width}
-      height={height}
-      margin={margin}
-      x={0}
       y={height - margin.bottom}
       label={pdp.x_feature}
     />
 
     <YAxis
       scale={y}
-      width={width}
-      height={height}
-      margin={margin}
       x={margin.left}
-      y={0}
       label={pdp.y_feature}
     />
   </svg>

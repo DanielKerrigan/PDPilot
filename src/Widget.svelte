@@ -19,7 +19,7 @@
     --blue: rgb(0, 99, 206);
     --dark-blue: rgb(1, 51, 104);
     --purple: rgb(123, 25, 179);
-    --dark-purple: rgb(92, 0, 148);
+    --dark-purple: rgb(76, 0, 133);
     --light-gray: hsl(0, 0%, 98%);
     --medium-gray: hsl(0, 0%, 90%);
     --dark-gray: hsl(0, 0%, 30%);

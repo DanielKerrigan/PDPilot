@@ -15,7 +15,14 @@ not support anything like `text-overflow: ellipsis` -->
 <foreignObject {x} {y} width={rotate ? height : width} height={rotate ? width : height}>
   <div class="container">
     <div class="content" class:rotate style="width: {width}px; height: {height}px;">
-      <p class:bold class="cutoff" style="font-size: {fontSize}px" title={label}>{label}</p>
+      <div
+        class:bold
+        class="cutoff"
+        style="font-size: {fontSize}px; line-height: normal;"
+        title={label}
+      >
+        {label}
+      </div>
     </div>
   </div>
 </foreignObject>

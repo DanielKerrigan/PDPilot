@@ -3,6 +3,8 @@
   import LineChart from './LineChart.svelte';
   import DotPlot from './DotPlot.svelte';
   import QuantitativeHeatmap from './QuantitativeHeatmap.svelte';
+  import MixedHeatmap from './MixedHeatmap.svelte';
+  import CategoricalHeatmap from './CategoricalHeatmap.svelte';
 
   export let pdp: PDPData;
   export let predictionExtent: [number, number];
@@ -20,6 +22,10 @@
       <DotPlot {width} {height} {pdp} {predictionExtent}/>
     {:else if pdp.type === 'quantitative-double'}
       <QuantitativeHeatmap {width} {height} {pdp} {color}/>
+    {:else if pdp.type === 'mixed-double'}
+      <MixedHeatmap {width} {height} {pdp} {color}/>
+    {:else if pdp.type === 'categorical-double'}
+      <CategoricalHeatmap {width} {height} {pdp} {color}/>
     {/if}
   {/if}
 </div>

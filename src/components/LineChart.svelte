@@ -9,7 +9,7 @@
   export let height: number;
   export let predictionExtent: [number, number];
 
-  const margin = { top: 5, right: 15, bottom: 35, left: 50 };
+  const margin = { top: 10, right: 10, bottom: 40, left: 50 };
 
   $: x = d3.scaleLinear()
     .domain(d3.extent(pdp.values, d => d.x) as [number, number])
@@ -42,21 +42,13 @@
 
   <XAxis
     scale={x}
-    width={width}
-    height={height}
-    margin={margin}
-    label={pdp.x_feature}
-    x={0}
     y={height - margin.bottom}
+    label={pdp.x_feature}
   />
 
   <YAxis
     scale={y}
-    width={width}
-    height={height}
-    margin={margin}
     x={margin.left}
-    y={0}
     label={'average prediction'}
   />
 </svg>
