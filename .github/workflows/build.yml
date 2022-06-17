@@ -53,11 +53,3 @@ jobs:
 
           pytest
           yarn run test
-
-      - name: Check docs can be build + links
-        run: |
-          sudo apt install -y pandoc
-          pushd docs
-          make html
-          python -m pytest --check-links
-          popd
