@@ -98,7 +98,7 @@ setup_args = dict(
     ],
     extras_require={
         'examples': [
-            # Any requirements for the examples to run
+          # Any requirements for the examples to run
           'scikit-learn>=1.0.2',
           'altair>=4.1.0',
         ],
@@ -106,6 +106,9 @@ setup_args = dict(
           'pylint',
           'black'
         ],
+        'test': [
+          'pytest'
+        ]
     },
     entry_points={
     },
