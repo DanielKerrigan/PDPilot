@@ -1,11 +1,11 @@
 <script lang="ts">
-  import Controls from "./components/Controls.svelte";
-  import Main from "./components/Main.svelte";
+  import Controls from './components/Controls.svelte';
+  import Main from './components/Main.svelte';
 </script>
 
-<div class="pdp-explorer-widget-container">
-  <Controls/>
-  <Main/>
+<div class='pdp-explorer-widget-container'>
+  <Controls />
+  <Main />
 </div>
 
 <style>
@@ -57,7 +57,7 @@
     cursor: pointer;
     font-size: 1em;
     padding: 0.0625em 0.0625em;
-    font-family : inherit;
+    font-family: inherit;
   }
 
   .pdp-explorer-widget-container :global(button:hover:enabled) {

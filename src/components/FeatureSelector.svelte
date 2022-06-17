@@ -20,15 +20,20 @@
     if (localSelectedFeatures.length === 0 && featuresChecked) {
       featuresChecked = false;
       featuresCheckboxIndeterminate = false;
-    } else if(localSelectedFeatures.length === $features.length && !featuresChecked) {
+    } else if (
+      localSelectedFeatures.length === $features.length &&
+      !featuresChecked
+    ) {
       featuresChecked = true;
       featuresCheckboxIndeterminate = false;
-    } else if (localSelectedFeatures.length > 0 && localSelectedFeatures.length < $features.length) {
+    } else if (
+      localSelectedFeatures.length > 0 &&
+      localSelectedFeatures.length < $features.length
+    ) {
       featuresChecked = true;
       featuresCheckboxIndeterminate = true;
     }
   }
-
 </script>
 
 <div class="controls-features">
@@ -40,7 +45,7 @@
           bind:checked={featuresChecked}
           indeterminate={featuresCheckboxIndeterminate}
           on:change={onAllFeaturesChange}
-        >
+        />
         <span>Features</span>
       </label>
     </li>
@@ -53,7 +58,7 @@
             name="features"
             value={feature}
             on:change={onFeatureChange}
-          >
+          />
           <span>{feature}</span>
         </label>
       </li>
@@ -67,7 +72,8 @@
   }
 
   /* https://stackoverflow.com/a/494922/5016634 */
-  label span, label input {
+  label span,
+  label input {
     vertical-align: middle;
   }
 </style>

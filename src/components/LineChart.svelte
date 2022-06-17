@@ -1,6 +1,8 @@
 <script lang="ts">
-  import type {QuantitativeSinglePDPData} from '../types';
-  import * as d3 from 'd3';
+  import type { QuantitativeSinglePDPData } from '../types';
+  import { scaleLinear } from 'd3-scale';
+  import { line as d3line } from 'd3-shape';
+  import { extent } from 'd3-array';
   import XAxis from './XAxis.svelte';
   import YAxis from './YAxis.svelte';
 
@@ -11,18 +13,17 @@
 
   const margin = { top: 10, right: 10, bottom: 40, left: 50 };
 
-  $: x = d3.scaleLinear()
-    .domain(d3.extent(pdp.values, d => d.x) as [number, number])
+  $: x = scaleLinear()
+    .domain(extent(pdp.values, (d) => d.x) as [number, number])
     .range([margin.left, width - margin.right]);
 
-  $: y = d3.scaleLinear()
+  $: y = scaleLinear()
     .domain(predictionExtent)
     .range([height - margin.bottom, margin.top]);
 
-  $: line = d3.line<{x: number, avg_pred: number}>()
-    .x(d => x(d.x))
-    .y(d => y(d.avg_pred));
-
+  $: line = d3line<{ x: number; avg_pred: number }>()
+    .x((d) => x(d.x))
+    .y((d) => y(d.avg_pred));
 </script>
 
 <!--
@@ -37,20 +38,11 @@
   was causing issues with resizing.
 -->
 <svg class="pdp-line-chart">
+  <path d={line(pdp.values)} stroke="steelblue" fill="none" />
 
-  <path d={line(pdp.values)} stroke="steelblue" fill="none"/>
+  <XAxis scale={x} y={height - margin.bottom} label={pdp.x_feature} />
 
-  <XAxis
-    scale={x}
-    y={height - margin.bottom}
-    label={pdp.x_feature}
-  />
-
-  <YAxis
-    scale={y}
-    x={margin.left}
-    label={'average prediction'}
-  />
+  <YAxis scale={y} x={margin.left} label={'average prediction'} />
 </svg>
 
 <style>

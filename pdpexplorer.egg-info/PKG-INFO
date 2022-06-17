@@ -20,9 +20,10 @@ Classifier: Programming Language :: Python :: 3.5
 Classifier: Programming Language :: Python :: 3.6
 Classifier: Programming Language :: Python :: 3.7
 Classifier: Framework :: Jupyter
-Requires-Python: >=3.6
+Requires-Python: >=3.7.1
 Description-Content-Type: text/markdown
 Provides-Extra: examples
+Provides-Extra: dev
 Provides-Extra: docs
 License-File: LICENSE.txt
 

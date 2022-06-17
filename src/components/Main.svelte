@@ -1,23 +1,29 @@
 <script lang="ts">
   import PDPGroup from './PDPGroup.svelte';
   import { single_pdps, double_pdps } from '../stores';
-  import * as d3 from 'd3';
+  import { scaleLinear } from 'd3-scale';
+  import { min, max } from 'd3-array';
 
   let singleExpanded = true;
   let doubleExpanded = true;
 
-  $: minPrediction = d3.min($single_pdps, pdp => d3.min(pdp.values, d => d.avg_pred)) ?? 0;
-  $: maxPrediction = d3.max($single_pdps, pdp => d3.max(pdp.values, d => d.avg_pred)) ?? 0;
+  $: minPrediction =
+    min($single_pdps, (pdp) => min(pdp.values, (d) => d.avg_pred)) ?? 0;
+  $: maxPrediction =
+    max($single_pdps, (pdp) => max(pdp.values, (d) => d.avg_pred)) ?? 0;
 
   let predictionExtent: [number, number];
-  $: predictionExtent = d3.scaleLinear().domain([minPrediction, maxPrediction]).nice().domain() as [number, number];
+  $: predictionExtent = scaleLinear()
+    .domain([minPrediction, maxPrediction])
+    .nice()
+    .domain() as [number, number];
 </script>
 
-<div class='main-container'>
+<div class="main-container">
   <PDPGroup
     title={'Single feature'}
     data={$single_pdps}
-    predictionExtent={predictionExtent}
+    {predictionExtent}
     showColorLegend={false}
     bind:expanded={singleExpanded}
     otherSectionCollapsed={!doubleExpanded}
@@ -26,7 +32,7 @@
   <PDPGroup
     title={'Double feature'}
     data={$double_pdps}
-    predictionExtent={predictionExtent}
+    {predictionExtent}
     showColorLegend={true}
     bind:expanded={doubleExpanded}
     otherSectionCollapsed={!singleExpanded}

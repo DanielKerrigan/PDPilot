@@ -5,16 +5,25 @@
   export let y: number = 0;
   export let bold: boolean = false;
   export let rotate: boolean = false;
-  export let label: string = "";
+  export let label: string = '';
   export let fontSize: number = 14;
 </script>
 
 <!-- using a foreignObject because SVG text does
 not support anything like `text-overflow: ellipsis` -->
 
-<foreignObject {x} {y} width={rotate ? height : width} height={rotate ? width : height}>
+<foreignObject
+  {x}
+  {y}
+  width={rotate ? height : width}
+  height={rotate ? width : height}
+>
   <div class="container">
-    <div class="content" class:rotate style="width: {width}px; height: {height}px;">
+    <div
+      class="content"
+      class:rotate
+      style="width: {width}px; height: {height}px;"
+    >
       <div
         class:bold
         class="cutoff"

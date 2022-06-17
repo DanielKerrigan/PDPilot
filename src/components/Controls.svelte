@@ -1,7 +1,7 @@
 <script lang="ts">
-  import FeatureSelector from "./FeatureSelector.svelte";
-  import Parameters from "./Parameters.svelte";
-  import PlotButton from "./PlotButton.svelte";
+  import FeatureSelector from './FeatureSelector.svelte';
+  import Parameters from './Parameters.svelte';
+  import PlotButton from './PlotButton.svelte';
   import { num_instances_used, resolution } from '../stores';
 
   let localSelectedFeatures: string[] = [];
@@ -11,13 +11,13 @@
 
 <div class="controls-container">
   <div>
-    <FeatureSelector bind:localSelectedFeatures={localSelectedFeatures}/>
+    <FeatureSelector bind:localSelectedFeatures />
   </div>
   <div>
-    <Parameters bind:localResolution={localResolution} bind:localNumInstances={localNumInstances}/>
+    <Parameters bind:localResolution bind:localNumInstances />
   </div>
   <div>
-    <PlotButton {localSelectedFeatures} {localResolution} {localNumInstances}/>
+    <PlotButton {localSelectedFeatures} {localResolution} {localNumInstances} />
   </div>
 </div>
 

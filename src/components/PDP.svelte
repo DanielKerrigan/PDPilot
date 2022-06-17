@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type {PDPData} from '../types';
+  import type { PDPData } from '../types';
   import LineChart from './LineChart.svelte';
   import DotPlot from './DotPlot.svelte';
   import QuantitativeHeatmap from './QuantitativeHeatmap.svelte';
@@ -17,15 +17,15 @@
 <div bind:clientWidth={width} bind:clientHeight={height}>
   {#if width != null && height != null}
     {#if pdp.type === 'quantitative-single'}
-      <LineChart {width} {height} {pdp} {predictionExtent}/>
+      <LineChart {width} {height} {pdp} {predictionExtent} />
     {:else if pdp.type === 'categorical-single'}
-      <DotPlot {width} {height} {pdp} {predictionExtent}/>
+      <DotPlot {width} {height} {pdp} {predictionExtent} />
     {:else if pdp.type === 'quantitative-double'}
-      <QuantitativeHeatmap {width} {height} {pdp} {color}/>
+      <QuantitativeHeatmap {width} {height} {pdp} {color} />
     {:else if pdp.type === 'mixed-double'}
-      <MixedHeatmap {width} {height} {pdp} {color}/>
+      <MixedHeatmap {width} {height} {pdp} {color} />
     {:else if pdp.type === 'categorical-double'}
-      <CategoricalHeatmap {width} {height} {pdp} {color}/>
+      <CategoricalHeatmap {width} {height} {pdp} {color} />
     {/if}
   {/if}
 </div>

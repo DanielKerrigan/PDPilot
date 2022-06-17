@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { PDPData } from '../types';
   import PDP from './PDP.svelte';
-  import * as d3 from 'd3';
+  import { scaleSequential } from 'd3-scale';
+  import { interpolateBuPu } from 'd3-scale-chromatic';
   import QuantitativeColorLegend from './QuantitativeColorLegend.svelte';
 
   export let title: string;
@@ -35,22 +36,29 @@
   $: perPage = maxNumRows * maxNumCols;
   $: numPages = Math.ceil(data.length / perPage);
 
-  $: pageCharts = data.slice((currentPage - 1) * currentPage, (currentPage - 1) * currentPage + perPage)
+  $: pageCharts = data.slice(
+    (currentPage - 1) * currentPage,
+    (currentPage - 1) * currentPage + perPage
+  );
 
   // color
 
   let color: d3.ScaleSequential<string, string>;
-  $: color = d3.scaleSequential()
-      .domain(predictionExtent)
-      .interpolator(d3.interpolateBlues)
-      .unknown('black');
+  $: color = scaleSequential()
+    .domain(predictionExtent)
+    .interpolator(interpolateBuPu)
+    .unknown('black');
 
   // header
 
   const headerHeight = 30;
 </script>
 
-<div class="group-container" class:hide-plots={!expanded} style="min-height: {headerHeight}px;">
+<div
+  class="group-container"
+  class:hide-plots={!expanded}
+  style="min-height: {headerHeight}px;"
+>
   <div class="header" style="height: {headerHeight}px;">
     <div>
       {#if expanded}
@@ -58,12 +66,17 @@
           <svg
             xmlns="http://www.w3.org/2000/svg"
             class="icon icon-tabler icon-tabler-chevron-down"
-            width="24" height="24" viewBox="0 0 24 24"
-            stroke-width="2" stroke="currentColor"
-            fill="none" stroke-linecap="round" stroke-linejoin="round"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke="currentColor"
+            fill="none"
+            stroke-linecap="round"
+            stroke-linejoin="round"
           >
-            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-            <polyline points="6 9 12 15 18 9"></polyline>
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <polyline points="6 9 12 15 18 9" />
           </svg>
         </button>
       {:else}
@@ -71,12 +84,17 @@
           <svg
             xmlns="http://www.w3.org/2000/svg"
             class="icon icon-tabler icon-tabler-chevron-right"
-            width="24" height="24" viewBox="0 0 24 24"
-            stroke-width="2" stroke="currentColor"
-            fill="none" stroke-linecap="round" stroke-linejoin="round"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke="currentColor"
+            fill="none"
+            stroke-linecap="round"
+            stroke-linejoin="round"
           >
-            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-            <polyline points="9 6 15 12 9 18"></polyline>
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <polyline points="9 6 15 12 9 18" />
           </svg>
         </button>
       {/if}
@@ -88,46 +106,56 @@
       <div class="page-change">
         <button
           disabled={currentPage === 1}
-          on:click={() => currentPage -= 1 }
+          on:click={() => (currentPage -= 1)}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             class="icon icon-tabler icon-tabler-arrow-left"
-            width="24" height="24" viewBox="0 0 24 24"
-            stroke-width="2" stroke="currentColor" fill="none"
-            stroke-linecap="round" stroke-linejoin="round"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke="currentColor"
+            fill="none"
+            stroke-linecap="round"
+            stroke-linejoin="round"
           >
-            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-            <line x1="5" y1="12" x2="11" y2="18"></line>
-            <line x1="5" y1="12" x2="11" y2="6"></line>
-        </svg>
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+            <line x1="5" y1="12" x2="11" y2="18" />
+            <line x1="5" y1="12" x2="11" y2="6" />
+          </svg>
         </button>
 
         <div class="current-page-number">{currentPage}</div>
 
         <button
           disabled={currentPage === numPages}
-          on:click={() => currentPage += 1 }
+          on:click={() => (currentPage += 1)}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             class="icon icon-tabler icon-tabler-arrow-right"
-            width="24" height="24" viewBox="0 0 24 24"
-            stroke-width="2" stroke="currentColor" fill="none"
-            stroke-linecap="round" stroke-linejoin="round"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke="currentColor"
+            fill="none"
+            stroke-linecap="round"
+            stroke-linejoin="round"
           >
-            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-            <line x1="13" y1="18" x2="19" y2="12"></line>
-            <line x1="13" y1="6" x2="19" y2="12"></line>
-        </svg>
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+            <line x1="13" y1="18" x2="19" y2="12" />
+            <line x1="13" y1="6" x2="19" y2="12" />
+          </svg>
         </button>
       </div>
 
       {#if showColorLegend}
         <div class="legend">
-          <QuantitativeColorLegend width={200} height={headerHeight} {color}/>
+          <QuantitativeColorLegend width={200} height={headerHeight} {color} />
         </div>
       {/if}
     {/if}
@@ -139,7 +167,7 @@
       style="grid-template-columns: repeat({numCols}, 1fr); grid-template-rows: repeat({numRows}, 1fr);"
     >
       {#each pageCharts as pdp (pdp.id)}
-        <PDP pdp={pdp} predictionExtent={predictionExtent} color={color}/>
+        <PDP {pdp} {predictionExtent} {color} />
       {/each}
     </div>
   {/if}
@@ -180,7 +208,8 @@
     margin-left: auto;
   }
 
-  .icon-tabler-chevron-down, .icon-tabler-chevron-right {
+  .icon-tabler-chevron-down,
+  .icon-tabler-chevron-right {
     cursor: pointer;
   }
 

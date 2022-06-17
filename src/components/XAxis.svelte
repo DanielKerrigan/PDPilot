@@ -1,12 +1,15 @@
 <script lang="ts">
-  import * as d3 from 'd3';
+  import { format as d3format } from 'd3-format';
   import Label from './Label.svelte';
 
-  export let scale: d3.ScaleContinuousNumeric<number,number> | d3.ScaleBand<string|number> | d3.ScalePoint<string|number>;
+  export let scale:
+    | d3.ScaleContinuousNumeric<number, number>
+    | d3.ScaleBand<string | number>
+    | d3.ScalePoint<string | number>;
   export let label: string;
   export let x: number = 0;
   export let y: number = 0;
-  export let format = d3.format('~s');
+  export let format = d3format('~s');
   export let gridHeight: number = 0;
   export let showLabels: boolean = true;
   export let fontSize: number = 10;
@@ -41,7 +44,7 @@
               y={tickSize + gapBetweenTickAndTickLabel}
               bold={false}
               label={`${tick}`}
-              fontSize={fontSize}
+              {fontSize}
             />
           {/if}
         </g>
@@ -49,7 +52,7 @@
     {:else}
       {#each scale.ticks(width / 80) as tick}
         <g transform="translate({scale(tick)})">
-          <line y1={gridHeight} y2={tickSize} stroke="black"/>
+          <line y1={gridHeight} y2={tickSize} stroke="black" />
           {#if showLabels}
             <text
               y={tickSize + gapBetweenTickAndTickLabel}
@@ -66,13 +69,16 @@
   </g>
 
   <Label
-    width={width}
+    {width}
     height={fontSize * lineHeight}
     x={left}
-    y={tickSize + gapBetweenTickAndTickLabel + fontSize + gapBetweenTicksAndAxisLabel}
+    y={tickSize +
+      gapBetweenTickAndTickLabel +
+      fontSize +
+      gapBetweenTicksAndAxisLabel}
     bold={true}
-    label={label}
-    fontSize={fontSize}
+    {label}
+    {fontSize}
   />
 </g>
 

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type {CategoricalSinglePDPData} from '../types';
-  import * as d3 from 'd3';
+  import type { CategoricalSinglePDPData } from '../types';
+  import { scalePoint, scaleLinear } from 'd3-scale';
   import XAxis from './XAxis.svelte';
   import YAxis from './YAxis.svelte';
 
@@ -11,12 +11,12 @@
 
   const margin = { top: 10, right: 10, bottom: 40, left: 50 };
 
-  $: x = d3.scalePoint<string | number>()
-    .domain(pdp.values.map(d => d.x))
+  $: x = scalePoint<string | number>()
+    .domain(pdp.values.map((d) => d.x))
     .range([margin.left, width - margin.right])
     .padding(0.5);
 
-  $: y = d3.scaleLinear()
+  $: y = scaleLinear()
     .domain(predictionExtent)
     .range([height - margin.bottom, margin.top]);
 
@@ -25,25 +25,12 @@
 
 <svg class="pdp-dot-plot">
   {#each pdp.values as d}
-    <circle
-      cx={x(d.x)}
-      cy={y(d.avg_pred)}
-      r={radius}
-      fill="steelblue"
-    />
+    <circle cx={x(d.x)} cy={y(d.avg_pred)} r={radius} fill="steelblue" />
   {/each}
 
-  <XAxis
-    scale={x}
-    y={height - margin.bottom}
-    label={pdp.x_feature}
-  />
+  <XAxis scale={x} y={height - margin.bottom} label={pdp.x_feature} />
 
-  <YAxis
-    scale={y}
-    x={margin.left}
-    label={'average prediction'}
-  />
+  <YAxis scale={y} x={margin.left} label={'average prediction'} />
 </svg>
 
 <style>

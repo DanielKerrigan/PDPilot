@@ -1,7 +1,4 @@
-export {
-  isNumeric,
-  areArraysEqual
-};
+export { isNumeric, areArraysEqual };
 
 /**
  * Checks if two arrays are equal to each other.
@@ -10,7 +7,11 @@ export {
  * @param eq function that checks the equality of two array elements
  * @returns `true` if the two arrays are equal and `false` otherwise
  */
-function areArraysEqual<T>(a: T[], b: T[], eq: (a: T, b: T) => boolean = (x: T, y: T) => x === y): boolean {
+function areArraysEqual<T>(
+  a: T[],
+  b: T[],
+  eq: (a: T, b: T) => boolean = (x: T, y: T) => x === y
+): boolean {
   if (a.length !== b.length) {
     return false;
   }
@@ -23,7 +24,6 @@ function areArraysEqual<T>(a: T[], b: T[], eq: (a: T, b: T) => boolean = (x: T, 
 
   return true;
 }
-
 
 /* https://stackoverflow.com/questions/175739/built-in-way-in-javascript-to-check-if-a-string-is-a-valid-number
    return true if the passed in value is a number or a string that is number */

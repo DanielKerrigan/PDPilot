@@ -7,7 +7,7 @@ import { setStoreModels } from './stores';
 
 import { MODULE_NAME, MODULE_VERSION } from './version';
 
-import Widget from './Widget.svelte'
+import Widget from './Widget.svelte';
 
 export class PDPExplorerModel extends DOMWidgetModel {
   defaults() {

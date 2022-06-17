@@ -90,15 +90,21 @@ setup_args = dict(
         'Framework :: Jupyter',
     ],
     include_package_data=True,
-    python_requires=">=3.6",
+    python_requires=">=3.7.1",
     install_requires=[
         'ipywidgets>=7.0.0',
-        'scikit-learn>=1.0.2',
-        'pandas>=1.4.2',
+        'pandas>=1.3.5',
+        'numpy>=1.21.5'
     ],
     extras_require={
         'examples': [
             # Any requirements for the examples to run
+          'scikit-learn>=1.0.2',
+          'altair>=4.1.0',
+        ],
+        'dev': [
+          'pylint',
+          'black'
         ],
         'docs': [
             'jupyter_sphinx',

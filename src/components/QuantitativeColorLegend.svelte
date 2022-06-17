@@ -3,9 +3,9 @@
    Copyright 2021, Observable Inc.
    Released under the ISC license.
  -->
-
- <script lang="ts">
-  import * as d3 from 'd3';
+<script lang="ts">
+  import { format as d3format } from 'd3-format';
+  import { scaleLinear } from 'd3-scale';
   import { onMount } from 'svelte';
   import { scaleCanvas } from '../VisUtils';
 
@@ -16,7 +16,7 @@
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
 
-  let format = d3.format('~s');
+  let format = d3format('~s');
 
   // dimensions
 
@@ -25,7 +25,8 @@
   const tickHeight = 10;
 
   $: colorWidth = width - margin.left - margin.right;
-  $: colorHeight = height - margin.top - margin.bottom - tickHeight - spaceBetweenColorAndTick;
+  $: colorHeight =
+    height - margin.top - margin.bottom - tickHeight - spaceBetweenColorAndTick;
 
   // set up
 
@@ -40,7 +41,7 @@
     interpolator: (t: number) => string,
     colorWidth: number,
     colorHeight: number,
-    margin: { top: number, right: number, bottom: number, left: number },
+    margin: { top: number; right: number; bottom: number; left: number }
   ) {
     for (let i = 0; i < colorWidth; i++) {
       ctx.fillStyle = interpolator(i / width);
@@ -48,12 +49,22 @@
     }
   }
 
-  $: if (ctx) scaleCanvas(canvas, ctx, width, height);
-  $: if (ctx) drawRegressionColorScale(ctx, color.interpolator(), colorWidth, colorHeight, margin);
+  $: if (ctx) {
+    scaleCanvas(canvas, ctx, width, height);
+  }
+  $: if (ctx) {
+    drawRegressionColorScale(
+      ctx,
+      color.interpolator(),
+      colorWidth,
+      colorHeight,
+      margin
+    );
+  }
 
-  $: x = d3.scaleLinear()
-      .domain(color.domain())
-      .range([margin.left, width - margin.right]);
+  $: x = scaleLinear()
+    .domain(color.domain())
+    .range([margin.left, width - margin.right]);
 
   $: ticks = x.ticks(colorWidth / 60);
 </script>
@@ -61,11 +72,11 @@
 <div class="legend-container">
   <div class="legend-title">Avg. Prediction</div>
   <div class="color-container" style="height: {height}px;">
-    <canvas bind:this={canvas}/>
+    <canvas bind:this={canvas} />
     <svg {width} {height}>
       {#each ticks as tick}
         <g transform="translate({x(tick)},{margin.top})">
-          <line y1={0} y2={colorHeight} stroke="black"/>
+          <line y1={0} y2={colorHeight} stroke="black" />
           <text
             y={colorHeight + spaceBetweenColorAndTick}
             dominant-baseline="hanging"
@@ -79,7 +90,6 @@
     </svg>
   </div>
 </div>
-
 
 <style>
   .legend-container {

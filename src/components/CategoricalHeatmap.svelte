@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type {CategoricalDoublePDPData} from '../types';
-  import * as d3 from 'd3';
+  import type { CategoricalDoublePDPData } from '../types';
+  import { scaleBand } from 'd3-scale';
   import XAxis from './XAxis.svelte';
   import YAxis from './YAxis.svelte';
   import { onMount } from 'svelte';
@@ -17,11 +17,11 @@
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
 
-  $: x = d3.scaleBand<string|number>()
+  $: x = scaleBand<string | number>()
     .domain(pdp.x_axis)
     .range([margin.left, width - margin.right]);
 
-  $: y = d3.scaleBand<string|number>()
+  $: y = scaleBand<string | number>()
     .domain(pdp.y_axis)
     .range([height - margin.bottom, margin.top]);
 
@@ -29,24 +29,20 @@
     ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
   });
 
-  $: if (ctx) scaleCanvas(canvas, ctx, width, height);
-  $: if (ctx && x !== undefined && y !== undefined) drawCategoricalHeatmap(pdp, ctx, width, height, x, y, color);
+  $: if (ctx) {
+    scaleCanvas(canvas, ctx, width, height);
+  }
+  $: if (ctx && x !== undefined && y !== undefined) {
+    drawCategoricalHeatmap(pdp, ctx, width, height, x, y, color);
+  }
 </script>
 
 <div>
-  <canvas bind:this={canvas}></canvas>
-  <svg width={width} height={height}>
-    <XAxis
-      scale={x}
-      y={height - margin.bottom}
-      label={pdp.x_feature}
-    />
+  <canvas bind:this={canvas} />
+  <svg {width} {height}>
+    <XAxis scale={x} y={height - margin.bottom} label={pdp.x_feature} />
 
-    <YAxis
-      scale={y}
-      x={margin.left}
-      label={pdp.y_feature}
-    />
+    <YAxis scale={y} x={margin.left} label={pdp.y_feature} />
   </svg>
 </div>
 

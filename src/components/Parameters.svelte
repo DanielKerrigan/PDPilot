@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { total_num_instances } from "../stores";
-  import { isNumeric } from "../Utils";
+  import { total_num_instances } from '../stores';
+  import { isNumeric } from '../Utils';
 
   export let localResolution: number;
   export let localNumInstances: number;
@@ -39,10 +39,18 @@
 
 <div class="parameters">
   <label for="resolution-input">Resolution</label>
-  <input id="resolution-input" bind:value={localResolutionString} on:change={onChangeResolution}/>
+  <input
+    id="resolution-input"
+    bind:value={localResolutionString}
+    on:change={onChangeResolution}
+  />
 
   <label for="instances-input">Instances</label>
-  <input id="instances-input" bind:value={localNumInstancesString} on:change={onChangeNumInstances}/>
+  <input
+    id="instances-input"
+    bind:value={localNumInstancesString}
+    on:change={onChangeNumInstances}
+  />
 </div>
 
 <style>

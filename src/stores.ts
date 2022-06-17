@@ -1,7 +1,7 @@
-import type {Writable} from 'svelte/store';
-import type {DOMWidgetModel} from '@jupyter-widgets/base'
+import type { Writable } from 'svelte/store';
+import type { DOMWidgetModel } from '@jupyter-widgets/base';
 
-import {writable} from 'svelte/store';
+import { writable } from 'svelte/store';
 import type { DoublePDPData, SinglePDPData } from './types';
 
 interface WidgetWritable<T> extends Writable<T> {
@@ -30,27 +30,45 @@ export function WidgetWritable<T>(name_: string, value_: T): WidgetWritable<T> {
           model.save_changes();
         }
         return output;
-      })
+      });
     },
     setModel: (m: DOMWidgetModel) => {
       model = m;
-      let modelValue = model.get(name)
-      if (modelValue) internalWritable.set(modelValue)
-      model.on('change:' + name, () => internalWritable.set(model.get(name)), null)
-    }
-  }
+      const modelValue = model.get(name);
+      if (modelValue) {
+        internalWritable.set(modelValue);
+      }
+      model.on(
+        'change:' + name,
+        () => internalWritable.set(model.get(name)),
+        null
+      );
+    },
+  };
 }
 
 // Declare stores with their associated Traitlets here.
 export const features = WidgetWritable<string[]>('features', []);
-export const selected_features = WidgetWritable<string[]>('selected_features', []);
+export const selected_features = WidgetWritable<string[]>(
+  'selected_features',
+  []
+);
 export const single_pdps = WidgetWritable<SinglePDPData[]>('single_pdps', []);
 export const double_pdps = WidgetWritable<DoublePDPData[]>('double_pdps', []);
 export const is_calculating = WidgetWritable<boolean>('is_calculating', false);
 export const resolution = WidgetWritable<number>('resolution', 20);
-export const num_instances_used = WidgetWritable<number>('num_instances_used', 100);
-export const plot_button_clicked = WidgetWritable<number>('plot_button_clicked', 0);
-export const total_num_instances = WidgetWritable<number>('total_num_instances', 0);
+export const num_instances_used = WidgetWritable<number>(
+  'num_instances_used',
+  100
+);
+export const plot_button_clicked = WidgetWritable<number>(
+  'plot_button_clicked',
+  0
+);
+export const total_num_instances = WidgetWritable<number>(
+  'total_num_instances',
+  0
+);
 
 // Set the model for each store you create.
 export function setStoreModels(model: DOMWidgetModel): void {

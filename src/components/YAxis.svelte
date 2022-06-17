@@ -1,12 +1,15 @@
 <script lang="ts">
-  import * as d3 from 'd3';
+  import { format as d3format } from 'd3-format';
   import Label from './Label.svelte';
 
-  export let scale: d3.ScaleContinuousNumeric<number,number> | d3.ScaleBand<string|number> | d3.ScalePoint<string|number>;
+  export let scale:
+    | d3.ScaleContinuousNumeric<number, number>
+    | d3.ScaleBand<string | number>
+    | d3.ScalePoint<string | number>;
   export let label: string;
   export let x: number = 0;
   export let y: number = 0;
-  export let format = d3.format('~s');
+  export let format = d3format('~s');
   export let gridWidth: number = 0;
   export let showLabels: boolean = true;
   export let fontSize: number = 10;
@@ -16,8 +19,14 @@
   const gapBetweenTicksAndAxisLabel: number = 30;
   const lineHeight: number = 1.2;
 
-  $: minimum = Math.min(scale.range()[0], scale.range()[scale.range().length - 1]);
-  $: maximum = Math.max(scale.range()[0], scale.range()[scale.range().length - 1]);
+  $: minimum = Math.min(
+    scale.range()[0],
+    scale.range()[scale.range().length - 1]
+  );
+  $: maximum = Math.max(
+    scale.range()[0],
+    scale.range()[scale.range().length - 1]
+  );
   $: height = maximum - minimum;
 </script>
 
@@ -41,7 +50,7 @@
               y={scale.bandwidth() === 0 ? -scale.step() / 2 : 0}
               bold={false}
               label={`${tick}`}
-              fontSize={fontSize}
+              {fontSize}
               rotate={true}
             />
           {/if}
@@ -50,7 +59,7 @@
     {:else}
       {#each scale.ticks(height / 30) as tick}
         <g transform="translate(0,{scale(tick)})">
-          <line x1={-tickSize} x2={gridWidth} stroke="black"/>
+          <line x1={-tickSize} x2={gridWidth} stroke="black" />
           {#if showLabels}
             <text
               x={-tickSize - gapBetweenTickAndTickLabel}
@@ -69,12 +78,17 @@
   <Label
     width={height}
     height={fontSize * lineHeight}
-    x={-(tickSize + gapBetweenTickAndTickLabel + fontSize + gapBetweenTicksAndAxisLabel)}
+    x={-(
+      tickSize +
+      gapBetweenTickAndTickLabel +
+      fontSize +
+      gapBetweenTicksAndAxisLabel
+    )}
     y={minimum}
     bold={true}
-    label={label}
+    {label}
     rotate={true}
-    fontSize={fontSize}
+    {fontSize}
   />
 </g>
 

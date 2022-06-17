@@ -1,11 +1,12 @@
-import type { QuantitativeDoublePDPData, MixedDoublePDPData, CategoricalDoublePDPData } from "./types";
-import type { ScaleLinear, ScaleSequential, ScaleBand } from "d3";
+import type {
+  QuantitativeDoublePDPData,
+  MixedDoublePDPData,
+  CategoricalDoublePDPData,
+} from './types';
 
-export {
-  drawQuantitativeHeatmap,
-  drawMixedHeatmap,
-  drawCategoricalHeatmap
-};
+import type { ScaleLinear, ScaleSequential, ScaleBand } from 'd3';
+
+export { drawQuantitativeHeatmap, drawMixedHeatmap, drawCategoricalHeatmap };
 
 function drawQuantitativeHeatmap(
   data: QuantitativeDoublePDPData,
@@ -15,7 +16,7 @@ function drawQuantitativeHeatmap(
   x: ScaleLinear<number, number>,
   y: ScaleLinear<number, number>,
   color: ScaleSequential<string, string>
-) {
+): void {
   ctx.save();
 
   ctx.clearRect(0, 0, width, height);
@@ -36,12 +37,7 @@ function drawQuantitativeHeatmap(
 
     ctx.fillStyle = color(cell.avg_pred);
 
-    ctx.fillRect(
-      x(x1),
-      y(y1),
-      x(x2) - x(x1),
-      y(y2) - y(y1),
-    );
+    ctx.fillRect(x(x1), y(y1), x(x2) - x(x1), y(y2) - y(y1));
   }
 
   ctx.restore();
@@ -53,9 +49,9 @@ function drawMixedHeatmap(
   width: number,
   height: number,
   x: ScaleLinear<number, number>,
-  y: ScaleBand<string|number>,
+  y: ScaleBand<string | number>,
   color: ScaleSequential<string, string>
-) {
+): void {
   ctx.save();
 
   ctx.clearRect(0, 0, width, height);
@@ -72,12 +68,7 @@ function drawMixedHeatmap(
 
     ctx.fillStyle = color(cell.avg_pred);
 
-    ctx.fillRect(
-      x(cell.x),
-      y(cell.y)! + 1,
-      x(x2) - x(x1),
-      y.bandwidth() - 2
-    );
+    ctx.fillRect(x(cell.x), y(cell.y)! + 1, x(x2) - x(x1), y.bandwidth() - 2);
   }
 
   ctx.restore();
@@ -88,22 +79,22 @@ function drawCategoricalHeatmap(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
-  x: ScaleBand<string|number>,
-  y: ScaleBand<string|number>,
+  x: ScaleBand<string | number>,
+  y: ScaleBand<string | number>,
   color: ScaleSequential<string, string>
-) {
+): void {
   ctx.save();
 
   ctx.clearRect(0, 0, width, height);
 
-  for (let cell of data.values) {
+  for (const cell of data.values) {
     ctx.fillStyle = color(cell.avg_pred);
 
     ctx.fillRect(
       x(cell.x)! + 1,
       y(cell.y)! + 1,
       x.bandwidth() - 2,
-      y.bandwidth() - 2,
+      y.bandwidth() - 2
     );
   }
 

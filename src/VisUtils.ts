@@ -1,9 +1,12 @@
-export {
-  scaleCanvas,
-};
+export { scaleCanvas };
 
 // Adapted from https://www.html5rocks.com/en/tutorials/canvas/hidpi/
-function scaleCanvas(canvas: HTMLCanvasElement, context: CanvasRenderingContext2D, width: number, height: number) {
+function scaleCanvas(
+  canvas: HTMLCanvasElement,
+  context: CanvasRenderingContext2D,
+  width: number,
+  height: number
+): void {
   // assume the device pixel ratio is 1 if the browser doesn't specify it
   const devicePixelRatio = window.devicePixelRatio || 1;
 
