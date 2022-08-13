@@ -7,7 +7,7 @@ import { setStoreModels } from './stores';
 
 import { MODULE_NAME, MODULE_VERSION } from './version';
 
-import Widget from './Widget.svelte';
+import Widget from './components/Widget.svelte';
 
 export class PDPExplorerModel extends DOMWidgetModel {
   defaults() {
@@ -23,11 +23,16 @@ export class PDPExplorerModel extends DOMWidgetModel {
       selected_features: [],
       single_pdps: [],
       double_pdps: [],
-      is_calculating: false,
       num_instances_used: 0,
       resolution: 0,
       plot_button_clicked: 0,
       total_num_instances: 0,
+      prediction_extent: [0, 0],
+      include_single_pdps: true,
+      include_double_pdps: true,
+      is_calculating_single_pdps: false,
+      is_calculating_double_pdps: false,
+      marginal_distributions: {},
     };
   }
 

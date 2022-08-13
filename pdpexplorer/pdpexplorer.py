@@ -6,10 +6,17 @@ TODO: Add module docstring
 """
 
 from itertools import combinations
+from operator import itemgetter
+from pathlib import Path
+import json
 from ipywidgets import DOMWidget
-from traitlets import Unicode, List, Bool, Int, observe
+from traitlets import Unicode, List, Bool, Int, Dict, observe
+
+from pdpexplorer.metadata import Metadata
 from ._frontend import module_name, module_version
-from .pdp import get_single_pdps, get_double_pdps
+from .pdp import get_marginal_distributions, widget_partial_dependence
+from .logging import log
+from scipy.stats import iqr as inner_quartile_range
 
 
 class PDPExplorerWidget(DOMWidget):
@@ -22,6 +29,8 @@ class PDPExplorerWidget(DOMWidget):
     _view_module = Unicode(module_name).tag(sync=True)
     _view_module_version = Unicode(module_version).tag(sync=True)
 
+    """widget state that is synced between backend and frontend"""
+
     features = List([]).tag(sync=True)
 
     selected_features = List([]).tag(sync=True)
@@ -32,90 +41,124 @@ class PDPExplorerWidget(DOMWidget):
     single_pdps = List([]).tag(sync=True)
     double_pdps = List([]).tag(sync=True)
 
-    is_calculating = Bool(False).tag(sync=True)
-
     plot_button_clicked = Int(0).tag(sync=True)
 
-    def __init__(self, model, dataset, feature_to_one_hot, **kwargs):
+    prediction_extent = List([0, 0]).tag(sync=True)
+
+    include_single_pdps = Bool(True).tag(sync=True)
+    include_double_pdps = Bool(True).tag(sync=True)
+
+    is_calculating_single_pdps = Bool(False).tag(sync=True)
+    is_calculating_double_pdps = Bool(False).tag(sync=True)
+    marginal_distributions = Dict({}).tag(sync=True)
+
+    def __init__(self, predict, df, pd_data, feature_to_one_hot=None, n_jobs=1, quant_threshold=12, **kwargs):
         super().__init__(**kwargs)
 
-        # sklearn model
-        self.model = model
+        # if pd_data is a path or string, then read the file at that path
+        if isinstance(pd_data, Path) or isinstance(pd_data, str):
+            path = Path(pd_data).resolve()
+
+            if not path.exists():
+                raise OSError(f"Cannot read {path}")
+
+            json_data = path.read_text()
+            pd_data = json.loads(json_data)
+
+        # model predict function
+        self.predict = predict
 
         # pandas dataframe
-        self.dataset = dataset
+        self.df = df
+        self.md = Metadata(df, feature_to_one_hot, quant_threshold=quant_threshold)
 
-        self.total_num_instances = dataset.shape[0]
-        self.num_instances_used = min(100, self.num_instances_used)
+        self.features = sorted([p["x_feature"] for p in pd_data['one_way_pds']])
 
-        # dictionary from original feature to list of one hot feature and original value
-        # { 'color': [('color_red', 'red'), ('color_blue', 'blue')] }
-        self.feature_to_one_hot = feature_to_one_hot
+        self.total_num_instances = self.md.size
+        self.num_instances_used = pd_data['n_instances']
+        self.resolution = pd_data['resolution']
+        
+        self.marginal_distributions = pd_data['marginal_distributions']
 
-        # set of one hot encoded features
-        self.one_hot_features = {
-            one_hot
-            for one_hots in feature_to_one_hot.values()
-            for one_hot, _ in one_hots
-        }
+        self.single_pdps = pd_data['one_way_pds']
+        self.double_pdps = pd_data['two_way_pds']
+        self.prediction_extent = pd_data['prediction_extent']
 
-        # list of non-one hot features
-        normal_features = [
-            feat for feat in dataset.columns if feat not in self.one_hot_features
-        ]
-
-        # list of feature to show in the UI. replace one hot features with the original feature.
-        self.features = sorted(normal_features + list(self.feature_to_one_hot.keys()))
-
-        # dictionary from tuple of original feature name and value to one hot feature name
-        self.value_to_one_hot = {
-            (feature, value): one_hot
-            for feature, one_hots in feature_to_one_hot.items()
-            for one_hot, value in one_hots
-        }
-
-        # dictionary from feature name to sorted list of unique values for that feature
-        self.unique_feature_vals = {
-            col: sorted(list(dataset[col].unique())) for col in normal_features
-        }
-        for feature, one_hot_info in self.feature_to_one_hot.items():
-            self.unique_feature_vals[feature] = sorted(
-                [value for (_, value) in one_hot_info]
-            )
-
-        # get numeric features with more than 12 values
-        self.quantitative_features = {
-            feature
-            for feature in dataset.select_dtypes(include="number").columns
-            if feature not in self.one_hot_features
-            and len(self.unique_feature_vals[feature]) > 12
-        }
+        self.n_jobs = n_jobs
 
     @observe("plot_button_clicked")
     def on_plot_button_clicked(self, _):
-        ''' calculate the PDPs when the plot button is clicked '''
-        subset = self.dataset.sample(n=self.num_instances_used)
+        """calculate the PDPs when the plot button is clicked"""
+        self.is_calculating_single_pdps = True
+        self.is_calculating_double_pdps = True
 
-        pairs = combinations(self.selected_features, 2)
+        subset = self.df.sample(n=self.num_instances_used)
 
-        self.single_pdps = get_single_pdps(
-            self.model,
-            subset,
-            self.selected_features,
-            self.resolution,
-            self.feature_to_one_hot,
-            self.value_to_one_hot,
-            self.quantitative_features,
-            self.unique_feature_vals,
+        self.marginal_distributions = get_marginal_distributions(
+            df=subset,
+            features=self.features,
+            md=self.md
         )
 
-        self.double_pdps = get_double_pdps(
-            self.model,
-            subset,
-            pairs,
-            self.resolution,
-            self.feature_to_one_hot,
-            self.value_to_one_hot,
-            self.quantitative_features,
-            self.unique_feature_vals,
-        )
+        if self.include_single_pdps:
+            iqr = inner_quartile_range(self.predict(subset))
+
+            single_pdps = widget_partial_dependence(
+                predict=self.predict,
+                subset=subset,
+                features=self.selected_features,
+                resolution=self.resolution,
+                md=self.md,
+                n_jobs=self.n_jobs,
+                iqr=iqr
+            )
+
+            min_pred_single = min(single_pdps, key=itemgetter("min_prediction"))[
+                "min_prediction"
+            ]
+            max_pred_single = max(single_pdps, key=itemgetter("max_prediction"))[
+                "max_prediction"
+            ]
+
+            self.single_pdps = single_pdps
+            self.prediction_extent = [min_pred_single, max_pred_single]
+
+            self.is_calculating_single_pdps = False
+        else:
+            self.single_pdps = []
+
+        self.is_calculating_single_pdps = False
+
+        if self.include_double_pdps and len(self.selected_features) > 1:
+            pairs = combinations(self.selected_features, 2)
+
+            double_pdps = widget_partial_dependence(
+                predict=self.predict,
+                subset=subset,
+                features=pairs,
+                resolution=self.resolution,
+                md=self.md,
+                n_jobs=self.n_jobs,
+                one_way_pds=self.single_pdps,
+            )
+
+            min_pred_double = min(double_pdps, key=itemgetter("min_prediction"))[
+                "min_prediction"
+            ]
+            max_pred_double = max(double_pdps, key=itemgetter("max_prediction"))[
+                "max_prediction"
+            ]
+
+            if self.include_single_pdps:
+                self.prediction_extent = [
+                    min(min_pred_single, min_pred_double),
+                    max(max_pred_single, max_pred_double),
+                ]
+            else:
+                self.prediction_extent = [min_pred_double, max_pred_double]
+
+            self.double_pdps = double_pdps
+        else:
+            self.double_pdps = []
+
+        self.is_calculating_double_pdps = False

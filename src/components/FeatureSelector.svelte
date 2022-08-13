@@ -1,34 +1,36 @@
 <script lang="ts">
-  import { features } from '../stores';
+  import { selected_features, features } from '../stores';
 
-  export let localSelectedFeatures: string[];
+  let featuresChecked: boolean = true;
+  let featuresCheckboxIndeterminate: boolean = false;
+  let search: string = '';
 
-  let featuresChecked = false;
-  let featuresCheckboxIndeterminate = false;
+  $: $selected_features = $features;
+  $: featureCheckboxes = $features.map((feature) => ({
+    feature,
+    hidden: !feature.includes(search),
+  }));
 
   function onAllFeaturesChange() {
     if (featuresChecked) {
-      localSelectedFeatures = $features;
+      $selected_features = $features;
       featuresCheckboxIndeterminate = false;
     } else {
-      localSelectedFeatures = [];
+      $selected_features = [];
       featuresCheckboxIndeterminate = false;
     }
   }
 
   function onFeatureChange() {
-    if (localSelectedFeatures.length === 0 && featuresChecked) {
+    if ($selected_features.length === 0) {
       featuresChecked = false;
       featuresCheckboxIndeterminate = false;
-    } else if (
-      localSelectedFeatures.length === $features.length &&
-      !featuresChecked
-    ) {
+    } else if ($selected_features.length === $features.length) {
       featuresChecked = true;
       featuresCheckboxIndeterminate = false;
     } else if (
-      localSelectedFeatures.length > 0 &&
-      localSelectedFeatures.length < $features.length
+      $selected_features.length > 0 &&
+      $selected_features.length < $features.length
     ) {
       featuresChecked = true;
       featuresCheckboxIndeterminate = true;
@@ -38,42 +40,76 @@
 
 <div class="controls-features">
   <ul>
-    <li>
-      <label class="bold">
-        <input
-          type="checkbox"
-          bind:checked={featuresChecked}
-          indeterminate={featuresCheckboxIndeterminate}
-          on:change={onAllFeaturesChange}
-        />
-        <span>Features</span>
-      </label>
+    <li class="fs-row">
+      <input
+        id="features-checkbox"
+        type="checkbox"
+        bind:checked={featuresChecked}
+        indeterminate={featuresCheckboxIndeterminate}
+        on:change={onAllFeaturesChange}
+        disabled={search !== ''}
+      />
+      <label class="bold" for="features-checkbox">Features</label>
     </li>
-    {#each $features as feature}
-      <li>
-        <label>
-          <input
-            type="checkbox"
-            bind:group={localSelectedFeatures}
-            name="features"
-            value={feature}
-            on:change={onFeatureChange}
-          />
-          <span>{feature}</span>
-        </label>
+  </ul>
+
+  <label class="fs-row">
+    Search
+    <input bind:value={search} />
+  </label>
+
+  <ul class="individual-features">
+    {#each featureCheckboxes as { feature, hidden } (feature)}
+      <li class="fs-row" class:hidden>
+        <input
+          id="{feature}-checkbox"
+          type="checkbox"
+          bind:group={$selected_features}
+          name="features"
+          value={feature}
+          on:change={onFeatureChange}
+        />
+        <label class="cutoff" for="{feature}-checkbox" title={feature}
+          >{feature}</label
+        >
       </li>
     {/each}
   </ul>
 </div>
 
 <style>
+  .controls-features {
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+    row-gap: 0.25em;
+  }
+
   ul {
     list-style: none;
   }
 
-  /* https://stackoverflow.com/a/494922/5016634 */
-  label span,
-  label input {
-    vertical-align: middle;
+  .fs-row {
+    display: flex;
+    align-items: center;
+    column-gap: 0.25em;
+  }
+
+  input {
+    min-width: 0;
+  }
+
+  .fs-row label {
+    flex: 1;
+  }
+
+  .individual-features {
+    flex: 0 1 auto;
+    overflow-y: scroll;
+    min-height: 0;
+  }
+
+  .hidden {
+    display: none;
   }
 </style>

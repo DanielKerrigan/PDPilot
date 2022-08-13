@@ -4,29 +4,33 @@
    Released under the ISC license.
  -->
 <script lang="ts">
-  import { format as d3format } from 'd3-format';
   import { scaleLinear } from 'd3-scale';
   import { onMount } from 'svelte';
-  import { scaleCanvas } from '../VisUtils';
+  import { defaultFormat, scaleCanvas } from '../../../vis-utils';
 
   export let width: number;
   export let height: number;
-  export let color: d3.ScaleSequential<string, string>;
+  export let color:
+    | d3.ScaleSequential<string, string>
+    | d3.ScaleDiverging<string, string>;
+  export let includeTitle: boolean;
+
+  export let marginTop: number = 0;
+  export let marginRight: number = 15;
+  export let marginBottom: number = 0;
+  export let marginLeft: number = 15;
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
 
-  let format = d3format('~s');
-
   // dimensions
 
-  const margin = { top: 4, right: 10, bottom: 2, left: 10 };
-  const spaceBetweenColorAndTick = 2;
-  const tickHeight = 10;
+  const spaceBetweenColorAndTickLabel = 2;
+  const tickLabelHeight = 10;
 
-  $: colorWidth = width - margin.left - margin.right;
+  $: colorWidth = width - marginLeft - marginRight;
   $: colorHeight =
-    height - margin.top - margin.bottom - tickHeight - spaceBetweenColorAndTick;
+    height - marginTop - marginBottom - tickLabelHeight - spaceBetweenColorAndTickLabel;
 
   // set up
 
@@ -39,13 +43,17 @@
   function drawRegressionColorScale(
     ctx: CanvasRenderingContext2D,
     interpolator: (t: number) => string,
+    totalWidth: number,
+    totalHeight: number,
     colorWidth: number,
     colorHeight: number,
-    margin: { top: number; right: number; bottom: number; left: number }
+    marginLeft: number,
+    marginTop: number
   ) {
+    ctx.clearRect(0, 0, totalWidth, totalHeight);
     for (let i = 0; i < colorWidth; i++) {
-      ctx.fillStyle = interpolator(i / width);
-      ctx.fillRect(i + margin.left, margin.top, 1, colorHeight);
+      ctx.fillStyle = interpolator(i / colorWidth);
+      ctx.fillRect(i + marginLeft, marginTop, 1, colorHeight);
     }
   }
 
@@ -56,34 +64,39 @@
     drawRegressionColorScale(
       ctx,
       color.interpolator(),
+      width,
+      height,
       colorWidth,
       colorHeight,
-      margin
+      marginLeft,
+      marginTop
     );
   }
 
   $: x = scaleLinear()
-    .domain(color.domain())
-    .range([margin.left, width - margin.right]);
+    .domain([color.domain()[0], color.domain()[color.domain().length - 1]])
+    .range([marginLeft, width - marginRight]);
 
   $: ticks = x.ticks(colorWidth / 60);
 </script>
 
 <div class="legend-container">
-  <div class="legend-title">Avg. Prediction</div>
+  {#if includeTitle}
+    <div class="legend-title">Prediction</div>
+  {/if}
   <div class="color-container" style="height: {height}px;">
     <canvas bind:this={canvas} />
     <svg {width} {height}>
       {#each ticks as tick}
-        <g transform="translate({x(tick)},{margin.top})">
+        <g transform="translate({x(tick)},{marginTop})">
           <line y1={0} y2={colorHeight} stroke="black" />
           <text
-            y={colorHeight + spaceBetweenColorAndTick}
+            y={colorHeight + spaceBetweenColorAndTickLabel}
             dominant-baseline="hanging"
             text-anchor="middle"
-            font-size={tickHeight}
+            font-size={tickLabelHeight}
           >
-            {format(tick)}
+            {defaultFormat(tick)}
           </text>
         </g>
       {/each}

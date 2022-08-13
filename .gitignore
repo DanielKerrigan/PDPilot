@@ -1,5 +1,7 @@
-# Custom
+# My additions
 .vscode
+scratch/
+**/__pycache__
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

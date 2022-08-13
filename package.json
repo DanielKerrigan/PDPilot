@@ -83,13 +83,7 @@
     "webpack-cli": "^4.0.0"
   },
   "jupyterlab": {
-    "extension": "lib/index",
-    "outputDir": "pdpexplorer/labextension/",
-    "sharedPackages": {
-      "@jupyter-widgets/base": {
-        "bundled": false,
-        "singleton": true
-      }
-    }
+    "extension": true,
+    "outputDir": "pdpexplorer/labextension/"
   }
 }

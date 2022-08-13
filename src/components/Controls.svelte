@@ -1,23 +1,10 @@
 <script lang="ts">
   import FeatureSelector from './FeatureSelector.svelte';
-  import Parameters from './Parameters.svelte';
-  import PlotButton from './PlotButton.svelte';
-  import { num_instances_used, resolution } from '../stores';
-
-  let localSelectedFeatures: string[] = [];
-  let localResolution: number = $resolution;
-  let localNumInstances: number = $num_instances_used;
 </script>
 
 <div class="controls-container">
-  <div>
-    <FeatureSelector bind:localSelectedFeatures />
-  </div>
-  <div>
-    <Parameters bind:localResolution bind:localNumInstances />
-  </div>
-  <div>
-    <PlotButton {localSelectedFeatures} {localResolution} {localNumInstances} />
+  <div class="feature-selector">
+    <FeatureSelector />
   </div>
 </div>
 
@@ -26,11 +13,15 @@
     flex: 0 0 200px;
     min-width: 200px;
     padding: 0.25em;
-    background-color: var(--light-gray);
-    border: 1px solid var(--medium-gray);
+    border-right: 1px solid var(--gray-1);
 
     display: flex;
     flex-direction: column;
     gap: 1em;
+  }
+
+  .feature-selector {
+    flex: 0 1 auto;
+    min-height: 0;
   }
 </style>

@@ -1,21 +1,33 @@
 export type QuantitativeSinglePDPData = {
-  type: 'quantitative-single';
+  num_features: 1;
+  kind: 'quantitative';
   id: string;
   x_feature: string;
-  values: {
-    x: number;
-    avg_pred: number;
-  }[];
+  x_values: number[];
+  mean_predictions: number[];
+  min_prediction: number;
+  max_prediction: number;
+  trend_low_order: number[];
+  rmse_low_order: number;
+  trend_good_fit: number[];
+  nrmse_good_fit: number;
+  knots_good_fit: number;
+  deviation: number;
 };
 
 export type CategoricalSinglePDPData = {
-  type: 'categorical-single';
+  num_features: 1;
+  kind: 'categorical';
   id: string;
   x_feature: string;
-  values: {
-    x: string | number;
-    avg_pred: number;
-  }[];
+  x_values: (number | string)[];
+  mean_predictions: number[];
+  min_prediction: number;
+  max_prediction: number;
+  rmse_low_order: number;
+  nrmse_good_fit: number;
+  knots_good_fit: number;
+  deviation: number;
 };
 
 export type SinglePDPData =
@@ -23,51 +35,57 @@ export type SinglePDPData =
   | QuantitativeSinglePDPData;
 
 export type QuantitativeDoublePDPData = {
-  type: 'quantitative-double';
+  num_features: 2;
+  kind: 'quantitative';
   id: string;
   x_feature: string;
-  y_feature: string;
+  x_values: number[];
   x_axis: number[];
+  y_feature: string;
+  y_values: number[];
   y_axis: number[];
-  values: {
-    x: number;
-    y: number;
-    row: number;
-    col: number;
-    avg_pred: number;
-  }[];
+  mean_predictions: number[];
+  min_prediction: number;
+  max_prediction: number;
+  interactions: number[];
+  deviation: number;
+  H: number;
 };
 
 export type CategoricalDoublePDPData = {
-  type: 'categorical-double';
+  num_features: 2;
+  kind: 'categorical';
   id: string;
   x_feature: string;
+  x_values: (string | number)[];
+  x_axis: (string | number)[];
   y_feature: string;
-  x_axis: number[] | string[];
-  y_axis: number[] | string[];
-  values: {
-    x: string | number;
-    y: string | number;
-    row: number;
-    col: number;
-    avg_pred: number;
-  }[];
+  y_values: (string | number)[];
+  y_axis: (string | number)[];
+  mean_predictions: number[];
+  min_prediction: number;
+  max_prediction: number;
+  interactions: number[];
+  deviation: number;
+  H: number;
 };
 
 export type MixedDoublePDPData = {
-  type: 'mixed-double';
+  num_features: 2;
+  kind: 'mixed';
   id: string;
   x_feature: string;
-  y_feature: string;
+  x_values: number[];
   x_axis: number[];
-  y_axis: number[] | string[];
-  values: {
-    x: number;
-    y: string | number;
-    row: number;
-    col: number;
-    avg_pred: number;
-  }[];
+  y_feature: string;
+  y_values: (string | number)[];
+  y_axis: (string | number)[];
+  mean_predictions: number[];
+  min_prediction: number;
+  max_prediction: number;
+  interactions: number[];
+  deviation: number;
+  H: number;
 };
 
 export type DoublePDPData =
@@ -75,4 +93,25 @@ export type DoublePDPData =
   | CategoricalDoublePDPData
   | MixedDoublePDPData;
 
-export type PDPData = SinglePDPData | DoublePDPData;
+export type SortingOption = {
+  name: string;
+  sort: (
+    data: SinglePDPData[] | DoublePDPData[]
+  ) => SinglePDPData[] | DoublePDPData[];
+};
+
+export type QuantitativeMarginalDistribution = {
+  kind: 'quantitative';
+  bins: number[];
+  counts: number[];
+};
+
+export type CategoricalMarginalDistribution = {
+  kind: 'categorical';
+  bins: string[];
+  counts: number[];
+};
+
+export type MarginalDistribution =
+  | QuantitativeMarginalDistribution
+  | CategoricalMarginalDistribution;
