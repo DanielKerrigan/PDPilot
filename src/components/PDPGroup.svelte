@@ -1,57 +1,121 @@
 <script lang="ts">
-  import type { PDPData } from '../types';
-  import PDP from './PDP.svelte';
+  import type { DoublePDPData, SinglePDPData, SortingOption } from '../types';
+  import PDPContainer from './PDPContainer.svelte';
   import { scaleSequential } from 'd3-scale';
-  import { interpolateBuPu } from 'd3-scale-chromatic';
-  import QuantitativeColorLegend from './QuantitativeColorLegend.svelte';
+  import { interpolateYlGnBu } from 'd3-scale-chromatic';
+  import QuantitativeColorLegend from './vis/two_way/QuantitativeColorLegend.svelte';
+  import { onMount } from 'svelte';
+  import { nice_prediction_extent } from '../stores';
 
   export let title: string;
-  export let data: PDPData[];
-  export let predictionExtent: [number, number];
+  export let data: SinglePDPData[] | DoublePDPData[];
   export let showColorLegend: boolean = false;
-  export let expanded: boolean = true;
-  export let otherSectionCollapsed: boolean = false;
+  export let isCalculating: boolean = false;
+  export let sortingOptions: SortingOption[];
+
+  let div: HTMLDivElement;
+
+  let gridWidth: number;
+  let gridHeight: number;
+
+  let pdpWidth: number;
+  let pdpHeight: number;
+
+  let expanded = true;
+
+  onMount(() => {
+    // Adapted from https://blog.sethcorker.com/question/how-do-you-use-the-resize-observer-api-in-svelte/
+    const resizeObserver = new ResizeObserver(
+      (entries: ResizeObserverEntry[]) => {
+        if (entries.length !== 1) {
+          return;
+        }
+
+        const entry: ResizeObserverEntry = entries[0];
+
+        if (entry.borderBoxSize.length !== 1) {
+          return;
+        }
+
+        const contentRect: ResizeObserverSize = entry.borderBoxSize[0];
+
+        gridWidth = contentRect.inlineSize;
+        gridHeight = contentRect.blockSize;
+      }
+    );
+
+    resizeObserver.observe(div);
+
+    return () => resizeObserver.unobserve(div);
+  });
 
   // expand and collapse
 
-  function expand() {
-    expanded = true;
-  }
-
-  function collapse() {
-    expanded = false;
+  function toggle() {
+    expanded = !expanded;
   }
 
   // number of rows and columns
 
-  const maxNumCols = 5;
-  $: maxNumRows = otherSectionCollapsed ? 4 : 2;
-  $: numRows = Math.min(maxNumRows, Math.ceil(data.length / maxNumCols));
-  $: numCols = Math.min(maxNumCols, Math.ceil(data.length / numRows));
+  $: perPage = Math.min(data.length, 6);
+  // TODO: https://stackoverflow.com/questions/60104268/default-panel-layout-of-ggplot2facet-wrap
+  $: numRows = Math.floor(Math.sqrt(perPage));
+  $: numCols = Math.ceil(perPage / numRows);
 
-  // pagination
-
-  let currentPage = 1;
-
-  $: perPage = maxNumRows * maxNumCols;
-  $: numPages = Math.ceil(data.length / perPage);
-
-  $: pageCharts = data.slice(
-    (currentPage - 1) * currentPage,
-    (currentPage - 1) * currentPage + perPage
-  );
+  $: pdpWidth = gridWidth / numCols;
+  $: pdpHeight = gridHeight / numRows;
 
   // color
 
-  let color: d3.ScaleSequential<string, string>;
-  $: color = scaleSequential()
-    .domain(predictionExtent)
-    .interpolator(interpolateBuPu)
+  let globalColor: d3.ScaleSequential<string, string>;
+  $: globalColor = scaleSequential()
+    .domain($nice_prediction_extent)
+    .interpolator(interpolateYlGnBu)
     .unknown('black');
 
   // header
 
   const headerHeight = 30;
+  const legendHeight = 24;
+
+  // sorting
+
+  let sortingOption = sortingOptions[0];
+
+  $: sortedData = sortingOption.sort(data);
+
+  // pagination
+
+  let currentPage = 1;
+
+  $: numPages = Math.ceil(data.length / perPage);
+
+  $: pageCharts = sortedData.slice(
+    (currentPage - 1) * perPage,
+    currentPage * perPage
+  );
+
+  function setPage(page: number) {
+    if (page < 1 || page > numPages) {
+      return;
+    }
+  
+    currentPage = page;
+  }
+
+  $: data, setPage(1);
+
+  function onkeydown(ev: KeyboardEvent) {
+    if (ev.key === 'ArrowLeft') {
+      setPage(currentPage - 1);
+    } else if (ev.key === 'ArrowRight') {
+      setPage(currentPage + 1);
+    }
+  }
+
+  // scaling
+
+  let scaleLocally = false;
 </script>
 
 <div
@@ -60,54 +124,31 @@
   style="min-height: {headerHeight}px;"
 >
   <div class="header" style="height: {headerHeight}px;">
-    <div>
-      {#if expanded}
-        <button on:click={collapse}>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="icon icon-tabler icon-tabler-chevron-down"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            stroke-width="2"
-            stroke="currentColor"
-            fill="none"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
-        </button>
-      {:else}
-        <button on:click={expand}>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="icon icon-tabler icon-tabler-chevron-right"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            stroke-width="2"
-            stroke="currentColor"
-            fill="none"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-            <polyline points="9 6 15 12 9 18" />
-          </svg>
-        </button>
-      {/if}
+    <div class="toggle-and-title">
+      <button on:click={toggle}>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="icon icon-tabler icon-tabler-chevron-down"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          stroke-width="2"
+          stroke="currentColor"
+          fill="none"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+          <polyline points={'6 9 12 15 18 9'} class:rotate={!expanded} />
+        </svg>
+      </button>
+
+      <div class="group-title">{isCalculating ? 'Calculating' : title}</div>
     </div>
 
-    <div class="group-title">{title}</div>
-
-    {#if expanded}
-      <div class="page-change">
-        <button
-          disabled={currentPage === 1}
-          on:click={() => (currentPage -= 1)}
-        >
+    {#if expanded && !isCalculating && data.length > 0}
+      <div class="page-change" on:keydown={onkeydown} tabindex="0">
+        <button disabled={currentPage <= 1} on:click={() => setPage(currentPage - 1)}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             class="icon icon-tabler icon-tabler-arrow-left"
@@ -129,10 +170,7 @@
 
         <div class="current-page-number">{currentPage}</div>
 
-        <button
-          disabled={currentPage === numPages}
-          on:click={() => (currentPage += 1)}
-        >
+        <button disabled={currentPage >= numPages} on:click={() => setPage(currentPage + 1)}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             class="icon icon-tabler icon-tabler-arrow-right"
@@ -153,24 +191,55 @@
         </button>
       </div>
 
-      {#if showColorLegend}
+      <label>
+        Sort by
+        <select bind:value={sortingOption}>
+          {#each sortingOptions as option}
+            <option value={option}>{option.name}</option>
+          {/each}
+        </select>
+      </label>
+
+      <label class="label-and-input">
+        <input type="checkbox" bind:checked={scaleLocally} /><span
+          >Scale locally</span
+        >
+      </label>
+
+      {#if showColorLegend && !scaleLocally}
         <div class="legend">
-          <QuantitativeColorLegend width={200} height={headerHeight} {color} />
+          <QuantitativeColorLegend
+            width={180}
+            height={legendHeight}
+            color={globalColor}
+            includeTitle={true}
+          />
         </div>
       {/if}
     {/if}
   </div>
 
-  {#if expanded}
-    <div
-      class="grid"
-      style="grid-template-columns: repeat({numCols}, 1fr); grid-template-rows: repeat({numRows}, 1fr);"
-    >
-      {#each pageCharts as pdp (pdp.id)}
-        <PDP {pdp} {predictionExtent} {color} />
-      {/each}
-    </div>
-  {/if}
+  <div class="pdp-grid-container" bind:this={div}>
+    {#if expanded}
+      <div
+        class="pdp-grid"
+        style:grid-template-columns="repeat({numCols}, 1fr)"
+        style:grid-template-rows="repeat({numRows}, 1fr)"
+      >
+        {#if !isCalculating}
+          {#each pageCharts as pdp (pdp.id)}
+            <PDPContainer
+              {pdp}
+              {globalColor}
+              width={pdpWidth}
+              height={pdpHeight}
+              {scaleLocally}
+            />
+          {/each}
+        {/if}
+      </div>
+    {/if}
+  </div>
 </div>
 
 <style>
@@ -182,24 +251,34 @@
   }
 
   .group-title {
-    width: 110px;
+    width: 8ch;
+  }
+
+  .toggle-and-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
   }
 
   .hide-plots {
     flex: 0;
   }
 
-  .grid {
-    display: grid;
+  .pdp-grid-container {
     flex: 1;
+  }
+
+  .pdp-grid {
+    height: 100%;
+    display: grid;
   }
 
   .header {
     display: flex;
     align-items: center;
-    gap: 0.5em;
-    background-color: var(--light-gray);
-    border-top: 1px solid var(--medium-gray);
+    gap: 1em;
+    border-top: 1px solid var(--gray-1);
+    border-bottom: 1px solid var(--gray-1);
     padding-left: 0.25em;
     padding-right: 0.25em;
   }
@@ -208,18 +287,32 @@
     margin-left: auto;
   }
 
-  .icon-tabler-chevron-down,
-  .icon-tabler-chevron-right {
-    cursor: pointer;
-  }
-
   .page-change {
     display: flex;
     align-items: center;
   }
 
+  .page-change:focus {
+    outline: var(--blue) auto 1px;
+  }
+
   .current-page-number {
     width: 2em;
     text-align: center;
+  }
+
+  .label-and-input {
+    display: flex;
+    align-items: center;
+    gap: 0.25em;
+  }
+
+  .icon-tabler-chevron-down polyline {
+    transition: transform 150ms;
+    transform-origin: 50% 50%;
+  }
+
+  .rotate {
+    transform: rotate(-90deg);
   }
 </style>

@@ -23,96 +23,83 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 
 # The name of the project
-name = 'pdpexplorer'
+name = "pdpexplorer"
 
 # Get the version
-version = get_version(pjoin(name, '_version.py'))
+version = get_version(pjoin(name, "_version.py"))
 
 
 # Representative files that should exist after a successful build
 jstargets = [
-    pjoin(HERE, name, 'nbextension', 'index.js'),
-    pjoin(HERE, 'lib', 'index.js'),
+    pjoin(HERE, name, "nbextension", "index.js"),
+    pjoin(HERE, "lib", "index.js"),
 ]
 
 
-package_data_spec = {
-    name: [
-        'nbextension/**js*',
-        'labextension/**'
-    ]
-}
+package_data_spec = {name: ["nbextension/**js*", "labextension/**"]}
 
 
 data_files_spec = [
-    ('share/jupyter/nbextensions/pdpexplorer',
-     'pdpexplorer/nbextension', '**'),
-    ('share/jupyter/labextensions/pdp-explorer',
-     'pdpexplorer/labextension', '**'),
-    ('share/jupyter/labextensions/pdp-explorer',
-     '.', 'install.json'),
-    ('etc/jupyter/nbconfig/notebook.d', '.',
-     'pdpexplorer.json'),
+    ("share/jupyter/nbextensions/pdpexplorer", "pdpexplorer/nbextension", "**"),
+    ("share/jupyter/labextensions/pdp-explorer", "pdpexplorer/labextension", "**"),
+    ("share/jupyter/labextensions/pdp-explorer", ".", "install.json"),
+    ("etc/jupyter/nbconfig/notebook.d", ".", "pdpexplorer.json"),
 ]
 
 
-cmdclass = create_cmdclass('jsdeps', package_data_spec=package_data_spec,
-                           data_files_spec=data_files_spec)
-cmdclass['jsdeps'] = combine_commands(
-    install_npm(HERE, build_cmd='build:prod'),
+cmdclass = create_cmdclass(
+    "jsdeps", package_data_spec=package_data_spec, data_files_spec=data_files_spec
+)
+cmdclass["jsdeps"] = combine_commands(
+    install_npm(HERE, build_cmd="build:prod"),
     ensure_targets(jstargets),
 )
 
 
 setup_args = dict(
     name=name,
-    description='A Jupyter widget for exploring partial dependence plots.',
+    description="A Jupyter widget for exploring partial dependence plots.",
     version=version,
-    scripts=glob(pjoin('scripts', '*')),
+    scripts=glob(pjoin("scripts", "*")),
     cmdclass=cmdclass,
     packages=find_packages(),
-    author='Daniel Kerrigan',
-    author_email='kerrigan.d@northeastern.edu',
-    url='https://github.com/nyuvis/pdp-explorer',
-    license='BSD',
+    author="Daniel Kerrigan",
+    author_email="kerrigan.d@northeastern.edu",
+    url="https://github.com/nyuvis/pdp-explorer",
+    license="BSD",
     platforms="Linux, Mac OS X, Windows",
-    keywords=['Jupyter', 'Widgets', 'IPython'],
+    keywords=["Jupyter", "Widgets", "IPython"],
     classifiers=[
-        'Intended Audience :: Developers',
-        'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: BSD License',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-        'Framework :: Jupyter',
+        "Intended Audience :: Developers",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: BSD License",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.4",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Framework :: Jupyter",
     ],
     include_package_data=True,
     python_requires=">=3.7.1",
     install_requires=[
-        'ipywidgets>=7.0.0',
-        'pandas>=1.3.5',
-        'numpy>=1.21.5'
+        "ipywidgets>=7.6.0",
+        "pandas>=1.3.5",
+        "numpy>=1.21.5",
+        "plotnine>=0.8.0",
+        "joblib>=1.1.0",
+        "scikit-learn>=1.0.2",
+        "tslearn>=0.5.2",
+        "kneed"
     ],
     extras_require={
-        'examples': [
-          # Any requirements for the examples to run
-          'scikit-learn>=1.0.2',
-          'altair>=4.1.0',
-        ],
-        'dev': [
-          'pylint',
-          'black'
-        ],
-        'test': [
-          'pytest'
-        ]
+        "examples": [],
+        "dev": ["pylint", "black"],
+        "test": ["pytest"],
     },
-    entry_points={
-    },
+    entry_points={},
 )
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     setup(**setup_args)

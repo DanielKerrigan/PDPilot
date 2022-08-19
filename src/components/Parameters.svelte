@@ -1,9 +1,10 @@
 <script lang="ts">
   import { total_num_instances } from '../stores';
-  import { isNumeric } from '../Utils';
+  import { isNumeric } from '../utils';
 
   export let localResolution: number;
   export let localNumInstances: number;
+  export let localIncludeDouble: boolean = true;
 
   let localResolutionString: string = `${localResolution}`;
   let localNumInstancesString: string = `${localNumInstances}`;
@@ -51,12 +52,23 @@
     bind:value={localNumInstancesString}
     on:change={onChangeNumInstances}
   />
+
+  <label for="double-input">Include 2D</label>
+  <input
+    id="double-input"
+    type="checkbox"
+    bind:checked={localIncludeDouble}
+  />
 </div>
 
 <style>
   input {
     min-width: 0;
     text-align: right;
+  }
+
+  #double-input {
+    margin-right: auto;
   }
 
   .parameters {
