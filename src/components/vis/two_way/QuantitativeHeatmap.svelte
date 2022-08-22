@@ -12,6 +12,7 @@
   import { drawQuantitativeHeatmap } from '../../../drawing';
   import MarginalHistogram from '../marginal/MarginalHistogram.svelte';
   import QuantitativeColorLegend from './QuantitativeColorLegend.svelte';
+  import { pairs } from 'd3-array';
 
   export let pdp: QuantitativeDoublePDPData;
   export let width: number;
@@ -50,8 +51,6 @@
     top:
       marginalDistributionX !== null && marginalDistributionY !== null
         ? 100
-        : showColorLegend
-        ? 0
         : 5,
     right:
       marginalDistributionX !== null && marginalDistributionY !== null
@@ -64,13 +63,26 @@
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
 
+  // get the minimum difference between sampling points
+  $: minDiffX = Math.min(...pairs(pdp.x_axis, (a, b) => b - a));
+  $: minDiffY = Math.min(...pairs(pdp.y_axis, (a, b) => b - a));
+
+  $: minX = pdp.x_axis[0] - minDiffX / 2;
+  $: maxX = pdp.x_axis[pdp.x_axis.length - 1] + minDiffX / 2;
+
   $: x = scaleLinear()
-    .domain([pdp.x_axis[0], pdp.x_axis[pdp.x_axis.length - 1]])
+    .domain([minX, maxX])
     .range([margin.left, width - margin.right]);
 
+  $: minY = pdp.y_axis[0] - minDiffY / 2;
+  $: maxY = pdp.y_axis[pdp.y_axis.length - 1] + minDiffY / 2;
+
   $: y = scaleLinear()
-    .domain([pdp.y_axis[0], pdp.y_axis[pdp.x_axis.length - 1]])
+    .domain([minY, maxY])
     .range([pdpHeight - margin.bottom, margin.top]);
+
+  $: rectWidth = x(minX + minDiffX) - x(minX);
+  $: rectHeight = y(minY) - y(minY + minDiffY);
 
   onMount(() => {
     ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
@@ -92,7 +104,9 @@
         x,
         y,
         color,
-        showInteractions
+        showInteractions,
+        rectWidth,
+        rectHeight
       );
     }
   }
@@ -110,7 +124,9 @@
       x,
       y,
       color,
-      showInteractions
+      showInteractions,
+      rectWidth,
+      rectHeight
     );
   }
 </script>

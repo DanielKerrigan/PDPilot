@@ -1,3 +1,5 @@
+// partial dependence
+
 export type QuantitativeSinglePDPData = {
   num_features: 1;
   kind: 'quantitative';
@@ -7,12 +9,12 @@ export type QuantitativeSinglePDPData = {
   mean_predictions: number[];
   min_prediction: number;
   max_prediction: number;
-  trend_low_order: number[];
-  rmse_low_order: number;
   trend_good_fit: number[];
   nrmse_good_fit: number;
   knots_good_fit: number;
   deviation: number;
+  distance_to_cluster_center: number;
+  cluster: number;
 };
 
 export type CategoricalSinglePDPData = {
@@ -24,10 +26,11 @@ export type CategoricalSinglePDPData = {
   mean_predictions: number[];
   min_prediction: number;
   max_prediction: number;
-  rmse_low_order: number;
   nrmse_good_fit: number;
   knots_good_fit: number;
   deviation: number;
+  distance_to_cluster_center: number;
+  cluster: number;
 };
 
 export type SinglePDPData =
@@ -93,12 +96,14 @@ export type DoublePDPData =
   | CategoricalDoublePDPData
   | MixedDoublePDPData;
 
-export type SortingOption = {
+export type PDSortingOption = {
   name: string;
   sort: (
     data: SinglePDPData[] | DoublePDPData[]
   ) => SinglePDPData[] | DoublePDPData[];
 };
+
+// marginal distributions
 
 export type QuantitativeMarginalDistribution = {
   kind: 'quantitative';
@@ -115,3 +120,64 @@ export type CategoricalMarginalDistribution = {
 export type MarginalDistribution =
   | QuantitativeMarginalDistribution
   | CategoricalMarginalDistribution;
+
+// clusters
+
+export type OneWayQuantitativeCluster = {
+  kind: 'quantitative';
+  id: number;
+  mean_distance: number;
+  features: string[];
+};
+
+export type OneWayCategoricalCluster = {
+  kind: 'categorical';
+  id: number;
+  features: string[];
+};
+
+export type Clusters = {
+  categoricalClusters: OneWayCategoricalCluster[];
+  quantitativeClusters: OneWayQuantitativeCluster[];
+  categoricalPds: Map<number, CategoricalSinglePDPData[]>;
+  quantitativePds: Map<number, QuantitativeSinglePDPData[]>;
+};
+
+export type ClustersSortingOption = {
+  name: string;
+  sort: (data: OneWayQuantitativeCluster[]) => OneWayQuantitativeCluster[];
+};
+
+// type predicates
+
+export function isQuantitativeOneWayPd(
+  data: SinglePDPData
+): data is QuantitativeSinglePDPData {
+  return data.kind === 'quantitative';
+}
+
+export function isCategoricalOneWayPd(
+  data: SinglePDPData
+): data is CategoricalSinglePDPData {
+  return data.kind === 'categorical';
+}
+
+export function isOneWayPdArray(
+  data: SinglePDPData[] | DoublePDPData[]
+): data is SinglePDPData[] {
+  if (data.length === 0) {
+    return true;
+  }
+
+  return data[0].num_features === 1;
+}
+
+export function isQuantitativeOneWayPdArray(
+  data: QuantitativeSinglePDPData[] | CategoricalSinglePDPData[]
+): data is QuantitativeSinglePDPData[] {
+  if (data.length === 0) {
+    return true;
+  }
+
+  return data[0].kind === 'quantitative';
+}

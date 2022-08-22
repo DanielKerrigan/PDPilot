@@ -3,11 +3,19 @@ import type { Readable, Writable } from 'svelte/store';
 import type { DOMWidgetModel } from '@jupyter-widgets/base';
 
 import type {
+  CategoricalSinglePDPData,
   DoublePDPData,
   MarginalDistribution,
+  OneWayCategoricalCluster,
+  OneWayQuantitativeCluster,
+  QuantitativeSinglePDPData,
   SinglePDPData,
 } from './types';
+
+import { isCategoricalOneWayPd, isQuantitativeOneWayPd } from './types';
+
 import { scaleLinear } from 'd3-scale';
+import { group } from 'd3-array';
 
 interface WidgetWritable<T> extends Writable<T> {
   setModel: (m: DOMWidgetModel) => void;
@@ -80,27 +88,17 @@ export const prediction_extent = WidgetWritable<[number, number]>(
   [0, 0]
 );
 
-export const include_single_pdps = WidgetWritable<boolean>(
-  'include_single_pdps',
-  true
-);
-export const include_double_pdps = WidgetWritable<boolean>(
-  'include_double_pdps',
-  true
-);
-
-export const is_calculating_single_pdps = WidgetWritable<boolean>(
-  'is_calculating_single_pdps',
-  false
-);
-export const is_calculating_double_pdps = WidgetWritable<boolean>(
-  'is_calculating_double_pdps',
-  false
-);
-
 export const marginal_distributions = WidgetWritable<
   Record<string, MarginalDistribution>
 >('marginal_distributions', {});
+
+export const one_way_quantitative_clusters = WidgetWritable<
+  OneWayQuantitativeCluster[]
+>('one_way_quantitative_clusters', []);
+
+export const one_way_categorical_clusters = WidgetWritable<
+  OneWayCategoricalCluster[]
+>('one_way_categorical_clusters', []);
 
 // Set the model for each store you create.
 export function setStoreModels(model: DOMWidgetModel): void {
@@ -113,11 +111,9 @@ export function setStoreModels(model: DOMWidgetModel): void {
   plot_button_clicked.setModel(model);
   total_num_instances.setModel(model);
   prediction_extent.setModel(model);
-  include_single_pdps.setModel(model);
-  include_double_pdps.setModel(model);
-  is_calculating_single_pdps.setModel(model);
-  is_calculating_double_pdps.setModel(model);
   marginal_distributions.setModel(model);
+  one_way_quantitative_clusters.setModel(model);
+  one_way_categorical_clusters.setModel(model);
 }
 
 // Derived stores
@@ -143,3 +139,17 @@ export const filteredTwoWayPds = derived(
         $selected_features.includes(p.y_feature)
     )
 );
+
+export const clusteredQuantitativeOneWayPds: Readable<
+  Map<number, QuantitativeSinglePDPData[]>
+> = derived(single_pdps, ($single_pdps) => {
+  const quantPds = $single_pdps.filter(isQuantitativeOneWayPd);
+  return group(quantPds, (d) => d.cluster);
+});
+
+export const clusteredCategoricalOneWayPds: Readable<
+  Map<number, CategoricalSinglePDPData[]>
+> = derived(single_pdps, ($single_pdps) => {
+  const catPds = $single_pdps.filter(isCategoricalOneWayPd);
+  return group(catPds, (d) => d.cluster);
+});

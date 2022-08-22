@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { DoublePDPData, SinglePDPData, SortingOption } from '../types';
+  import type { DoublePDPData, SinglePDPData, PDSortingOption } from '../types';
   import PDPContainer from './PDPContainer.svelte';
   import { scaleSequential } from 'd3-scale';
   import { interpolateYlGnBu } from 'd3-scale-chromatic';
@@ -10,8 +10,7 @@
   export let title: string;
   export let data: SinglePDPData[] | DoublePDPData[];
   export let showColorLegend: boolean = false;
-  export let isCalculating: boolean = false;
-  export let sortingOptions: SortingOption[];
+  export let sortingOptions: PDSortingOption[];
 
   let div: HTMLDivElement;
 
@@ -25,6 +24,7 @@
 
   onMount(() => {
     // Adapted from https://blog.sethcorker.com/question/how-do-you-use-the-resize-observer-api-in-svelte/
+    // and https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver
     const resizeObserver = new ResizeObserver(
       (entries: ResizeObserverEntry[]) => {
         if (entries.length !== 1) {
@@ -33,14 +33,17 @@
 
         const entry: ResizeObserverEntry = entries[0];
 
-        if (entry.borderBoxSize.length !== 1) {
-          return;
+        if (entry.contentBoxSize) {
+          const contentBoxSize = Array.isArray(entry.contentBoxSize)
+            ? entry.contentBoxSize[0]
+            : entry.contentBoxSize;
+
+          gridWidth = contentBoxSize.inlineSize;
+          gridHeight = contentBoxSize.blockSize;
+        } else {
+          gridWidth = entry.contentRect.width;
+          gridHeight = entry.contentRect.height;
         }
-
-        const contentRect: ResizeObserverSize = entry.borderBoxSize[0];
-
-        gridWidth = contentRect.inlineSize;
-        gridHeight = contentRect.blockSize;
       }
     );
 
@@ -75,7 +78,7 @@
 
   // header
 
-  const headerHeight = 30;
+  $: hide = !expanded || data.length === 0;
   const legendHeight = 24;
 
   // sorting
@@ -99,7 +102,7 @@
     if (page < 1 || page > numPages) {
       return;
     }
-  
+
     currentPage = page;
   }
 
@@ -121,9 +124,8 @@
 <div
   class="group-container"
   class:hide-plots={!expanded}
-  style="min-height: {headerHeight}px;"
 >
-  <div class="header" style="height: {headerHeight}px;">
+  <div class="group-header">
     <div class="toggle-and-title">
       <button on:click={toggle}>
         <svg
@@ -143,11 +145,10 @@
         </svg>
       </button>
 
-      <div class="group-title">{isCalculating ? 'Calculating' : title}</div>
+      <div class="group-title">{title}</div>
     </div>
 
-    {#if expanded && !isCalculating && data.length > 0}
-      <div class="page-change" on:keydown={onkeydown} tabindex="0">
+      <div class="page-change" class:hide on:keydown={onkeydown} tabindex="0">
         <button disabled={currentPage <= 1} on:click={() => setPage(currentPage - 1)}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -191,7 +192,7 @@
         </button>
       </div>
 
-      <label>
+      <label class:hide>
         Sort by
         <select bind:value={sortingOption}>
           {#each sortingOptions as option}
@@ -200,23 +201,24 @@
         </select>
       </label>
 
-      <label class="label-and-input">
+      <label class="label-and-input" class:hide>
         <input type="checkbox" bind:checked={scaleLocally} /><span
           >Scale locally</span
         >
       </label>
 
       {#if showColorLegend && !scaleLocally}
-        <div class="legend">
+        <div class="legend" class:hide>
           <QuantitativeColorLegend
             width={180}
             height={legendHeight}
             color={globalColor}
             includeTitle={true}
+            marginLeft={15}
+            marginRight={15}
           />
         </div>
       {/if}
-    {/if}
   </div>
 
   <div class="pdp-grid-container" bind:this={div}>
@@ -226,17 +228,15 @@
         style:grid-template-columns="repeat({numCols}, 1fr)"
         style:grid-template-rows="repeat({numRows}, 1fr)"
       >
-        {#if !isCalculating}
-          {#each pageCharts as pdp (pdp.id)}
-            <PDPContainer
-              {pdp}
-              {globalColor}
-              width={pdpWidth}
-              height={pdpHeight}
-              {scaleLocally}
-            />
-          {/each}
-        {/if}
+        {#each pageCharts as pdp (pdp.id)}
+          <PDPContainer
+            {pdp}
+            {globalColor}
+            width={pdpWidth}
+            height={pdpHeight}
+            {scaleLocally}
+          />
+        {/each}
       </div>
     {/if}
   </div>
@@ -273,14 +273,20 @@
     display: grid;
   }
 
-  .header {
+  .group-header {
     display: flex;
     align-items: center;
     gap: 1em;
     border-top: 1px solid var(--gray-1);
     border-bottom: 1px solid var(--gray-1);
-    padding-left: 0.25em;
-    padding-right: 0.25em;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+    padding-top: 0.25em;
+    padding-bottom: 0.25em;
+  }
+
+  .hide {
+    visibility: hidden;
   }
 
   .legend {

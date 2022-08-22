@@ -16,9 +16,9 @@
   export let includeTitle: boolean;
 
   export let marginTop: number = 0;
-  export let marginRight: number = 15;
+  export let marginRight: number = 0;
   export let marginBottom: number = 0;
-  export let marginLeft: number = 15;
+  export let marginLeft: number = 0;
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;

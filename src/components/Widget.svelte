@@ -1,19 +1,34 @@
 <script lang="ts">
-  import Controls from './Controls.svelte';
-  import Main from './Main.svelte';
+  import IndividualControls from './IndividualControls.svelte';
+  import IndividualMain from './IndividualMain.svelte';
+  import ClustersMain from './ClustersMain.svelte';
+  import Tabs from './Tabs.svelte';
+
+  let mode: string;
 </script>
 
-<div class='pdp-explorer-widget-container'>
-  <Controls />
-  <Main />
+<div class="pdp-explorer-widget-container">
+  <Tabs bind:mode />
+
+  {#if !mode || mode === 'individual'}
+    <div class="individual-content">
+      <IndividualControls />
+      <IndividualMain />
+    </div>
+  {:else}
+    <div class="clusters-content">
+      <ClustersMain />
+    </div>
+  {/if}
 </div>
 
 <style>
-  div {
+  .pdp-explorer-widget-container {
     box-sizing: border-box;
     width: 100%;
     height: 700px;
     display: flex;
+    flex-direction: column;
     font-size: 16px;
     border: 1px solid var(--gray-1);
     background-color: white;
@@ -33,8 +48,19 @@
     --gray-7: rgb(71, 71, 71);
     --gray-8: rgb(48, 48, 48);
     --gray-9: rgb(27, 27, 27);
-    
+
     --red: red;
+  }
+
+  .individual-content {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+  }
+
+  .clusters-content {
+    flex: 1;
+    min-height: 0;
   }
 
   /* global styles */

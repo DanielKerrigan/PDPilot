@@ -1,26 +1,28 @@
-import type { SinglePDPData, DoublePDPData, SortingOption } from './types';
+import type {
+  ClustersSortingOption,
+  SinglePDPData,
+  DoublePDPData,
+  PDSortingOption,
+  OneWayQuantitativeCluster,
+} from './types';
+
+import { isOneWayPdArray } from './types';
 
 import { ascending, descending } from 'd3-array';
 
-export { singlePDPSortingOptions, doublePDPSortingOptions };
+export {
+  singlePDPSortingOptions,
+  doublePDPSortingOptions,
+  oneWayClustersSortingOptions,
+};
 
-function isSingle(
-  data: SinglePDPData[] | DoublePDPData[]
-): data is SinglePDPData[] {
-  if (data.length === 0) {
-    return true;
-  }
-
-  return data[0].num_features === 1;
-}
-
-const singlePDPSortingOptions: SortingOption[] = [
+const singlePDPSortingOptions: PDSortingOption[] = [
   {
     name: 'complexity',
     sort: function (
       data: SinglePDPData[] | DoublePDPData[]
     ): SinglePDPData[] | DoublePDPData[] {
-      if (data.length === 0 || !isSingle(data)) {
+      if (data.length === 0 || !isOneWayPdArray(data)) {
         return data;
       }
 
@@ -35,7 +37,7 @@ const singlePDPSortingOptions: SortingOption[] = [
     sort: function (
       data: SinglePDPData[] | DoublePDPData[]
     ): SinglePDPData[] | DoublePDPData[] {
-      if (data.length === 0 || !isSingle(data)) {
+      if (data.length === 0 || !isOneWayPdArray(data)) {
         return data;
       }
 
@@ -47,7 +49,7 @@ const singlePDPSortingOptions: SortingOption[] = [
     sort: function (
       data: SinglePDPData[] | DoublePDPData[]
     ): SinglePDPData[] | DoublePDPData[] {
-      if (data.length === 0 || !isSingle(data)) {
+      if (data.length === 0 || !isOneWayPdArray(data)) {
         return data;
       }
 
@@ -56,13 +58,13 @@ const singlePDPSortingOptions: SortingOption[] = [
   },
 ];
 
-const doublePDPSortingOptions: SortingOption[] = [
+const doublePDPSortingOptions: PDSortingOption[] = [
   {
     name: 'H-statistic',
     sort: function (
       data: SinglePDPData[] | DoublePDPData[]
     ): SinglePDPData[] | DoublePDPData[] {
-      if (data.length === 0 || isSingle(data)) {
+      if (data.length === 0 || isOneWayPdArray(data)) {
         return data;
       }
 
@@ -74,7 +76,7 @@ const doublePDPSortingOptions: SortingOption[] = [
     sort: function (
       data: SinglePDPData[] | DoublePDPData[]
     ): SinglePDPData[] | DoublePDPData[] {
-      if (data.length === 0 || isSingle(data)) {
+      if (data.length === 0 || isOneWayPdArray(data)) {
         return data;
       }
 
@@ -86,12 +88,27 @@ const doublePDPSortingOptions: SortingOption[] = [
     sort: function (
       data: SinglePDPData[] | DoublePDPData[]
     ): SinglePDPData[] | DoublePDPData[] {
-      if (data.length === 0 || isSingle(data)) {
+      if (data.length === 0 || isOneWayPdArray(data)) {
         return data;
       }
 
       data.sort((a, b) => ascending(a.y_feature, b.y_feature));
       return data.sort((a, b) => ascending(a.x_feature, b.x_feature));
+    },
+  },
+];
+
+const oneWayClustersSortingOptions: ClustersSortingOption[] = [
+  {
+    name: 'distance',
+    sort: function (
+      data: OneWayQuantitativeCluster[]
+    ): OneWayQuantitativeCluster[] {
+      if (data.length === 0) {
+        return data;
+      }
+
+      return data.sort((a, b) => ascending(a.mean_distance, b.mean_distance));
     },
   },
 ];

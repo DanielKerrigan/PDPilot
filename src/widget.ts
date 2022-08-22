@@ -28,11 +28,9 @@ export class PDPExplorerModel extends DOMWidgetModel {
       plot_button_clicked: 0,
       total_num_instances: 0,
       prediction_extent: [0, 0],
-      include_single_pdps: true,
-      include_double_pdps: true,
-      is_calculating_single_pdps: false,
-      is_calculating_double_pdps: false,
       marginal_distributions: {},
+      one_way_quantitative_clusters: [],
+      one_way_categorical_clusters: [],
     };
   }
 

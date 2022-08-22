@@ -3,7 +3,7 @@ import * as assert from 'uvu/assert';
 import {
   isNumeric,
   areArraysEqual
-} from '../src/Utils';
+} from '../src/utils';
 
 test('is numeric', () => {
   assert.ok(isNumeric('0'));

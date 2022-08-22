@@ -19,6 +19,9 @@ from pdpexplorer.metadata import Metadata
 from pdpexplorer.ticks import nice, ticks
 from .logging import log
 
+from tslearn.utils import to_time_series_dataset
+from tslearn.clustering import TimeSeriesKMeans, silhouette_score
+
 from sklearn.linear_model import Ridge
 from sklearn.preprocessing import SplineTransformer, StandardScaler
 from sklearn.pipeline import make_pipeline
@@ -102,9 +105,13 @@ def partial_dependence(
             delayed(_calc_pd)(**args) for args in one_way_work
         )
 
-    # two-way
-
     feature_to_pd = _get_feature_to_pd(one_way_pds) if one_way_pds else None
+
+    one_way_quantitative_clusters, one_way_categorical_clusters = one_way_clustering(
+        one_way_pds=one_way_pds, feature_to_pd=feature_to_pd, md=md, n_jobs=n_jobs
+    )
+
+    # two-way
 
     two_way_work = [
         {
@@ -153,6 +160,8 @@ def partial_dependence(
     results = {
         "one_way_pds": one_way_pds,
         "two_way_pds": two_way_pds,
+        "one_way_quantitative_clusters": one_way_quantitative_clusters,
+        "one_way_categorical_clusters": one_way_categorical_clusters,
         "prediction_extent": [min_pred, max_pred],
         "marginal_distributions": marginal_distributions,
         "n_instances": n_instances,
@@ -726,3 +735,92 @@ def get_marginal_distributions(*, df, features, md):
             }
 
     return marginal_distributions
+
+
+def one_way_clustering(*, one_way_pds, feature_to_pd, md, n_jobs):
+    quant_one_way = []
+    cat_one_way = []
+
+    for p in one_way_pds:
+        if p["x_feature"] in md.quantitative_features:
+            quant_one_way.append(p)
+        else:
+            cat_one_way.append(p)
+
+    one_way_quantitative_clusters = quantitative_feature_clustering(
+        one_way_pds=quant_one_way, feature_to_pd=feature_to_pd, n_jobs=n_jobs
+    )
+
+    n_quant_clusters = len(one_way_quantitative_clusters)
+
+    one_way_categorical_clusters = []
+
+    if cat_one_way:
+        one_way_categorical_clusters = [{
+            "id": n_quant_clusters,
+            "kind": "categorical",
+            "features": [p["x_feature"] for p in cat_one_way]
+        }]
+
+    return one_way_quantitative_clusters, one_way_categorical_clusters
+
+def quantitative_feature_clustering(*, one_way_pds, feature_to_pd, n_jobs):
+    timeseries_dataset = to_time_series_dataset(
+        [d["mean_predictions"] for d in one_way_pds]
+    )
+    features = [d["x_feature"] for d in one_way_pds]
+    n_clusters_options = list(range(2, int(len(features) / 2), 2))
+
+    if not n_clusters_options:
+        n_clusters_options = list(range(2, len(features)))
+
+    best_n_clusters = -1
+    best_clusters = []
+    best_score = -math.inf
+    best_model = None
+
+    for n in n_clusters_options:
+        cluster_model = TimeSeriesKMeans(
+            n_clusters=n, metric="dtw", max_iter=50, n_jobs=n_jobs
+        )
+        cluster_model.fit(timeseries_dataset)
+        clusters = cluster_model.predict(timeseries_dataset)
+
+        score = silhouette_score(timeseries_dataset, clusters, metric="dtw")
+
+        if score > best_score:
+            best_score = score
+            best_clusters = clusters
+            best_n_clusters = n
+            best_model = cluster_model
+
+    distance_to_centers = best_model.transform(timeseries_dataset)
+    distances = np.min(distance_to_centers, axis=1).tolist()
+
+    clusters_dict = {
+        i: {
+            "id": i,
+            "type": "quantitative",
+            "mean_distance": 0,
+            "mean_complexity": 0,
+            "features": []
+        }
+        for i in range(best_n_clusters)
+    }
+
+    for feature, cluster, distance in zip(features, best_clusters, distances):
+        p = feature_to_pd[feature]
+        c = clusters_dict[cluster]
+
+        p["distance_to_cluster_center"] = distance
+        p["cluster"] = cluster.item()
+
+        c["mean_distance"] += distance
+        c["features"].append(feature)
+
+    clusters = list(clusters_dict.values())
+
+    for c in clusters:
+        c["mean_distance"] = c["mean_distance"] / len(c["features"])
+
+    return clusters

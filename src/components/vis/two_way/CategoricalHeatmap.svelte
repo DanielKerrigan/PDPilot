@@ -50,8 +50,6 @@
     top:
       marginalDistributionX !== null && marginalDistributionY !== null
         ? 100
-        : showColorLegend
-        ? 0
         : 5,
     right:
       marginalDistributionX !== null && marginalDistributionY !== null

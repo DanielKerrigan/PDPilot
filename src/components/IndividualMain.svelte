@@ -12,12 +12,14 @@
     sortingOptions={singlePDPSortingOptions}
   />
 
-  <PDPGroup
-    title={'Two-way'}
-    data={$filteredTwoWayPds}
-    showColorLegend={true}
-    sortingOptions={doublePDPSortingOptions}
-  />
+  {#if $filteredTwoWayPds.length > 0}
+    <PDPGroup
+      title={'Two-way'}
+      data={$filteredTwoWayPds}
+      showColorLegend={true}
+      sortingOptions={doublePDPSortingOptions}
+    />
+  {/if}
 </div>
 
 <style>

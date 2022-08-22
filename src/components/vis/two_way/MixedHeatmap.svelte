@@ -14,6 +14,7 @@
   import MarginalHistogram from '../marginal/MarginalHistogram.svelte';
   import MarginalBarChart from '../marginal/MarginalBarChart.svelte';
   import QuantitativeColorLegend from './QuantitativeColorLegend.svelte';
+  import { pairs } from 'd3';
 
   export let pdp: MixedDoublePDPData;
   export let width: number;
@@ -52,8 +53,6 @@
     top:
       marginalDistributionX !== null && marginalDistributionY !== null
         ? 100
-        : showColorLegend
-        ? 0
         : 5,
     right:
       marginalDistributionX !== null && marginalDistributionY !== null
@@ -66,13 +65,21 @@
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
 
+  // get the minimum difference between sampling points
+  $: minDiffX = Math.min(...pairs(pdp.x_axis, (a, b) => b - a));
+
+  $: minX = pdp.x_axis[0] - minDiffX / 2;
+  $: maxX = pdp.x_axis[pdp.x_axis.length - 1] + minDiffX / 2;
+
   $: x = scaleLinear()
-    .domain([pdp.x_axis[0], pdp.x_axis[pdp.x_axis.length - 1]])
+    .domain([minX, maxX])
     .range([margin.left, width - margin.right]);
 
   $: y = scaleBand<string | number>()
     .domain(pdp.y_axis)
     .range([pdpHeight - margin.bottom, margin.top]);
+
+  $: rectWidth = x(minX + minDiffX) - x(minX);
 
   onMount(() => {
     ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
@@ -86,7 +93,17 @@
   */
   function draw() {
     if (ctx && x != null && y != null) {
-      drawMixedHeatmap(pdp, ctx, width, pdpHeight, x, y, color, showInteractions);
+      drawMixedHeatmap(
+        pdp,
+        ctx,
+        width,
+        pdpHeight,
+        x,
+        y,
+        color,
+        showInteractions,
+        rectWidth
+      );
     }
   }
   $: if (ctx) {
@@ -95,7 +112,17 @@
   }
 
   $: if (ctx && x != null && y != null) {
-    drawMixedHeatmap(pdp, ctx, width, pdpHeight, x, y, color, showInteractions);
+    drawMixedHeatmap(
+      pdp,
+      ctx,
+      width,
+      pdpHeight,
+      x,
+      y,
+      color,
+      showInteractions,
+      rectWidth
+    );
   }
 </script>
 

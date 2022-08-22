@@ -34,6 +34,7 @@
 
   onMount(() => {
     // Adapted from https://blog.sethcorker.com/question/how-do-you-use-the-resize-observer-api-in-svelte/
+    // and https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver
     const resizeObserver = new ResizeObserver(
       (entries: ResizeObserverEntry[]) => {
         if (entries.length !== 1) {
@@ -42,14 +43,17 @@
 
         const entry: ResizeObserverEntry = entries[0];
 
-        if (entry.borderBoxSize.length !== 1) {
-          return;
+        if (entry.contentBoxSize) {
+          const contentBoxSize = Array.isArray(entry.contentBoxSize)
+            ? entry.contentBoxSize[0]
+            : entry.contentBoxSize;
+
+          gridWidth = contentBoxSize.inlineSize;
+          gridHeight = contentBoxSize.blockSize;
+        } else {
+          gridWidth = entry.contentRect.width;
+          gridHeight = entry.contentRect.height;
         }
-
-        const contentRect: ResizeObserverSize = entry.borderBoxSize[0];
-
-        gridWidth = contentRect.inlineSize;
-        gridHeight = contentRect.blockSize;
       }
     );
 
@@ -166,7 +170,7 @@
           width={halfWidth}
           height={halfHeight}
           {scaleLocally}
-          {showTrendLine}
+          showTrendLine={false}
           {showMarginalDistribution}
         />
       </div>
@@ -178,7 +182,7 @@
           width={halfWidth}
           height={halfHeight}
           {scaleLocally}
-          {showTrendLine}
+          showTrendLine={false}
           {showMarginalDistribution}
         />
       </div>
@@ -244,14 +248,15 @@
     align-items: center;
     gap: 2em;
     background-color: white;
-    padding-left: 0.25em;
-    padding-right: 0.25em;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
     border-bottom: 1px solid var(--gray-1);
   }
 
   .zoomed-pdp-content {
     flex: 1;
     display: grid;
+    padding: 0.5em;
   }
 
   .close-button {
