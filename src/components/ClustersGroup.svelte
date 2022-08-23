@@ -70,6 +70,19 @@
     clusters.quantitativeClusters
   );
   $: sortedCategoricalClusters = clusters.categoricalClusters;
+
+  $: allClusters = [
+    ...sortedQuantitativeClusters,
+    ...sortedCategoricalClusters,
+  ];
+
+  $: isClusterExpanded = Object.fromEntries(
+    allClusters.map((d) => [d.id, false])
+  );
+
+  function toggleClusterExpanded(id: number) {
+    isClusterExpanded[id] = !isClusterExpanded[id];
+  }
 </script>
 
 <div class="group-container" class:hide-plots={!expanded}>
@@ -106,27 +119,70 @@
     </label>
   </div>
 
-  <div class="cluster-grid-container" bind:this={div}>
+  <div class="cluster-grid-container">
     {#if expanded}
-      <div
-        class="cluster-grid"
-        style:grid-template-columns="repeat({numCols}, 1fr)"
-        style:grid-template-rows="repeat({numRows}, 1fr)"
-      >
-        {#each sortedQuantitativeClusters as c (c.id)}
-          <MultiLineChart
-            cluster={c}
-            pds={clusters.quantitativePds.get(c.id) ?? []}
-            width={chartWidth}
-            height={chartHeight}
-          />
-        {/each}
+      <div class="cluster-grid-side">
+        <ul class="clusters-list">
+          {#each allClusters as c (c.id)}
+            <li class="cluster-list-item">
+              <div class="cluster-id">
+                <button on:click={() => toggleClusterExpanded(c.id)}>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="icon icon-tabler icon-tabler-chevron-down"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    stroke-width="2"
+                    stroke="currentColor"
+                    fill="none"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <polyline
+                      points={'6 9 12 15 18 9'}
+                      class:rotate={!isClusterExpanded[c.id]}
+                    />
+                  </svg>
+                </button>
 
-        {#each sortedCategoricalClusters as c (c.id)}
-          <div class="categorical-cluster">
-            <div>Categorical cluster</div>
-          </div>
-        {/each}
+                <span>Cluster {c.id}</span>
+              </div>
+
+              {#if isClusterExpanded[c.id]}
+                <ul>
+                  {#each c.features as feature}
+                    <li>{feature}</li>
+                  {/each}
+                </ul>
+              {/if}
+            </li>
+          {/each}
+        </ul>
+      </div>
+
+      <div class="cluster-grid-main" bind:this={div}>
+        <div
+          class="cluster-grid"
+          style:grid-template-columns="repeat({numCols}, 1fr)"
+          style:grid-template-rows="repeat({numRows}, 1fr)"
+        >
+          {#each sortedQuantitativeClusters as c (c.id)}
+            <MultiLineChart
+              cluster={c}
+              pds={clusters.quantitativePds.get(c.id) ?? []}
+              width={chartWidth}
+              height={chartHeight}
+            />
+          {/each}
+
+          {#each sortedCategoricalClusters as c (c.id)}
+            <div class="categorical-cluster">
+              <div>Categorical cluster</div>
+            </div>
+          {/each}
+        </div>
       </div>
     {/if}
   </div>
@@ -162,6 +218,22 @@
 
   .cluster-grid-container {
     flex: 1;
+    display: flex;
+  }
+
+  .cluster-grid-side {
+    flex: 0 0 200px;
+    min-width: 200px;
+    padding: 0.25em;
+    border-right: 1px solid var(--gray-1);
+
+    /* display: flex;
+    flex-direction: column;
+    gap: 1em; */
+  }
+
+  .cluster-grid-main {
+    flex: 1;
   }
 
   .cluster-grid {
@@ -188,5 +260,18 @@
 
   .rotate {
     transform: rotate(-90deg);
+  }
+
+  .cluster-id {
+    display: flex;
+    align-items: center;
+  }
+
+  .cluster-id > button {
+    border: none;
+  }
+
+  .cluster-list-item + .cluster-list-item {
+    margin-top: 0.5em;
   }
 </style>
