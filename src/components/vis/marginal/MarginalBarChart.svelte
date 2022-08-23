@@ -16,7 +16,7 @@
     .range(direction === 'horizontal' ? [height, 0] : [0, height]);
 
   $: barWidth = (x.bandwidth() || x.step() * x.padding()) - 2;
-  $: offset = (x.bandwidth() === 0 ? (barWidth / 2) : 0) - 1;
+  $: offset = (x.bandwidth() === 0 ? barWidth / 2 : 0) - 1;
 </script>
 
 <g transform="translate({translate})">
@@ -29,12 +29,7 @@
         height={y(0) - y(data.counts[i])}
       />
     {/each}
-    <line
-      x1={x.range()[0]}
-      x2={x.range()[1]}
-      y1={height}
-      y2={height}
-    />
+    <line x1={x.range()[0]} x2={x.range()[1]} y1={height} y2={height} />
   {:else}
     {#each indices as i}
       <rect
@@ -44,12 +39,7 @@
         height={barWidth}
       />
     {/each}
-    <line
-      x1={0}
-      x2={0}
-      y1={x.range()[0]}
-      y2={x.range()[1]}
-    />
+    <line x1={0} x2={0} y1={x.range()[0]} y2={x.range()[1]} />
   {/if}
 </g>
 

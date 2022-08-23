@@ -30,7 +30,11 @@
 
   $: colorWidth = width - marginLeft - marginRight;
   $: colorHeight =
-    height - marginTop - marginBottom - tickLabelHeight - spaceBetweenColorAndTickLabel;
+    height -
+    marginTop -
+    marginBottom -
+    tickLabelHeight -
+    spaceBetweenColorAndTickLabel;
 
   // set up
 

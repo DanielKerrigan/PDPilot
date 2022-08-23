@@ -35,12 +35,14 @@
     padding: 0.25em;
   }
 
-  #button-tab-individual, #button-tab-cluster {
+  #button-tab-individual,
+  #button-tab-cluster {
     border: none;
     border-radius: 0;
   }
 
-  #button-tab-individual.tab-selected, #button-tab-cluster.tab-selected {
+  #button-tab-individual.tab-selected,
+  #button-tab-cluster.tab-selected {
     border-bottom: 1px solid black;
   }
 

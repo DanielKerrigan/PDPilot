@@ -8,7 +8,7 @@ class Metadata:
         # dictionary from original feature to list of one hot feature and original value
         # { 'color': [('color_red', 'red'), ('color_blue', 'blue')] }
         self.feature_to_one_hot = feature_to_one_hot
-        
+
         # set of one hot encoded features
         self.one_hot_features = {
             one_hot

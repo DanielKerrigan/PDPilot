@@ -26,12 +26,7 @@
         height={y(0) - y(data.counts[i])}
       />
     {/each}
-    <line
-      x1={x.range()[0]}
-      x2={x.range()[1]}
-      y1={height}
-      y2={height}
-    />
+    <line x1={x.range()[0]} x2={x.range()[1]} y1={height} y2={height} />
   {:else}
     {#each indices as i}
       <rect
@@ -41,12 +36,7 @@
         height={x(data.bins[i]) - x(data.bins[i + 1]) - 2}
       />
     {/each}
-    <line
-      x1={0}
-      x2={0}
-      y1={x.range()[0]}
-      y2={x.range()[1]}
-    />
+    <line x1={0} x2={0} y1={x.range()[0]} y2={x.range()[1]} />
   {/if}
 </g>
 

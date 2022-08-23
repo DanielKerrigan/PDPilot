@@ -22,10 +22,10 @@ TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 """
 
-'''
+"""
 In JavaScript, Math.log(0) returns -Infinity.
 In Python, math.log(0) results in an error.
-'''
+"""
 
 
 import math
@@ -36,7 +36,7 @@ e5 = math.sqrt(10)
 e2 = math.sqrt(2)
 
 
-'''
+"""
 Like d3.tickStep, except requires that start is always less than or equal to stop,
 and if the tick step for the given start, stop and count would be less than one,
 returns the negative inverse tick step instead. This method is always guaranteed
@@ -44,7 +44,9 @@ to return an integer, and is used by d3.ticks to guarantee that the returned tic
 values are represented as precisely as possible in IEEE 754 floating point.
 
 https://github.com/d3/d3-array#tickIncrement
-'''
+"""
+
+
 def tick_increment(start, stop, count):
     if count <= 0:
         return math.inf
@@ -55,11 +57,11 @@ def tick_increment(start, stop, count):
         return -math.inf
 
     power = math.floor(math.log10(step))
-    error = step / (10 ** power)
+    error = step / (10**power)
 
     # tick step >= 1
     if power >= 0:
-        base_step = 10 ** power
+        base_step = 10**power
         if error >= e10:
             return 10 * base_step
         elif error >= e5:
@@ -70,7 +72,7 @@ def tick_increment(start, stop, count):
             return base_step
     # tick step < 1
     else:
-        base_step = -(10 ** -power)
+        base_step = -(10**-power)
         if error >= e10:
             return base_step / 10
         elif error >= e5:
@@ -81,7 +83,7 @@ def tick_increment(start, stop, count):
             return base_step
 
 
-'''
+"""
 Returns an array of approximately count + 1 uniformly-spaced,nicely-rounded
 values between start and stop (inclusive). Each value is a power of ten
 multiplied by 1, 2 or 5. See also d3.tickIncrement, d3.tickStep and linear.ticks.
@@ -92,11 +94,13 @@ with the inferred step. More formally, each returned tick t satisfies
 start ≤ t and t ≤ stop.
 
 https://github.com/d3/d3-array#ticks
-'''
+"""
+
+
 def ticks(start, stop, count):
     if start == stop and count > 0:
         return [start]
-    
+
     reverse = stop < start
     if reverse:
         n = start
@@ -122,7 +126,7 @@ def ticks(start, stop, count):
         step = -step
         r0 = round(start * step)
         r1 = round(stop * step)
-        
+
         if r0 / step < start:
             r0 += 1
 
@@ -137,14 +141,16 @@ def ticks(start, stop, count):
     return ticks
 
 
-'''
+"""
 Returns a new interval [niceStart, niceStop] covering the given interval
 [start, stop] and where niceStart and niceStop are guaranteed to align
 with the corresponding tick step. Like d3.tickIncrement, this requires
 that start is less than or equal to stop.
 
 https://github.com/d3/d3-array#nice
-'''
+"""
+
+
 def nice(start, stop, count):
     prestep = 0
 

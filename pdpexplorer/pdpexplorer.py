@@ -50,7 +50,16 @@ class PDPExplorerWidget(DOMWidget):
 
     marginal_distributions = Dict({}).tag(sync=True)
 
-    def __init__(self, predict, df, pd_data, feature_to_one_hot=None, n_jobs=1, quant_threshold=12, **kwargs):
+    def __init__(
+        self,
+        predict,
+        df,
+        pd_data,
+        feature_to_one_hot=None,
+        n_jobs=1,
+        quant_threshold=12,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
 
         # if pd_data is a path or string, then read the file at that path
@@ -70,20 +79,20 @@ class PDPExplorerWidget(DOMWidget):
         self.df = df
         self.md = Metadata(df, feature_to_one_hot, quant_threshold=quant_threshold)
 
-        self.features = sorted([p["x_feature"] for p in pd_data['one_way_pds']])
+        self.features = sorted([p["x_feature"] for p in pd_data["one_way_pds"]])
 
         self.total_num_instances = self.md.size
-        self.num_instances_used = pd_data['n_instances']
-        self.resolution = pd_data['resolution']
+        self.num_instances_used = pd_data["n_instances"]
+        self.resolution = pd_data["resolution"]
 
-        self.marginal_distributions = pd_data['marginal_distributions']
+        self.marginal_distributions = pd_data["marginal_distributions"]
 
-        self.single_pdps = pd_data['one_way_pds']
-        self.double_pdps = pd_data['two_way_pds']
-        self.prediction_extent = pd_data['prediction_extent']
+        self.single_pdps = pd_data["one_way_pds"]
+        self.double_pdps = pd_data["two_way_pds"]
+        self.prediction_extent = pd_data["prediction_extent"]
 
-        self.one_way_quantitative_clusters = pd_data['one_way_quantitative_clusters']
-        self.one_way_categorical_clusters = pd_data['one_way_categorical_clusters']
+        self.one_way_quantitative_clusters = pd_data["one_way_quantitative_clusters"]
+        self.one_way_categorical_clusters = pd_data["one_way_categorical_clusters"]
 
         self.n_jobs = n_jobs
 
@@ -93,9 +102,7 @@ class PDPExplorerWidget(DOMWidget):
         subset = self.df.sample(n=self.num_instances_used)
 
         self.marginal_distributions = get_marginal_distributions(
-            df=subset,
-            features=self.features,
-            md=self.md
+            df=subset, features=self.features, md=self.md
         )
 
         iqr = inner_quartile_range(self.predict(subset))
@@ -107,7 +114,7 @@ class PDPExplorerWidget(DOMWidget):
             resolution=self.resolution,
             md=self.md,
             n_jobs=self.n_jobs,
-            iqr=iqr
+            iqr=iqr,
         )
 
         min_pred_single = min(single_pdps, key=itemgetter("min_prediction"))[

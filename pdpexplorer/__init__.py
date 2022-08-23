@@ -4,6 +4,7 @@
 from .pdpexplorer import PDPExplorerWidget
 from ._version import __version__, version_info
 
+
 def _jupyter_labextension_paths():
     """Called by Jupyter Lab Server to detect if it is a valid labextension and
     to install the widget
@@ -16,10 +17,12 @@ def _jupyter_labextension_paths():
         from `src` directory into <jupyter path>/labextensions/<dest> directory
         during widget installation
     """
-    return [{
-        'src': 'labextension',
-        'dest': 'pdp-explorer',
-    }]
+    return [
+        {
+            "src": "labextension",
+            "dest": "pdp-explorer",
+        }
+    ]
 
 
 def _jupyter_nbextension_paths():
@@ -38,9 +41,11 @@ def _jupyter_nbextension_paths():
     require: Path to importable AMD Javascript module inside the
         <jupyter path>/nbextensions/<dest> directory
     """
-    return [{
-        'section': 'notebook',
-        'src': 'nbextension',
-        'dest': 'pdpexplorer',
-        'require': 'pdpexplorer/extension'
-    }]
+    return [
+        {
+            "section": "notebook",
+            "src": "nbextension",
+            "dest": "pdpexplorer",
+            "require": "pdpexplorer/extension",
+        }
+    ]

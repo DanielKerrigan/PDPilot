@@ -13,10 +13,10 @@
     quantitativeClusters: $one_way_quantitative_clusters,
     categoricalPds: $clusteredCategoricalOneWayPds,
     quantitativePds: $clusteredQuantitativeOneWayPds,
-  }
+  };
 </script>
 
-<div class='clusters-groups-container'>
+<div class="clusters-groups-container">
   <ClustersGroup
     title={'One-way'}
     clusters={oneWayClusters}

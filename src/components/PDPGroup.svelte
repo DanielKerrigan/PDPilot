@@ -121,10 +121,7 @@
   let scaleLocally = false;
 </script>
 
-<div
-  class="group-container"
-  class:hide-plots={!expanded}
->
+<div class="group-container" class:hide-plots={!expanded}>
   <div class="group-header">
     <div class="toggle-and-title">
       <button on:click={toggle}>
@@ -148,77 +145,83 @@
       <div class="group-title">{title}</div>
     </div>
 
-      <div class="page-change" class:hide on:keydown={onkeydown} tabindex="0">
-        <button disabled={currentPage <= 1} on:click={() => setPage(currentPage - 1)}>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="icon icon-tabler icon-tabler-arrow-left"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            stroke-width="2"
-            stroke="currentColor"
-            fill="none"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-            <line x1="5" y1="12" x2="11" y2="18" />
-            <line x1="5" y1="12" x2="11" y2="6" />
-          </svg>
-        </button>
-
-        <div class="current-page-number">{currentPage}</div>
-
-        <button disabled={currentPage >= numPages} on:click={() => setPage(currentPage + 1)}>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="icon icon-tabler icon-tabler-arrow-right"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            stroke-width="2"
-            stroke="currentColor"
-            fill="none"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-            <line x1="13" y1="18" x2="19" y2="12" />
-            <line x1="13" y1="6" x2="19" y2="12" />
-          </svg>
-        </button>
-      </div>
-
-      <label class:hide>
-        Sort by
-        <select bind:value={sortingOption}>
-          {#each sortingOptions as option}
-            <option value={option}>{option.name}</option>
-          {/each}
-        </select>
-      </label>
-
-      <label class="label-and-input" class:hide>
-        <input type="checkbox" bind:checked={scaleLocally} /><span
-          >Scale locally</span
+    <div class="page-change" class:hide on:keydown={onkeydown} tabindex="0">
+      <button
+        disabled={currentPage <= 1}
+        on:click={() => setPage(currentPage - 1)}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="icon icon-tabler icon-tabler-arrow-left"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          stroke-width="2"
+          stroke="currentColor"
+          fill="none"
+          stroke-linecap="round"
+          stroke-linejoin="round"
         >
-      </label>
+          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+          <line x1="5" y1="12" x2="11" y2="18" />
+          <line x1="5" y1="12" x2="11" y2="6" />
+        </svg>
+      </button>
 
-      {#if showColorLegend && !scaleLocally}
-        <div class="legend" class:hide>
-          <QuantitativeColorLegend
-            width={180}
-            height={legendHeight}
-            color={globalColor}
-            includeTitle={true}
-            marginLeft={15}
-            marginRight={15}
-          />
-        </div>
-      {/if}
+      <div class="current-page-number">{currentPage}</div>
+
+      <button
+        disabled={currentPage >= numPages}
+        on:click={() => setPage(currentPage + 1)}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="icon icon-tabler icon-tabler-arrow-right"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          stroke-width="2"
+          stroke="currentColor"
+          fill="none"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+          <line x1="13" y1="18" x2="19" y2="12" />
+          <line x1="13" y1="6" x2="19" y2="12" />
+        </svg>
+      </button>
+    </div>
+
+    <label class:hide>
+      Sort by
+      <select bind:value={sortingOption}>
+        {#each sortingOptions as option}
+          <option value={option}>{option.name}</option>
+        {/each}
+      </select>
+    </label>
+
+    <label class="label-and-input" class:hide>
+      <input type="checkbox" bind:checked={scaleLocally} /><span
+        >Scale locally</span
+      >
+    </label>
+
+    {#if showColorLegend && !scaleLocally}
+      <div class="legend" class:hide>
+        <QuantitativeColorLegend
+          width={180}
+          height={legendHeight}
+          color={globalColor}
+          includeTitle={true}
+          marginLeft={15}
+          marginRight={15}
+        />
+      </div>
+    {/if}
   </div>
 
   <div class="pdp-grid-container" bind:this={div}>

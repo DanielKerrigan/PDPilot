@@ -756,13 +756,16 @@ def one_way_clustering(*, one_way_pds, feature_to_pd, md, n_jobs):
     one_way_categorical_clusters = []
 
     if cat_one_way:
-        one_way_categorical_clusters = [{
-            "id": n_quant_clusters,
-            "kind": "categorical",
-            "features": [p["x_feature"] for p in cat_one_way]
-        }]
+        one_way_categorical_clusters = [
+            {
+                "id": n_quant_clusters,
+                "kind": "categorical",
+                "features": [p["x_feature"] for p in cat_one_way],
+            }
+        ]
 
     return one_way_quantitative_clusters, one_way_categorical_clusters
+
 
 def quantitative_feature_clustering(*, one_way_pds, feature_to_pd, n_jobs):
     timeseries_dataset = to_time_series_dataset(
@@ -803,7 +806,7 @@ def quantitative_feature_clustering(*, one_way_pds, feature_to_pd, n_jobs):
             "type": "quantitative",
             "mean_distance": 0,
             "mean_complexity": 0,
-            "features": []
+            "features": [],
         }
         for i in range(best_n_clusters)
     }
