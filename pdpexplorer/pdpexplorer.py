@@ -50,6 +50,8 @@ class PDPExplorerWidget(DOMWidget):
 
     marginal_distributions = Dict({}).tag(sync=True)
 
+    height = Int(600).tag(sync=True)
+
     def __init__(
         self,
         predict,
@@ -58,6 +60,7 @@ class PDPExplorerWidget(DOMWidget):
         feature_to_one_hot=None,
         n_jobs=1,
         quant_threshold=12,
+        height=600,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -94,6 +97,7 @@ class PDPExplorerWidget(DOMWidget):
         self.one_way_quantitative_clusters = pd_data["one_way_quantitative_clusters"]
         self.one_way_categorical_clusters = pd_data["one_way_categorical_clusters"]
 
+        self.height = height
         self.n_jobs = n_jobs
 
     @observe("plot_button_clicked")

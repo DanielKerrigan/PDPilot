@@ -31,6 +31,7 @@ export class PDPExplorerModel extends DOMWidgetModel {
       marginal_distributions: {},
       one_way_quantitative_clusters: [],
       one_way_categorical_clusters: [],
+      height: 600,
     };
   }
 

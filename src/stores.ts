@@ -100,6 +100,8 @@ export const one_way_categorical_clusters = WidgetWritable<
   OneWayCategoricalCluster[]
 >('one_way_categorical_clusters', []);
 
+export const height = WidgetWritable<number>('height', 600);
+
 // Set the model for each store you create.
 export function setStoreModels(model: DOMWidgetModel): void {
   features.setModel(model);
@@ -114,6 +116,7 @@ export function setStoreModels(model: DOMWidgetModel): void {
   marginal_distributions.setModel(model);
   one_way_quantitative_clusters.setModel(model);
   one_way_categorical_clusters.setModel(model);
+  height.setModel(model);
 }
 
 // Derived stores

@@ -3,11 +3,12 @@
   import IndividualMain from './IndividualMain.svelte';
   import ClustersMain from './ClustersMain.svelte';
   import Tabs from './Tabs.svelte';
+  import { height } from '../stores';
 
   let mode: string;
 </script>
 
-<div class="pdp-explorer-widget-container">
+<div class="pdp-explorer-widget-container" style:height="{$height}px">
   <Tabs bind:mode />
 
   {#if !mode || mode === 'individual'}
@@ -26,7 +27,6 @@
   .pdp-explorer-widget-container {
     box-sizing: border-box;
     width: 100%;
-    height: 700px;
     display: flex;
     flex-direction: column;
     font-size: 16px;
