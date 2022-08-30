@@ -1,20 +1,10 @@
-import type {
-  ClustersSortingOption,
-  SinglePDPData,
-  DoublePDPData,
-  PDSortingOption,
-  OneWayQuantitativeCluster,
-} from './types';
+import type { SinglePDPData, DoublePDPData, PDSortingOption } from './types';
 
 import { isOneWayPdArray } from './types';
 
 import { ascending, descending } from 'd3-array';
 
-export {
-  singlePDPSortingOptions,
-  doublePDPSortingOptions,
-  oneWayClustersSortingOptions,
-};
+export { singlePDPSortingOptions, doublePDPSortingOptions };
 
 const singlePDPSortingOptions: PDSortingOption[] = [
   {
@@ -94,21 +84,6 @@ const doublePDPSortingOptions: PDSortingOption[] = [
 
       data.sort((a, b) => ascending(a.y_feature, b.y_feature));
       return data.sort((a, b) => ascending(a.x_feature, b.x_feature));
-    },
-  },
-];
-
-const oneWayClustersSortingOptions: ClustersSortingOption[] = [
-  {
-    name: 'distance',
-    sort: function (
-      data: OneWayQuantitativeCluster[]
-    ): OneWayQuantitativeCluster[] {
-      if (data.length === 0) {
-        return data;
-      }
-
-      return data.sort((a, b) => ascending(a.mean_distance, b.mean_distance));
     },
   },
 ];

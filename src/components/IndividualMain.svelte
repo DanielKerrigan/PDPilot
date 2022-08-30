@@ -1,23 +1,37 @@
 <script lang="ts">
   import PDPGroup from './PDPGroup.svelte';
-  import { filteredOneWayPds, filteredTwoWayPds } from '../stores';
+  import { single_pdps, double_pdps } from '../stores';
   import { doublePDPSortingOptions, singlePDPSortingOptions } from '../sorting';
+
+  export let selectedFeatures: string[];
+
+  $: filteredOneWayPds = $single_pdps.filter((p) =>
+    selectedFeatures.includes(p.x_feature)
+  );
+
+  $: filteredTwoWayPds = $double_pdps.filter(
+    (p) =>
+      selectedFeatures.includes(p.x_feature) &&
+      selectedFeatures.includes(p.y_feature)
+  );
 </script>
 
 <div class="main-container">
   <PDPGroup
     title={'One-way'}
-    data={$filteredOneWayPds}
+    data={filteredOneWayPds}
     showColorLegend={false}
     sortingOptions={singlePDPSortingOptions}
+    on:zoom
   />
 
-  {#if $filteredTwoWayPds.length > 0}
+  {#if filteredTwoWayPds.length > 0}
     <PDPGroup
       title={'Two-way'}
-      data={$filteredTwoWayPds}
+      data={filteredTwoWayPds}
       showColorLegend={true}
       sortingOptions={doublePDPSortingOptions}
+      on:zoom
     />
   {/if}
 </div>

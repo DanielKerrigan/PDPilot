@@ -10,7 +10,7 @@ from operator import itemgetter
 from pathlib import Path
 import json
 from ipywidgets import DOMWidget
-from traitlets import Unicode, List, Bool, Int, Dict, observe
+from traitlets import Unicode, List, Int, Dict, observe
 
 from pdpexplorer.metadata import Metadata
 from ._frontend import module_name, module_version

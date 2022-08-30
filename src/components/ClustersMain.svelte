@@ -6,7 +6,6 @@
     clusteredQuantitativeOneWayPds,
     clusteredCategoricalOneWayPds,
   } from '../stores';
-  import { oneWayClustersSortingOptions } from '../sorting';
 
   $: oneWayClusters = {
     categoricalClusters: $one_way_categorical_clusters,
@@ -20,7 +19,7 @@
   <ClustersGroup
     title={'One-way'}
     clusters={oneWayClusters}
-    sortingOptions={oneWayClustersSortingOptions}
+    on:filterByCluster
   />
 </div>
 

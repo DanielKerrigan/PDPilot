@@ -143,11 +143,6 @@ export type Clusters = {
   quantitativePds: Map<number, QuantitativeSinglePDPData[]>;
 };
 
-export type ClustersSortingOption = {
-  name: string;
-  sort: (data: OneWayQuantitativeCluster[]) => OneWayQuantitativeCluster[];
-};
-
 // type predicates
 
 export function isQuantitativeOneWayPd(
@@ -181,3 +176,7 @@ export function isQuantitativeOneWayPdArray(
 
   return data[0].kind === 'quantitative';
 }
+
+// tabs
+
+export type Mode = 'grid' | 'clusters' | 'individual';

@@ -1,11 +1,15 @@
 <script lang="ts">
-  import type { Clusters, ClustersSortingOption } from '../types';
-  import { onMount } from 'svelte';
+  import type {
+    Clusters,
+    OneWayCategoricalCluster,
+    OneWayQuantitativeCluster,
+  } from '../types';
+  import { createEventDispatcher, onMount } from 'svelte';
   import MultiLineChart from './vis/clusters/MultiLineChart.svelte';
+  import CategoryMosaic from './vis/clusters/CategoryMosaic.svelte';
 
   export let title: string;
   export let clusters: Clusters;
-  export let sortingOptions: ClustersSortingOption[];
 
   let div: HTMLDivElement;
 
@@ -56,24 +60,16 @@
   // number of rows and columns
   $: numClusters =
     clusters.categoricalClusters.length + clusters.quantitativeClusters.length;
+  // TODO: https://stackoverflow.com/questions/60104268/default-panel-layout-of-ggplot2facet-wrap
   $: numRows = Math.floor(Math.sqrt(numClusters));
   $: numCols = Math.ceil(numClusters / numRows);
 
   $: chartWidth = gridWidth / numCols;
   $: chartHeight = gridHeight / numRows;
 
-  // sorting
-
-  let sortingOption = sortingOptions[0];
-
-  $: sortedQuantitativeClusters = sortingOption.sort(
-    clusters.quantitativeClusters
-  );
-  $: sortedCategoricalClusters = clusters.categoricalClusters;
-
   $: allClusters = [
-    ...sortedQuantitativeClusters,
-    ...sortedCategoricalClusters,
+    ...clusters.quantitativeClusters,
+    ...clusters.categoricalClusters,
   ];
 
   $: isClusterExpanded = Object.fromEntries(
@@ -82,6 +78,27 @@
 
   function toggleClusterExpanded(id: number) {
     isClusterExpanded[id] = !isClusterExpanded[id];
+  }
+
+  // events
+
+  const dispatch = createEventDispatcher<{
+    filterByCluster: string[];
+  }>();
+
+  function onClickCluster(
+    cluster: OneWayCategoricalCluster | OneWayQuantitativeCluster
+  ) {
+    dispatch('filterByCluster', cluster.features);
+  }
+
+  function onKeyDownCluster(
+    ev: KeyboardEvent,
+    cluster: OneWayCategoricalCluster | OneWayQuantitativeCluster
+  ) {
+    if (ev.key === 'Enter' || ev.key === ' ') {
+      onClickCluster(cluster);
+    }
   }
 </script>
 
@@ -108,15 +125,6 @@
 
       <div class="group-title">{title}</div>
     </div>
-
-    <label class:hide={!expanded}>
-      Sort by
-      <select bind:value={sortingOption}>
-        {#each sortingOptions as option}
-          <option value={option}>{option.name}</option>
-        {/each}
-      </select>
-    </label>
   </div>
 
   <div class="cluster-grid-container">
@@ -146,14 +154,13 @@
                     />
                   </svg>
                 </button>
-
-                <span>Cluster {c.id}</span>
+                <span>Cluster {c.id + 1}</span>
               </div>
 
               {#if isClusterExpanded[c.id]}
                 <ul>
                   {#each c.features as feature}
-                    <li>{feature}</li>
+                    <li class="cluster-feature-list-item">{feature}</li>
                   {/each}
                 </ul>
               {/if}
@@ -168,18 +175,35 @@
           style:grid-template-columns="repeat({numCols}, 1fr)"
           style:grid-template-rows="repeat({numRows}, 1fr)"
         >
-          {#each sortedQuantitativeClusters as c (c.id)}
-            <MultiLineChart
-              cluster={c}
-              pds={clusters.quantitativePds.get(c.id) ?? []}
-              width={chartWidth}
-              height={chartHeight}
-            />
+          {#each clusters.quantitativeClusters as c (c.id)}
+            <div
+              class="cluster-container"
+              tabindex="0"
+              on:click={() => onClickCluster(c)}
+              on:keydown={(e) => onKeyDownCluster(e, c)}
+            >
+              <MultiLineChart
+                cluster={c}
+                pds={clusters.quantitativePds.get(c.id) ?? []}
+                width={chartWidth}
+                height={chartHeight}
+              />
+            </div>
           {/each}
 
-          {#each sortedCategoricalClusters as c (c.id)}
-            <div class="categorical-cluster">
-              <div>Categorical cluster</div>
+          {#each clusters.categoricalClusters as c (c.id)}
+            <div
+              class="cluster-container"
+              tabindex="0"
+              on:click={() => onClickCluster(c)}
+              on:keydown={(e) => onKeyDownCluster(e, c)}
+            >
+              <CategoryMosaic
+                cluster={c}
+                pds={clusters.categoricalPds.get(c.id) ?? []}
+                width={chartWidth}
+                height={chartHeight}
+              />
             </div>
           {/each}
         </div>
@@ -189,10 +213,10 @@
 </div>
 
 <style>
-  .categorical-cluster {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  /* https://stackoverflow.com/a/69029387/5016634 */
+  .icon-tabler-chevron-down {
+    -webkit-transform: translate(0px, 0px);
+    transform: translate(0px, 0px);
   }
 
   .group-container {
@@ -226,10 +250,6 @@
     min-width: 200px;
     padding: 0.25em;
     border-right: 1px solid var(--gray-1);
-
-    /* display: flex;
-    flex-direction: column;
-    gap: 1em; */
   }
 
   .cluster-grid-main {
@@ -262,6 +282,10 @@
     transform: rotate(-90deg);
   }
 
+  ul {
+    list-style: none;
+  }
+
   .cluster-id {
     display: flex;
     align-items: center;
@@ -273,5 +297,13 @@
 
   .cluster-list-item + .cluster-list-item {
     margin-top: 0.5em;
+  }
+
+  .cluster-container {
+    cursor: pointer;
+  }
+
+  .cluster-feature-list-item {
+    margin-left: 1.0625em;
   }
 </style>

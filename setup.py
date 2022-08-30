@@ -91,7 +91,6 @@ setup_args = dict(
         "joblib>=1.1.0",
         "scikit-learn>=1.0.2",
         "tslearn>=0.5.2",
-        "kneed"
     ],
     extras_require={
         "examples": [],

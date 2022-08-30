@@ -1,1 +1,2 @@
-good-names=i,r,c,x,X,y
+[DEFAULT]
+good-names=i,r,c,x,X,y,n,N,r0,r1

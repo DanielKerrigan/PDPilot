@@ -1,26 +1,64 @@
 <script lang="ts">
   import type { SinglePDPData, DoublePDPData } from '../types';
   import { createEventDispatcher, onMount } from 'svelte';
-  import { single_pdps } from '../stores';
+  import { single_pdps, double_pdps, globalColor, features } from '../stores';
   import PDP from './PDP.svelte';
 
   export let pdp: SinglePDPData | DoublePDPData;
-  export let globalColor: d3.ScaleSequential<string, string>;
-  export let scaleLocally: boolean;
-  export let showTrendLine: boolean;
 
   // header
 
-  const headerHeight = 30;
+  $: feature1 = pdp.x_feature;
+  $: feature2 = pdp.num_features === 2 ? pdp.y_feature : '';
 
-  $: title =
-    pdp.num_features === 1
-      ? pdp.x_feature
-      : `${pdp.x_feature} vs. ${pdp.y_feature}`;
+  let scaleLocally: boolean = false;
+  let showTrendLine: boolean = false;
 
   let showMarginalDistribution: boolean = false;
   let show1D: boolean = false;
   let showInteractions: boolean = false;
+
+  const dispatch = createEventDispatcher<{
+    zoom: SinglePDPData | DoublePDPData;
+  }>();
+
+  function onChangeFeature(
+    event: { currentTarget: HTMLSelectElement },
+    whichFeature: number
+  ) {
+    let f1: string = '';
+    let f2: string = '';
+
+    if (whichFeature === 1) {
+      f1 = event.currentTarget.value;
+      f2 = feature2;
+    } else {
+      f1 = feature1;
+      f2 = event.currentTarget.value;
+    }
+
+    if (f1 === f2) {
+      f2 = '';
+    }
+
+    if (f2 === '') {
+      const pd = $single_pdps.find((d) => d.x_feature === f1);
+
+      if (pd) {
+        dispatch('zoom', pd);
+      }
+    } else {
+      const pd = $double_pdps.find(
+        (d) =>
+          (d.x_feature === f1 && d.y_feature === f2) ||
+          (d.x_feature === f2 && d.y_feature === f1)
+      );
+
+      if (pd) {
+        dispatch('zoom', pd);
+      }
+    }
+  }
 
   // sizes
 
@@ -90,23 +128,41 @@
   ) {
     return show1D && xPdp !== undefined && yPdp !== undefined;
   }
-
-  // closing
-
-  const dispatch = createEventDispatcher();
-
-  function close() {
-    dispatch('close');
-  }
 </script>
 
-<div class="zoomed-pdp-background">
-  <div class="zoomed-pdp-header" style="min-height: {headerHeight}px;">
-    <div>{title}</div>
+<div class="zoomed-pdp-container">
+  <div class="zoomed-pdp-header">
+    <div class="feature-select">
+      <label>
+        Feat. 1
+        <select value={feature1} on:change={(e) => onChangeFeature(e, 1)}>
+          {#each $features as feature}
+            <option value={feature}>{feature}</option>
+          {/each}
+        </select>
+      </label>
+
+      <label>
+        Feat. 2
+        <select value={feature2} on:change={(e) => onChangeFeature(e, 2)}>
+          <option value="" />
+          {#each $features as feature}
+            <option value={feature}>{feature}</option>
+          {/each}
+        </select>
+      </label>
+    </div>
 
     <label class="label-and-input">
       <input type="checkbox" bind:checked={scaleLocally} />
       Scale locally
+    </label>
+
+    <label class="label-and-input">
+      <input type="checkbox" bind:checked={showMarginalDistribution} />
+      {pdp.num_features === 1
+        ? 'Marginal distribution'
+        : 'Marginal distributions'}
     </label>
 
     {#if pdp.num_features === 1 && pdp.kind === 'quantitative'}
@@ -115,13 +171,6 @@
         Trend line
       </label>
     {/if}
-
-    <label class="label-and-input">
-      <input type="checkbox" bind:checked={showMarginalDistribution} />
-      {pdp.num_features === 1
-        ? 'Marginal distribution'
-        : 'Marginal distributions'}
-    </label>
 
     {#if pdp.num_features === 2}
       <label class="label-and-input">
@@ -134,25 +183,6 @@
         Interaction
       </label>
     {/if}
-
-    <button class="close-button" on:click={close}>
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        class="icon icon-tabler icon-tabler-x"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        stroke-width="2"
-        stroke="currentColor"
-        fill="none"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-        <line x1="18" y1="6" x2="6" y2="18" />
-        <line x1="6" y1="6" x2="18" y2="18" />
-      </svg>
-    </button>
   </div>
   <div
     class="zoomed-pdp-content show1D-{shouldShow1D(
@@ -166,7 +196,7 @@
       <div style:grid-area="one-way-left">
         <PDP
           pdp={xPdp}
-          {globalColor}
+          globalColor={$globalColor}
           width={halfWidth}
           height={halfHeight}
           {scaleLocally}
@@ -178,7 +208,7 @@
       <div style:grid-area="one-way-right">
         <PDP
           pdp={yPdp}
-          {globalColor}
+          globalColor={$globalColor}
           width={halfWidth}
           height={halfHeight}
           {scaleLocally}
@@ -191,7 +221,7 @@
     <div style:grid-area="two-way">
       <PDP
         {pdp}
-        {globalColor}
+        globalColor={$globalColor}
         width={shouldShow1D(show1D, xPdp, yPdp) && showInteractions
           ? halfWidth
           : gridWidth}
@@ -209,7 +239,7 @@
       <div style:grid-area="interaction">
         <PDP
           {pdp}
-          {globalColor}
+          globalColor={$globalColor}
           width={shouldShow1D(show1D, xPdp, yPdp) ? halfWidth : gridWidth}
           height={halfHeight}
           {scaleLocally}
@@ -224,32 +254,27 @@
 </div>
 
 <style>
-  .zoomed-pdp-background {
-    position: absolute;
+  .feature-select label + label {
+    margin-left: 0.25em;
+  }
 
-    left: 0;
-    top: 0;
-
-    z-index: 1;
-
+  .zoomed-pdp-container {
     width: 100%;
     height: 100%;
 
-    background-color: white;
-
     display: flex;
     flex-direction: column;
-
-    border: 1px solid var(--gray-1);
   }
 
   .zoomed-pdp-header {
     display: flex;
     align-items: center;
-    gap: 2em;
     background-color: white;
+    gap: 2em;
     padding-left: 0.5em;
     padding-right: 0.5em;
+    padding-top: 0.25em;
+    padding-bottom: 0.25em;
     border-bottom: 1px solid var(--gray-1);
   }
 
@@ -257,10 +282,6 @@
     flex: 1;
     display: grid;
     padding: 0.5em;
-  }
-
-  .close-button {
-    margin-left: auto;
   }
 
   .label-and-input {

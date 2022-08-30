@@ -6,6 +6,7 @@ import type {
   CategoricalSinglePDPData,
   DoublePDPData,
   MarginalDistribution,
+  Mode,
   OneWayCategoricalCluster,
   OneWayQuantitativeCluster,
   QuantitativeSinglePDPData,
@@ -14,7 +15,8 @@ import type {
 
 import { isCategoricalOneWayPd, isQuantitativeOneWayPd } from './types';
 
-import { scaleLinear } from 'd3-scale';
+import { scaleLinear, scaleSequential } from 'd3-scale';
+import { interpolateYlGnBu } from 'd3-scale-chromatic';
 import { group } from 'd3-array';
 
 interface WidgetWritable<T> extends Writable<T> {
@@ -119,6 +121,10 @@ export function setStoreModels(model: DOMWidgetModel): void {
   height.setModel(model);
 }
 
+// Stores that are not synced with the backend
+
+export const mode: Writable<Mode> = writable('grid');
+
 // Derived stores
 
 export const nice_prediction_extent: Readable<[number, number]> = derived(
@@ -127,21 +133,13 @@ export const nice_prediction_extent: Readable<[number, number]> = derived(
     scaleLinear().domain($prediction_extent).nice().domain() as [number, number]
 );
 
-export const filteredOneWayPds = derived(
-  [single_pdps, selected_features],
-  ([$single_pdps, $selected_features]) =>
-    $single_pdps.filter((p) => $selected_features.includes(p.x_feature))
-);
-
-export const filteredTwoWayPds = derived(
-  [double_pdps, selected_features],
-  ([$double_pdps, $selected_features]) =>
-    $double_pdps.filter(
-      (p) =>
-        $selected_features.includes(p.x_feature) &&
-        $selected_features.includes(p.y_feature)
-    )
-);
+export const globalColor: Readable<d3.ScaleSequential<string, string>> =
+  derived(nice_prediction_extent, ($nice_prediction_extent) =>
+    scaleSequential()
+      .domain($nice_prediction_extent)
+      .interpolator(interpolateYlGnBu)
+      .unknown('black')
+  );
 
 export const clusteredQuantitativeOneWayPds: Readable<
   Map<number, QuantitativeSinglePDPData[]>

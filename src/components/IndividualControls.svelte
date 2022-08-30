@@ -1,10 +1,12 @@
 <script lang="ts">
   import FeatureSelector from './FeatureSelector.svelte';
+
+  export let selectedFeatures: string[];
 </script>
 
 <div class="controls-container">
   <div class="feature-selector">
-    <FeatureSelector />
+    <FeatureSelector bind:selectedFeatures />
   </div>
 </div>
 

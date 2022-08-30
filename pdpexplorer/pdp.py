@@ -764,6 +764,9 @@ def one_way_clustering(*, one_way_pds, feature_to_pd, md, n_jobs):
             }
         ]
 
+        for p in cat_one_way:
+            p["cluster"] = n_quant_clusters
+
     return one_way_quantitative_clusters, one_way_categorical_clusters
 
 

@@ -3,24 +3,42 @@
   import IndividualMain from './IndividualMain.svelte';
   import ClustersMain from './ClustersMain.svelte';
   import Tabs from './Tabs.svelte';
-  import { height } from '../stores';
+  import { height, mode, single_pdps, features } from '../stores';
+  import ZoomedPdp from './ZoomedPDP.svelte';
+  import type { DoublePDPData, SinglePDPData } from '../types';
 
-  let mode: string;
+  let zoomedPd: SinglePDPData | DoublePDPData = $single_pdps[0];
+  // changing this to
+  // $: selectedFeatures = $features;
+  // breaks the checkbox binding. why is features being updated?
+  let selectedFeatures: string[] = $features;
+
+  function onZoom(event: CustomEvent<SinglePDPData | DoublePDPData>) {
+    zoomedPd = event.detail;
+    $mode = 'individual';
+  }
+
+  function onFilterByCluster(event: CustomEvent<string[]>) {
+    selectedFeatures = event.detail;
+    $mode = 'grid';
+  }
 </script>
 
 <div class="pdp-explorer-widget-container" style:height="{$height}px">
-  <Tabs bind:mode />
+  <Tabs />
 
-  {#if !mode || mode === 'individual'}
-    <div class="individual-content">
-      <IndividualControls />
-      <IndividualMain />
-    </div>
-  {:else}
-    <div class="clusters-content">
-      <ClustersMain />
-    </div>
-  {/if}
+  <div class="grid-content" class:noshow={$mode !== 'grid'}>
+    <IndividualControls bind:selectedFeatures />
+    <IndividualMain {selectedFeatures} on:zoom={onZoom} />
+  </div>
+
+  <div class="clusters-content" class:noshow={$mode !== 'clusters'}>
+    <ClustersMain on:filterByCluster={onFilterByCluster} />
+  </div>
+
+  <div class="individual-content" class:noshow={$mode !== 'individual'}>
+    <ZoomedPdp pdp={zoomedPd} on:zoom={onZoom} />
+  </div>
 </div>
 
 <style>
@@ -52,13 +70,18 @@
     --red: red;
   }
 
-  .individual-content {
+  .grid-content {
     flex: 1;
     min-height: 0;
     display: flex;
   }
 
   .clusters-content {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .individual-content {
     flex: 1;
     min-height: 0;
   }
@@ -142,5 +165,9 @@
 
   .pdp-explorer-widget-container :global(:focus-visible) {
     outline: var(--blue) auto 1px;
+  }
+
+  .noshow {
+    display: none;
   }
 </style>

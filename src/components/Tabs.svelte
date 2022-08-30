@@ -1,8 +1,9 @@
 <script lang="ts">
-  export let mode = 'individual';
+  import { mode } from '../stores';
+  import type { Mode } from '../types';
 
-  function changeMode(newMode: string) {
-    mode = newMode;
+  function changeMode(newMode: Mode) {
+    $mode = newMode;
   }
 </script>
 
@@ -10,20 +11,29 @@
   <ul>
     <li>
       <button
-        id="button-tab-individual"
-        class:tab-selected={mode === 'individual'}
-        on:click={() => changeMode('individual')}
+        id="button-tab-grid"
+        class:tab-selected={$mode === 'grid'}
+        on:click={() => changeMode('grid')}
       >
-        Individual Plots
+        Plots Grid
       </button>
     </li>
     <li>
       <button
-        id="button-tab-cluster"
-        class:tab-selected={mode === 'cluster'}
-        on:click={() => changeMode('cluster')}
+        id="button-tab-clusters"
+        class:tab-selected={$mode === 'clusters'}
+        on:click={() => changeMode('clusters')}
       >
-        Clusters
+        Clustered Plots
+      </button>
+    </li>
+    <li>
+      <button
+        id="button-tab-individual"
+        class:tab-selected={$mode === 'individual'}
+        on:click={() => changeMode('individual')}
+      >
+        Individual Plot
       </button>
     </li>
   </ul>
@@ -33,21 +43,25 @@
   .tabs-container {
     display: flex;
     padding: 0.25em;
+    background-color: var(--gray-1);
   }
 
-  #button-tab-individual,
-  #button-tab-cluster {
+  #button-tab-grid,
+  #button-tab-clusters,
+  #button-tab-individual {
     border: none;
     border-radius: 0;
+    background-color: transparent;
   }
 
-  #button-tab-individual.tab-selected,
-  #button-tab-cluster.tab-selected {
+  #button-tab-grid.tab-selected,
+  #button-tab-clusters.tab-selected,
+  #button-tab-individual.tab-selected {
     border-bottom: 1px solid black;
   }
 
   ul {
-    list-style-type: none;
+    list-style: none;
   }
 
   li {

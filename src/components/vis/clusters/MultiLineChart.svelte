@@ -48,7 +48,7 @@
     font-size={12}
     font-weight="bold"
   >
-    Cluster {cluster.id}
+    Cluster {cluster.id + 1}
   </text>
 
   {#each pds as pd}

@@ -1,36 +1,39 @@
 <script lang="ts">
-  import { selected_features, features } from '../stores';
+  import { features } from '../stores';
+
+  export let selectedFeatures: string[];
 
   let featuresChecked: boolean = true;
   let featuresCheckboxIndeterminate: boolean = false;
   let search: string = '';
 
-  $: $selected_features = $features;
   $: featureCheckboxes = $features.map((feature) => ({
     feature,
     hidden: !feature.includes(search),
   }));
 
+  $: selectedFeatures, onFeatureChange();
+
   function onAllFeaturesChange() {
     if (featuresChecked) {
-      $selected_features = $features;
+      selectedFeatures = $features;
       featuresCheckboxIndeterminate = false;
     } else {
-      $selected_features = [];
+      selectedFeatures = [];
       featuresCheckboxIndeterminate = false;
     }
   }
 
   function onFeatureChange() {
-    if ($selected_features.length === 0) {
+    if (selectedFeatures.length === 0) {
       featuresChecked = false;
       featuresCheckboxIndeterminate = false;
-    } else if ($selected_features.length === $features.length) {
+    } else if (selectedFeatures.length === $features.length) {
       featuresChecked = true;
       featuresCheckboxIndeterminate = false;
     } else if (
-      $selected_features.length > 0 &&
-      $selected_features.length < $features.length
+      selectedFeatures.length > 0 &&
+      selectedFeatures.length < $features.length
     ) {
       featuresChecked = true;
       featuresCheckboxIndeterminate = true;
@@ -64,10 +67,9 @@
         <input
           id="{feature}-checkbox"
           type="checkbox"
-          bind:group={$selected_features}
+          bind:group={selectedFeatures}
           name="features"
           value={feature}
-          on:change={onFeatureChange}
         />
         <label class="cutoff" for="{feature}-checkbox" title={feature}
           >{feature}</label

@@ -1,11 +1,9 @@
 <script lang="ts">
   import type { DoublePDPData, SinglePDPData, PDSortingOption } from '../types';
-  import PDPContainer from './PDPContainer.svelte';
-  import { scaleSequential } from 'd3-scale';
-  import { interpolateYlGnBu } from 'd3-scale-chromatic';
+  import PDP from './PDP.svelte';
   import QuantitativeColorLegend from './vis/two_way/QuantitativeColorLegend.svelte';
-  import { onMount } from 'svelte';
-  import { nice_prediction_extent } from '../stores';
+  import { onMount, createEventDispatcher } from 'svelte';
+  import { globalColor } from '../stores';
 
   export let title: string;
   export let data: SinglePDPData[] | DoublePDPData[];
@@ -68,17 +66,9 @@
   $: pdpWidth = gridWidth / numCols;
   $: pdpHeight = gridHeight / numRows;
 
-  // color
-
-  let globalColor: d3.ScaleSequential<string, string>;
-  $: globalColor = scaleSequential()
-    .domain($nice_prediction_extent)
-    .interpolator(interpolateYlGnBu)
-    .unknown('black');
-
   // header
 
-  $: hide = !expanded || data.length === 0;
+  $: noshow = !expanded || data.length === 0;
   const legendHeight = 24;
 
   // sorting
@@ -108,7 +98,7 @@
 
   $: data, setPage(1);
 
-  function onkeydown(ev: KeyboardEvent) {
+  function onKeyDownPageChange(ev: KeyboardEvent) {
     if (ev.key === 'ArrowLeft') {
       setPage(currentPage - 1);
     } else if (ev.key === 'ArrowRight') {
@@ -119,12 +109,28 @@
   // scaling
 
   let scaleLocally = false;
+
+  // selecting pdp
+
+  const dispatch = createEventDispatcher<{
+    zoom: SinglePDPData | DoublePDPData;
+  }>();
+
+  function onClickPdp(pd: SinglePDPData | DoublePDPData) {
+    dispatch('zoom', pd);
+  }
+
+  function onKeyDownPdp(ev: KeyboardEvent, pd: SinglePDPData | DoublePDPData) {
+    if (ev.key === 'Enter' || ev.key === ' ') {
+      onClickPdp(pd);
+    }
+  }
 </script>
 
 <div class="group-container" class:hide-plots={!expanded}>
   <div class="group-header">
     <div class="toggle-and-title">
-      <button on:click={toggle}>
+      <button class="toggle-button" on:click={toggle}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           class="icon icon-tabler icon-tabler-chevron-down"
@@ -145,7 +151,12 @@
       <div class="group-title">{title}</div>
     </div>
 
-    <div class="page-change" class:hide on:keydown={onkeydown} tabindex="0">
+    <div
+      class="page-change"
+      class:noshow
+      on:keydown={onKeyDownPageChange}
+      tabindex="0"
+    >
       <button
         disabled={currentPage <= 1}
         on:click={() => setPage(currentPage - 1)}
@@ -195,7 +206,7 @@
       </button>
     </div>
 
-    <label class:hide>
+    <label class:noshow>
       Sort by
       <select bind:value={sortingOption}>
         {#each sortingOptions as option}
@@ -204,18 +215,18 @@
       </select>
     </label>
 
-    <label class="label-and-input" class:hide>
+    <label class="label-and-input" class:noshow>
       <input type="checkbox" bind:checked={scaleLocally} /><span
         >Scale locally</span
       >
     </label>
 
     {#if showColorLegend && !scaleLocally}
-      <div class="legend" class:hide>
+      <div class="legend" class:noshow>
         <QuantitativeColorLegend
           width={180}
           height={legendHeight}
-          color={globalColor}
+          color={$globalColor}
           includeTitle={true}
           marginLeft={15}
           marginRight={15}
@@ -232,13 +243,23 @@
         style:grid-template-rows="repeat({numRows}, 1fr)"
       >
         {#each pageCharts as pdp (pdp.id)}
-          <PDPContainer
-            {pdp}
-            {globalColor}
-            width={pdpWidth}
-            height={pdpHeight}
-            {scaleLocally}
-          />
+          <div
+            on:click={() => onClickPdp(pdp)}
+            tabindex="0"
+            on:keydown={(e) => onKeyDownPdp(e, pdp)}
+            style:cursor="pointer"
+          >
+            <PDP
+              {pdp}
+              globalColor={$globalColor}
+              width={pdpWidth}
+              height={pdpHeight}
+              {scaleLocally}
+              showTrendLine={true}
+              showMarginalDistribution={false}
+              showColorLegend={scaleLocally}
+            />
+          </div>
         {/each}
       </div>
     {/if}
@@ -246,6 +267,12 @@
 </div>
 
 <style>
+  /* https://stackoverflow.com/a/69029387/5016634 */
+  .icon-tabler-chevron-down {
+    -webkit-transform: translate(0px, 0px);
+    transform: translate(0px, 0px);
+  }
+
   .group-container {
     flex: 1;
 
@@ -261,6 +288,12 @@
     display: flex;
     align-items: center;
     gap: 0.5em;
+  }
+
+  .toggle-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .hide-plots {
@@ -288,7 +321,7 @@
     padding-bottom: 0.25em;
   }
 
-  .hide {
+  .noshow {
     visibility: hidden;
   }
 
@@ -317,7 +350,7 @@
   }
 
   .icon-tabler-chevron-down polyline {
-    transition: transform 150ms;
+    transition: transform 200ms;
     transform-origin: 50% 50%;
   }
 
