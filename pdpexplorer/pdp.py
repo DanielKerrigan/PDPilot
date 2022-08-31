@@ -799,6 +799,9 @@ def one_way_clustering(*, one_way_pds, feature_to_pd, md, n_jobs):
 
 
 def quantitative_feature_clustering(*, one_way_pds, feature_to_pd, n_jobs):
+    if not one_way_pds:
+        return []
+
     timeseries_dataset = to_time_series_dataset(
         [d["mean_predictions"] for d in one_way_pds]
     )
@@ -863,6 +866,9 @@ def quantitative_feature_clustering(*, one_way_pds, feature_to_pd, n_jobs):
 
 
 def categorical_feature_clustering(*, one_way_pds, feature_to_pd, first_id):
+    if not one_way_pds:
+        return []
+
     features = [d["x_feature"] for d in one_way_pds]
 
     min_clusters = 2
