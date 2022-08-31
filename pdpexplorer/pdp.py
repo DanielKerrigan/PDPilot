@@ -777,6 +777,7 @@ def one_way_clustering(*, one_way_pds, feature_to_pd, md, n_jobs):
         if (
             md.feature_info[p["x_feature"]]["kind"] == "integer"
             or md.feature_info[p["x_feature"]]["kind"] == "continuous"
+            or md.feature_info[p["x_feature"]]["kind"] == "ordinal"
         ):
             quant_one_way.append(p)
         else:

@@ -160,7 +160,9 @@
               {#if isClusterExpanded[c.id]}
                 <ul>
                   {#each c.features as feature}
-                    <li class="cluster-feature-list-item">{feature}</li>
+                    <li class="cluster-feature-list-item cutoff small">
+                      {feature}
+                    </li>
                   {/each}
                 </ul>
               {/if}
@@ -224,6 +226,8 @@
 
     display: flex;
     flex-direction: column;
+
+    min-height: 0;
   }
 
   .group-title {
@@ -243,6 +247,8 @@
   .cluster-grid-container {
     flex: 1;
     display: flex;
+
+    min-height: 0;
   }
 
   .cluster-grid-side {
@@ -250,6 +256,11 @@
     min-width: 200px;
     padding: 0.25em;
     border-right: 1px solid var(--gray-1);
+  }
+
+  .clusters-list {
+    max-height: 100%;
+    overflow-y: scroll;
   }
 
   .cluster-grid-main {
@@ -304,6 +315,6 @@
   }
 
   .cluster-feature-list-item {
-    margin-left: 1.0625em;
+    margin-left: 1.25em;
   }
 </style>

@@ -141,11 +141,11 @@
   }
 
   .pdp-explorer-widget-container :global(.large) {
-    font-size: 1.125rem;
+    font-size: 1.125em;
   }
 
   .pdp-explorer-widget-container :global(.small) {
-    font-size: 0.875rem;
+    font-size: 0.875em;
   }
 
   .pdp-explorer-widget-container :global(.bold) {
