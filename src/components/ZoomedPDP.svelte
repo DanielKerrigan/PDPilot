@@ -122,11 +122,17 @@
   }
 
   function shouldShow1D(
+    pdp: SinglePDPData | DoublePDPData,
     show1D: boolean,
     xPdp: SinglePDPData | undefined,
     yPdp: SinglePDPData | undefined
   ) {
-    return show1D && xPdp !== undefined && yPdp !== undefined;
+    return (
+      pdp.num_features === 2 &&
+      show1D &&
+      xPdp !== undefined &&
+      yPdp !== undefined
+    );
   }
 </script>
 
@@ -186,13 +192,14 @@
   </div>
   <div
     class="zoomed-pdp-content show1D-{shouldShow1D(
+      pdp,
       show1D,
       xPdp,
       yPdp
     )}-showInteraction-{showInteractions}"
     bind:this={div}
   >
-    {#if shouldShow1D(show1D, xPdp, yPdp)}
+    {#if shouldShow1D(pdp, show1D, xPdp, yPdp)}
       <div style:grid-area="one-way-left">
         <PDP
           pdp={xPdp}
@@ -222,10 +229,10 @@
       <PDP
         {pdp}
         globalColor={$globalColor}
-        width={shouldShow1D(show1D, xPdp, yPdp) && showInteractions
+        width={shouldShow1D(pdp, show1D, xPdp, yPdp) && showInteractions
           ? halfWidth
           : gridWidth}
-        height={shouldShow1D(show1D, xPdp, yPdp) || showInteractions
+        height={shouldShow1D(pdp, show1D, xPdp, yPdp) || showInteractions
           ? halfHeight
           : gridHeight}
         {scaleLocally}
@@ -240,7 +247,7 @@
         <PDP
           {pdp}
           globalColor={$globalColor}
-          width={shouldShow1D(show1D, xPdp, yPdp) ? halfWidth : gridWidth}
+          width={shouldShow1D(pdp, show1D, xPdp, yPdp) ? halfWidth : gridWidth}
           height={halfHeight}
           {scaleLocally}
           {showTrendLine}
