@@ -221,8 +221,8 @@
       >
     </label>
 
-    {#if showColorLegend && !scaleLocally}
-      <div class="legend" class:noshow>
+    {#if showColorLegend}
+      <div class="legend" class:noshow={noshow || scaleLocally}>
         <QuantitativeColorLegend
           width={180}
           height={legendHeight}
@@ -248,6 +248,8 @@
             tabindex="0"
             on:keydown={(e) => onKeyDownPdp(e, pdp)}
             style:cursor="pointer"
+            style:max-width="{pdpWidth}px"
+            style:max-height="{pdpHeight}px"
           >
             <PDP
               {pdp}
@@ -278,6 +280,8 @@
 
     display: flex;
     flex-direction: column;
+
+    min-height: 2em;
   }
 
   .group-title {
@@ -302,6 +306,7 @@
 
   .pdp-grid-container {
     flex: 1;
+    min-height: 0;
   }
 
   .pdp-grid {
