@@ -70,8 +70,4 @@
     width: 100%;
     height: 100%;
   }
-
-  .line {
-    transition: d 150ms;
-  }
 </style>

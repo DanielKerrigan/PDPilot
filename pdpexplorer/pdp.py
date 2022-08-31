@@ -5,27 +5,28 @@
 Compute partial dependence plots
 """
 
-from joblib import Parallel, delayed
 from operator import itemgetter
 from itertools import chain
 import json
 import math
+import sys
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-from pathlib import Path
+from joblib import Parallel, delayed
+
 from scipy.stats import iqr as inner_quartile_range
 
-from pdpexplorer.metadata import Metadata
-from pdpexplorer.ticks import nice, ticks
-from .logging import log
-
 from tslearn.utils import to_time_series_dataset
-from tslearn.clustering import TimeSeriesKMeans, silhouette_score
+from tslearn.clustering import TimeSeriesKMeans, silhouette_score as ts_silhouette_score
 
 from sklearn.linear_model import Ridge
 from sklearn.preprocessing import SplineTransformer, StandardScaler
 from sklearn.pipeline import make_pipeline
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, silhouette_score
+from sklearn.cluster import KMeans
+
 from plotnine import (
     ggplot,
     geom_line,
@@ -40,6 +41,9 @@ from plotnine import (
     coord_cartesian,
 )
 
+from pdpexplorer.metadata import Metadata
+from pdpexplorer.ticks import nice, ticks
+
 
 def partial_dependence(
     *,
@@ -49,11 +53,14 @@ def partial_dependence(
     two_way_feature_pairs=None,
     n_instances=100,
     resolution=20,
-    feature_to_one_hot=None,
+    one_hot_features=None,
+    categorical_features=None,
+    ordinal_features=None,
     n_jobs=1,
     output_path=None,
-    quant_threshold=12,
 ):
+    """calculates the partial dependences for the given features and feature pairs"""
+
     # first check that the output path exists if provided so that the function
     # can fail quickly, rather than waiting until all the work is done
     if output_path:
@@ -75,7 +82,7 @@ def partial_dependence(
         set(chain.from_iterable(two_way_feature_pairs)).union(one_way_features)
     )
 
-    md = Metadata(df, feature_to_one_hot, quant_threshold=quant_threshold)
+    md = Metadata(df, one_hot_features, categorical_features, ordinal_features)
 
     subset = df.sample(n=n_instances)
     subset_copy = df.copy()
@@ -169,7 +176,7 @@ def partial_dependence(
     }
 
     if output_path:
-        path.write_text(json.dumps(results))
+        path.write_text(json.dumps(results), encoding="utf-8")
     else:
         return results
 
@@ -460,9 +467,9 @@ def _calc_one_way_pd(
     md,
     iqr,
 ):
-    x_values = _get_feature_values(
-        feature, md.quantitative_features, resolution, md.unique_feature_vals
-    )
+    feat_info = md.feature_info[feature]
+
+    x_values = _get_feature_values(feature, feat_info, resolution)
 
     mean_predictions = []
 
@@ -470,7 +477,7 @@ def _calc_one_way_pd(
     max_pred = -math.inf
 
     for value in x_values:
-        _set_feature(feature, value, data, md.feature_to_one_hot, md.value_to_one_hot)
+        _set_feature(feature, value, data, feat_info)
 
         predictions = predict(data)
         mean_pred = np.mean(predictions).item()
@@ -483,9 +490,13 @@ def _calc_one_way_pd(
         if mean_pred > max_pred:
             max_pred = mean_pred
 
-    _reset_feature(feature, data, data_copy, md.feature_to_one_hot)
+    _reset_feature(feature, data, data_copy, feat_info)
 
-    x_is_quant = feature in md.quantitative_features
+    x_is_quant = (
+        feat_info["kind"] == "integer"
+        or feat_info["kind"] == "continuous"
+        or feat_info["kind"] == "ordinal"
+    )
 
     mean_predictions_centered = (
         np.array(mean_predictions) - np.mean(mean_predictions)
@@ -554,21 +565,30 @@ def _calc_two_way_pd(
 ):
     x_feature, y_feature = pair
 
+    x_feat_info = md.feature_info[x_feature]
+    y_feat_info = md.feature_info[y_feature]
+
     # when one feature is quantitative and the other is categorical,
     # make the y feature be categorical
-    if (
-        y_feature in md.quantitative_features
-        and x_feature not in md.quantitative_features
-    ):
+
+    x_is_quant = (
+        x_feat_info["kind"] == "integer"
+        or x_feat_info["kind"] == "continuous"
+        or x_feat_info["kind"] == "ordinal"
+    )
+    y_is_quant = (
+        y_feat_info["kind"] == "integer"
+        or y_feat_info["kind"] == "continuous"
+        or y_feat_info["kind"] == "ordinal"
+    )
+
+    if y_is_quant and not x_is_quant:
         x_feature, y_feature = y_feature, x_feature
+        x_is_quant, y_is_quant = y_is_quant, x_is_quant
+        x_feat_info, y_feat_info = y_feat_info, x_feat_info
 
-    x_axis = _get_feature_values(
-        x_feature, md.quantitative_features, resolution, md.unique_feature_vals
-    )
-
-    y_axis = _get_feature_values(
-        y_feature, md.quantitative_features, resolution, md.unique_feature_vals
-    )
+    x_axis = _get_feature_values(x_feature, x_feat_info, resolution)
+    y_axis = _get_feature_values(y_feature, y_feat_info, resolution)
 
     x_values = []
     y_values = []
@@ -584,14 +604,10 @@ def _calc_two_way_pd(
     max_pred = -math.inf
 
     for c, x_value in enumerate(x_axis):
-        _set_feature(
-            x_feature, x_value, data, md.feature_to_one_hot, md.value_to_one_hot
-        )
+        _set_feature(x_feature, x_value, data, x_feat_info)
 
         for r, y_value in enumerate(y_axis):
-            _set_feature(
-                y_feature, y_value, data, md.feature_to_one_hot, md.value_to_one_hot
-            )
+            _set_feature(y_feature, y_value, data, y_feat_info)
 
             predictions = predict(data)
             mean_pred = np.mean(predictions).item()
@@ -614,18 +630,15 @@ def _calc_two_way_pd(
             if mean_pred > max_pred:
                 max_pred = mean_pred
 
-            _reset_feature(y_feature, data, data_copy, md.feature_to_one_hot)
+            _reset_feature(y_feature, data, data_copy, y_feat_info)
 
-        _reset_feature(x_feature, data, data_copy, md.feature_to_one_hot)
+        _reset_feature(x_feature, data, data_copy, x_feat_info)
 
     mean_predictions_centered = np.array(mean_predictions) - np.mean(mean_predictions)
     interactions = (mean_predictions_centered - np.array(no_interactions)).tolist()
     mean_predictions_centered = mean_predictions_centered.tolist()
 
     h_statistic = np.sqrt(np.square(interactions).sum()).item()
-
-    x_is_quant = x_feature in md.quantitative_features
-    y_is_quant = y_feature in md.quantitative_features
 
     if x_is_quant and y_is_quant:
         kind = "quantitative"
@@ -655,12 +668,12 @@ def _calc_two_way_pd(
     return par_dep
 
 
-def _set_feature(feature, value, data, feature_to_one_hot, value_to_one_hot):
-    if feature in feature_to_one_hot:
-        value_feature = value_to_one_hot[(feature, value)]
-        all_features = [feat for feat, _ in feature_to_one_hot[feature]]
+def _set_feature(feature, value, data, feature_info):
+    if feature_info["kind"] == "one_hot":
+        col = feature_info["value_to_column"][value]
+        all_features = [feat for feat, _ in feature_info["columns_and_values"]]
         data[all_features] = 0
-        data[value_feature] = 1
+        data[col] = 1
     else:
         data[feature] = value
 
@@ -669,26 +682,30 @@ def _reset_feature(
     feature,
     data,
     data_copy,
-    feature_to_one_hot,
+    feature_info,
 ):
-    if feature in feature_to_one_hot:
-        all_features = [feat for feat, _ in feature_to_one_hot[feature]]
+    if feature_info["kind"] == "one_hot":
+        all_features = [col for col, _ in feature_info["columns_and_values"]]
         data[all_features] = data_copy[all_features]
     else:
         data[feature] = data_copy[feature]
 
 
-def _get_feature_values(
-    feature, quantitative_features, resolution, unique_feature_vals
-):
-    if feature in quantitative_features and resolution < len(
-        unique_feature_vals[feature]
-    ):
-        min_val = unique_feature_vals[feature][0]
-        max_val = unique_feature_vals[feature][-1]
+def _get_feature_values(feature, feature_info, resolution):
+    n_unique = len(feature_info["unique_values"])
+
+    if feature_info["kind"] == "continuous" and resolution < n_unique:
+        min_val = feature_info["unique_values"][0]
+        max_val = feature_info["unique_values"][-1]
         return (np.linspace(min_val, max_val, resolution)).tolist()
+    elif feature_info["kind"] == "integer" and resolution < n_unique:
+        return (
+            [feature_info["unique_values"][0]]
+            + feature_info["unique_values"][1 : -1 : n_unique // resolution]
+            + [feature_info["unique_values"][-1]]
+        )
     else:
-        return unique_feature_vals[feature]
+        return feature_info["unique_values"]
 
 
 def _get_feature_to_pd(one_way_pds):
@@ -699,26 +716,41 @@ def get_marginal_distributions(*, df, features, md):
     marginal_distributions = {}
 
     for feature in features:
-        if feature in md.feature_to_one_hot:
+        feature_info = md.feature_info[feature]
+        if feature_info["kind"] == "one_hot":
             bins = []
             counts = []
 
-            for one_hot_feature, value in md.feature_to_one_hot[feature]:
+            for col, value in feature_info["columns_and_values"]:
                 bins.append(value)
-                counts.append(df[one_hot_feature].sum().item())
+                counts.append(df[col].sum().item())
 
             marginal_distributions[feature] = {
                 "kind": "categorical",
                 "bins": bins,
                 "counts": counts,
             }
-        elif feature in md.quantitative_features:
+        elif feature_info["kind"] == "integer" or feature_info["kind"] == "continuous":
             counts, bins = np.histogram(
                 df[feature],
                 "auto",
                 (
-                    md.unique_feature_vals[feature][0],
-                    md.unique_feature_vals[feature][-1],
+                    feature_info["unique_values"][0],
+                    feature_info["unique_values"][-1],
+                ),
+            )
+            marginal_distributions[feature] = {
+                "kind": "quantitative",
+                "bins": bins.tolist(),
+                "counts": counts.tolist(),
+            }
+        elif feature_info["kind"] == "ordinal":
+            counts, bins = np.histogram(
+                df[feature],
+                len(feature_info["unique_values"]),
+                (
+                    feature_info["unique_values"][0],
+                    feature_info["unique_values"][-1],
                 ),
             )
             marginal_distributions[feature] = {
@@ -742,7 +774,10 @@ def one_way_clustering(*, one_way_pds, feature_to_pd, md, n_jobs):
     cat_one_way = []
 
     for p in one_way_pds:
-        if p["x_feature"] in md.quantitative_features:
+        if (
+            md.feature_info[p["x_feature"]]["kind"] == "integer"
+            or md.feature_info[p["x_feature"]]["kind"] == "continuous"
+        ):
             quant_one_way.append(p)
         else:
             cat_one_way.append(p)
@@ -753,19 +788,11 @@ def one_way_clustering(*, one_way_pds, feature_to_pd, md, n_jobs):
 
     n_quant_clusters = len(one_way_quantitative_clusters)
 
-    one_way_categorical_clusters = []
-
-    if cat_one_way:
-        one_way_categorical_clusters = [
-            {
-                "id": n_quant_clusters,
-                "kind": "categorical",
-                "features": [p["x_feature"] for p in cat_one_way],
-            }
-        ]
-
-        for p in cat_one_way:
-            p["cluster"] = n_quant_clusters
+    one_way_categorical_clusters = categorical_feature_clustering(
+        one_way_pds=cat_one_way,
+        feature_to_pd=feature_to_pd,
+        first_id=n_quant_clusters,
+    )
 
     return one_way_quantitative_clusters, one_way_categorical_clusters
 
@@ -775,10 +802,12 @@ def quantitative_feature_clustering(*, one_way_pds, feature_to_pd, n_jobs):
         [d["mean_predictions"] for d in one_way_pds]
     )
     features = [d["x_feature"] for d in one_way_pds]
-    n_clusters_options = list(range(2, int(len(features) / 2), 2))
 
-    if not n_clusters_options:
-        n_clusters_options = list(range(2, len(features)))
+    min_clusters = 2
+    max_clusters = (
+        int(len(features) / 2) if int(len(features) / 2) > 2 else len(features)
+    )
+    n_clusters_options = range(min_clusters, max_clusters)
 
     best_n_clusters = -1
     best_clusters = []
@@ -787,16 +816,16 @@ def quantitative_feature_clustering(*, one_way_pds, feature_to_pd, n_jobs):
 
     for n in n_clusters_options:
         cluster_model = TimeSeriesKMeans(
-            n_clusters=n, metric="dtw", max_iter=50, n_jobs=n_jobs
+            n_clusters=n, metric="dtw", max_iter=50, n_init=5, n_jobs=n_jobs
         )
         cluster_model.fit(timeseries_dataset)
-        clusters = cluster_model.predict(timeseries_dataset)
+        labels = cluster_model.predict(timeseries_dataset)
 
-        score = silhouette_score(timeseries_dataset, clusters, metric="dtw")
+        score = ts_silhouette_score(timeseries_dataset, labels, metric="dtw")
 
         if score > best_score:
             best_score = score
-            best_clusters = clusters
+            best_clusters = labels
             best_n_clusters = n
             best_model = cluster_model
 
@@ -807,6 +836,69 @@ def quantitative_feature_clustering(*, one_way_pds, feature_to_pd, n_jobs):
         i: {
             "id": i,
             "type": "quantitative",
+            "mean_distance": 0,
+            "mean_complexity": 0,
+            "features": [],
+        }
+        for i in range(best_n_clusters)
+    }
+
+    for feature, cluster, distance in zip(features, best_clusters, distances):
+        p = feature_to_pd[feature]
+        c = clusters_dict[cluster]
+
+        p["distance_to_cluster_center"] = distance
+        p["cluster"] = cluster.item()
+
+        c["mean_distance"] += distance
+        c["features"].append(feature)
+
+    clusters = list(clusters_dict.values())
+
+    for c in clusters:
+        c["mean_distance"] = c["mean_distance"] / len(c["features"])
+
+    return clusters
+
+
+def categorical_feature_clustering(*, one_way_pds, feature_to_pd, first_id):
+    features = [d["x_feature"] for d in one_way_pds]
+
+    min_clusters = 2
+    max_clusters = (
+        int(len(features) / 2) if int(len(features) / 2) > 2 else len(features)
+    )
+    n_clusters_options = range(min_clusters, max_clusters)
+
+    deviations = np.array([d["deviation"] for d in one_way_pds]).reshape(-1, 1)
+
+    best_n_clusters = -1
+    best_clusters = []
+    best_score = -math.inf
+    best_model = None
+
+    for n in n_clusters_options:
+        cluster_model = KMeans(n_clusters=n, n_init=5, max_iter=300)
+        cluster_model.fit(deviations)
+        labels = cluster_model.labels_
+
+        score = silhouette_score(deviations, labels, metric="euclidean")
+
+        if score > best_score:
+            best_score = score
+            best_clusters = labels
+            best_n_clusters = n
+            best_model = cluster_model
+
+    distance_to_centers = best_model.transform(deviations)
+    distances = np.min(distance_to_centers, axis=1).tolist()
+
+    best_clusters += first_id
+
+    clusters_dict = {
+        (i + first_id): {
+            "id": i + first_id,
+            "type": "categorical",
             "mean_distance": 0,
             "mean_complexity": 0,
             "features": [],

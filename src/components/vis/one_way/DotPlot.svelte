@@ -76,8 +76,4 @@
     width: 100%;
     height: 100%;
   }
-
-  .dot {
-    transition: cx 150ms, cy 150ms;
-  }
 </style>

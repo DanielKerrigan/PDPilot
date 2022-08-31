@@ -5,18 +5,13 @@
 TODO: Add module docstring
 """
 
-from itertools import combinations
-from operator import itemgetter
 from pathlib import Path
 import json
 from ipywidgets import DOMWidget
-from traitlets import Unicode, List, Int, Dict, observe
+from traitlets import Unicode, List, Int, Dict
 
 from pdpexplorer.metadata import Metadata
 from ._frontend import module_name, module_version
-from .pdp import get_marginal_distributions, widget_partial_dependence
-from .logging import log
-from scipy.stats import iqr as inner_quartile_range
 
 
 class PDPExplorerWidget(DOMWidget):
@@ -57,9 +52,10 @@ class PDPExplorerWidget(DOMWidget):
         predict,
         df,
         pd_data,
-        feature_to_one_hot=None,
+        one_hot_features=None,
+        categorical_features=None,
+        ordinal_features=None,
         n_jobs=1,
-        quant_threshold=12,
         height=600,
         **kwargs,
     ):
@@ -72,7 +68,7 @@ class PDPExplorerWidget(DOMWidget):
             if not path.exists():
                 raise OSError(f"Cannot read {path}")
 
-            json_data = path.read_text()
+            json_data = path.read_text(encoding="utf-8")
             pd_data = json.loads(json_data)
 
         # model predict function
@@ -80,7 +76,7 @@ class PDPExplorerWidget(DOMWidget):
 
         # pandas dataframe
         self.df = df
-        self.md = Metadata(df, feature_to_one_hot, quant_threshold=quant_threshold)
+        self.md = Metadata(df, one_hot_features, categorical_features, ordinal_features)
 
         self.features = sorted([p["x_feature"] for p in pd_data["one_way_pds"]])
 
@@ -99,60 +95,3 @@ class PDPExplorerWidget(DOMWidget):
 
         self.height = height
         self.n_jobs = n_jobs
-
-    @observe("plot_button_clicked")
-    def on_plot_button_clicked(self, _):
-        """calculate the PDPs when the plot button is clicked"""
-        subset = self.df.sample(n=self.num_instances_used)
-
-        self.marginal_distributions = get_marginal_distributions(
-            df=subset, features=self.features, md=self.md
-        )
-
-        iqr = inner_quartile_range(self.predict(subset))
-
-        single_pdps = widget_partial_dependence(
-            predict=self.predict,
-            subset=subset,
-            features=self.selected_features,
-            resolution=self.resolution,
-            md=self.md,
-            n_jobs=self.n_jobs,
-            iqr=iqr,
-        )
-
-        min_pred_single = min(single_pdps, key=itemgetter("min_prediction"))[
-            "min_prediction"
-        ]
-        max_pred_single = max(single_pdps, key=itemgetter("max_prediction"))[
-            "max_prediction"
-        ]
-
-        self.single_pdps = single_pdps
-        self.prediction_extent = [min_pred_single, max_pred_single]
-
-        pairs = combinations(self.selected_features, 2)
-
-        double_pdps = widget_partial_dependence(
-            predict=self.predict,
-            subset=subset,
-            features=pairs,
-            resolution=self.resolution,
-            md=self.md,
-            n_jobs=self.n_jobs,
-            one_way_pds=self.single_pdps,
-        )
-
-        min_pred_double = min(double_pdps, key=itemgetter("min_prediction"))[
-            "min_prediction"
-        ]
-        max_pred_double = max(double_pdps, key=itemgetter("max_prediction"))[
-            "max_prediction"
-        ]
-
-        self.prediction_extent = [
-            min(min_pred_single, min_pred_double),
-            max(max_pred_single, max_pred_double),
-        ]
-
-        self.double_pdps = double_pdps
