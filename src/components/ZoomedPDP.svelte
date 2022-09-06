@@ -14,9 +14,22 @@
   let scaleLocally: boolean = false;
   let showTrendLine: boolean = false;
 
+  // one-way PDPs
+  let xPdp: SinglePDPData | null = null;
+  let yPdp: SinglePDPData | null = null;
+
   let showMarginalDistribution: boolean = false;
-  let show1D: boolean = false;
+  let showOneWayChecked: boolean = false;
+  let showOneWay: boolean = false;
+  let showInteractionsChecked: boolean = false;
   let showInteractions: boolean = false;
+
+  $: showOneWay =
+    pdp.num_features === 2 &&
+    showOneWayChecked &&
+    xPdp !== null &&
+    yPdp !== null;
+  $: showInteractions = pdp.num_features === 2 && showInteractionsChecked;
 
   const dispatch = createEventDispatcher<{
     zoom: SinglePDPData | DoublePDPData;
@@ -100,11 +113,11 @@
     return () => resizeObserver.unobserve(div);
   });
 
-  let xPdp: SinglePDPData;
-  let yPdp: SinglePDPData;
-
   $: if (pdp.num_features === 2) {
     let found = 0;
+
+    xPdp = null;
+    yPdp = null;
 
     for (let pd of $single_pdps) {
       if (pd.x_feature === pdp.x_feature) {
@@ -119,20 +132,6 @@
         break;
       }
     }
-  }
-
-  function shouldShow1D(
-    pdp: SinglePDPData | DoublePDPData,
-    show1D: boolean,
-    xPdp: SinglePDPData | undefined,
-    yPdp: SinglePDPData | undefined
-  ) {
-    return (
-      pdp.num_features === 2 &&
-      show1D &&
-      xPdp !== undefined &&
-      yPdp !== undefined
-    );
   }
 </script>
 
@@ -180,26 +179,21 @@
 
     {#if pdp.num_features === 2}
       <label class="label-and-input">
-        <input type="checkbox" bind:checked={show1D} />
-        1D PDPs
+        <input type="checkbox" bind:checked={showOneWayChecked} />
+        One-way PDPs
       </label>
 
       <label class="label-and-input">
-        <input type="checkbox" bind:checked={showInteractions} />
+        <input type="checkbox" bind:checked={showInteractionsChecked} />
         Interaction
       </label>
     {/if}
   </div>
   <div
-    class="zoomed-pdp-content show1D-{shouldShow1D(
-      pdp,
-      show1D,
-      xPdp,
-      yPdp
-    )}-showInteraction-{showInteractions}"
+    class="zoomed-pdp-content showOneWay-{showOneWay}-showInteraction-{showInteractions}"
     bind:this={div}
   >
-    {#if shouldShow1D(pdp, show1D, xPdp, yPdp)}
+    {#if xPdp !== null && yPdp !== null && showOneWay}
       <div style:grid-area="one-way-left">
         <PDP
           pdp={xPdp}
@@ -229,12 +223,8 @@
       <PDP
         {pdp}
         globalColor={$globalColor}
-        width={shouldShow1D(pdp, show1D, xPdp, yPdp) && showInteractions
-          ? halfWidth
-          : gridWidth}
-        height={shouldShow1D(pdp, show1D, xPdp, yPdp) || showInteractions
-          ? halfHeight
-          : gridHeight}
+        width={showOneWay && showInteractions ? halfWidth : gridWidth}
+        height={showOneWay || showInteractions ? halfHeight : gridHeight}
         {scaleLocally}
         {showTrendLine}
         {showMarginalDistribution}
@@ -242,12 +232,12 @@
       />
     </div>
 
-    {#if showInteractions}
+    {#if showInteractions && pdp.num_features === 2}
       <div style:grid-area="interaction">
         <PDP
           {pdp}
           globalColor={$globalColor}
-          width={shouldShow1D(pdp, show1D, xPdp, yPdp) ? halfWidth : gridWidth}
+          width={showOneWay ? halfWidth : gridWidth}
           height={halfHeight}
           {scaleLocally}
           {showTrendLine}
@@ -297,7 +287,7 @@
     gap: 0.25em;
   }
 
-  .show1D-true-showInteraction-true {
+  .showOneWay-true-showInteraction-true {
     grid-template-rows: 1fr 1fr;
     grid-template-columns: 1fr 1fr;
     grid-template-areas:
@@ -305,7 +295,7 @@
       'two-way interaction';
   }
 
-  .show1D-true-showInteraction-false {
+  .showOneWay-true-showInteraction-false {
     grid-template-rows: 1fr 1fr;
     grid-template-columns: 1fr 1fr;
     grid-template-areas:
@@ -313,7 +303,7 @@
       'two-way two-way';
   }
 
-  .show1D-false-showInteraction-true {
+  .showOneWay-false-showInteraction-true {
     grid-template-rows: 1fr 1fr;
     grid-template-columns: 1fr 1fr;
     grid-template-areas:
@@ -321,7 +311,7 @@
       'interaction interaction';
   }
 
-  .show1D-false-showInteraction-false {
+  .showOneWay-false-showInteraction-false {
     grid-template-rows: 1fr 1fr;
     grid-template-columns: 1fr 1fr;
     grid-template-areas:
