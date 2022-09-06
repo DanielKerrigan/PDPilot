@@ -1,6 +1,6 @@
 <script lang="ts">
-  import IndividualControls from './IndividualControls.svelte';
-  import IndividualMain from './IndividualMain.svelte';
+  import PDPGridControls from './PDPGridControls.svelte';
+  import PDPGridsMain from './PDPGridsMain.svelte';
   import ClustersMain from './ClustersMain.svelte';
   import Tabs from './Tabs.svelte';
   import { height, mode, single_pdps, features } from '../stores';
@@ -28,8 +28,8 @@
   <Tabs />
 
   <div class="grid-content" class:noshow={$mode !== 'grid'}>
-    <IndividualControls bind:selectedFeatures />
-    <IndividualMain {selectedFeatures} on:zoom={onZoom} />
+    <PDPGridControls bind:selectedFeatures />
+    <PDPGridsMain {selectedFeatures} on:zoom={onZoom} />
   </div>
 
   <div class="clusters-content" class:noshow={$mode !== 'clusters'}>

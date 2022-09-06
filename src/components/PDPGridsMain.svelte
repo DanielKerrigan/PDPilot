@@ -1,5 +1,5 @@
 <script lang="ts">
-  import PDPGroup from './PDPGroup.svelte';
+  import PDPGrid from './PDPGrid.svelte';
   import { single_pdps, double_pdps } from '../stores';
   import { doublePDPSortingOptions, singlePDPSortingOptions } from '../sorting';
 
@@ -17,7 +17,7 @@
 </script>
 
 <div class="main-container">
-  <PDPGroup
+  <PDPGrid
     title={'One-way'}
     data={filteredOneWayPds}
     showColorLegend={false}
@@ -26,7 +26,7 @@
   />
 
   {#if filteredTwoWayPds.length > 0}
-    <PDPGroup
+    <PDPGrid
       title={'Two-way'}
       data={filteredTwoWayPds}
       showColorLegend={true}
