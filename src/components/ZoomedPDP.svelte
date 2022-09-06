@@ -264,14 +264,13 @@
   }
 
   .zoomed-pdp-header {
+    height: 2em;
     display: flex;
     align-items: center;
     background-color: white;
     gap: 2em;
     padding-left: 0.5em;
     padding-right: 0.5em;
-    padding-top: 0.25em;
-    padding-bottom: 0.25em;
     border-bottom: 1px solid var(--gray-1);
   }
 

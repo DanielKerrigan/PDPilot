@@ -68,7 +68,6 @@
 
   // header
 
-  $: noshow = !expanded || data.length === 0;
   const legendHeight = 24;
 
   // sorting
@@ -151,87 +150,84 @@
       <div class="group-title">{title}</div>
     </div>
 
-    <div
-      class="page-change"
-      class:noshow
-      on:keydown={onKeyDownPageChange}
-      tabindex="0"
-    >
-      <button
-        disabled={currentPage <= 1}
-        on:click={() => setPage(currentPage - 1)}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="icon icon-tabler icon-tabler-arrow-left"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          stroke-width="2"
-          stroke="currentColor"
-          fill="none"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+    {#if expanded && data.length > 0}
+      <div class="page-change" on:keydown={onKeyDownPageChange} tabindex="0">
+        <button
+          disabled={currentPage <= 1}
+          on:click={() => setPage(currentPage - 1)}
         >
-          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-          <line x1="5" y1="12" x2="11" y2="18" />
-          <line x1="5" y1="12" x2="11" y2="6" />
-        </svg>
-      </button>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="icon icon-tabler icon-tabler-arrow-left"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke="currentColor"
+            fill="none"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+            <line x1="5" y1="12" x2="11" y2="18" />
+            <line x1="5" y1="12" x2="11" y2="6" />
+          </svg>
+        </button>
 
-      <div class="current-page-number">{currentPage}</div>
+        <div class="current-page-number">{currentPage}</div>
 
-      <button
-        disabled={currentPage >= numPages}
-        on:click={() => setPage(currentPage + 1)}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="icon icon-tabler icon-tabler-arrow-right"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          stroke-width="2"
-          stroke="currentColor"
-          fill="none"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+        <button
+          disabled={currentPage >= numPages}
+          on:click={() => setPage(currentPage + 1)}
         >
-          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-          <line x1="13" y1="18" x2="19" y2="12" />
-          <line x1="13" y1="6" x2="19" y2="12" />
-        </svg>
-      </button>
-    </div>
-
-    <label class:noshow>
-      Sort by
-      <select bind:value={sortingOption}>
-        {#each sortingOptions as option}
-          <option value={option}>{option.name}</option>
-        {/each}
-      </select>
-    </label>
-
-    <label class="label-and-input" class:noshow>
-      <input type="checkbox" bind:checked={scaleLocally} /><span
-        >Scale locally</span
-      >
-    </label>
-
-    {#if showColorLegend}
-      <div class="legend" class:noshow={noshow || scaleLocally}>
-        <QuantitativeColorLegend
-          width={180}
-          height={legendHeight}
-          color={$globalColor}
-          includeTitle={true}
-          marginLeft={15}
-          marginRight={15}
-        />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="icon icon-tabler icon-tabler-arrow-right"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke="currentColor"
+            fill="none"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+            <line x1="13" y1="18" x2="19" y2="12" />
+            <line x1="13" y1="6" x2="19" y2="12" />
+          </svg>
+        </button>
       </div>
+
+      <label>
+        Sort by
+        <select bind:value={sortingOption}>
+          {#each sortingOptions as option}
+            <option value={option}>{option.name}</option>
+          {/each}
+        </select>
+      </label>
+
+      <label class="label-and-input">
+        <input type="checkbox" bind:checked={scaleLocally} /><span
+          >Scale locally</span
+        >
+      </label>
+
+      {#if showColorLegend && !scaleLocally}
+        <div class="legend">
+          <QuantitativeColorLegend
+            width={180}
+            height={legendHeight}
+            color={$globalColor}
+            includeTitle={true}
+            marginLeft={15}
+            marginRight={15}
+          />
+        </div>
+      {/if}
     {/if}
   </div>
 
@@ -327,6 +323,7 @@
   }
 
   .group-header {
+    height: 2em;
     display: flex;
     align-items: center;
     gap: 1em;
@@ -334,12 +331,6 @@
     border-bottom: 1px solid var(--gray-1);
     padding-left: 0.5em;
     padding-right: 0.5em;
-    padding-top: 0.25em;
-    padding-bottom: 0.25em;
-  }
-
-  .noshow {
-    visibility: hidden;
   }
 
   .legend {

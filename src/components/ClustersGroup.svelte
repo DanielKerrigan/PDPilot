@@ -273,6 +273,7 @@
   }
 
   .clusters-header {
+    height: 2em;
     display: flex;
     align-items: center;
     gap: 1em;
@@ -280,8 +281,6 @@
     border-bottom: 1px solid var(--gray-1);
     padding-left: 0.5em;
     padding-right: 0.5em;
-    padding-top: 0.25em;
-    padding-bottom: 0.25em;
   }
 
   .icon-tabler-chevron-down polyline {
