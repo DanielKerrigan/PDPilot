@@ -14,8 +14,6 @@
   let scaleLocally: boolean = false;
   let showTrendLine: boolean = false;
 
-  $: console.log('PDP', pdp.id);
-
   // one-way PDPs
   let xPdp: SinglePDPData | null = null;
   let yPdp: SinglePDPData | null = null;
@@ -41,7 +39,6 @@
     event: { currentTarget: HTMLSelectElement },
     whichFeature: number
   ) {
-    console.log('onChangeFeature', whichFeature, event.currentTarget.value);
     let f1: string = '';
     let f2: string = '';
 
@@ -61,7 +58,6 @@
       const pd = $single_pdps.find((d) => d.x_feature === f1);
 
       if (pd) {
-        console.log('dispatch single', pd.id);
         dispatch('zoom', pd);
       }
     } else {
@@ -72,10 +68,7 @@
       );
 
       if (pd) {
-        console.log('dispatch double', pd.id);
         dispatch('zoom', pd);
-      } else {
-        console.log(`did not find any pdp for ${f1} vs ${f2}`);
       }
     }
   }
@@ -121,8 +114,6 @@
   });
 
   $: if (pdp.num_features === 2) {
-    console.log('in if statement');
-
     let found = 0;
 
     xPdp = null;
@@ -281,6 +272,7 @@
     gap: 2em;
     padding-left: 0.5em;
     padding-right: 0.5em;
+    border-top: 1px solid var(--gray-1);
     border-bottom: 1px solid var(--gray-1);
   }
 
