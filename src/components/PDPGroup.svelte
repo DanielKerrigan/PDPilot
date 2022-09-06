@@ -63,8 +63,8 @@
   $: numRows = Math.floor(Math.sqrt(perPage));
   $: numCols = Math.ceil(perPage / numRows);
 
-  $: pdpWidth = gridWidth / numCols;
-  $: pdpHeight = gridHeight / numRows;
+  $: pdpWidth = Math.floor(gridWidth / numCols);
+  $: pdpHeight = Math.floor(gridHeight / numRows);
 
   // header
 
@@ -237,10 +237,22 @@
 
   <div class="pdp-grid-container" bind:this={div}>
     {#if expanded}
+      <!--
+        Using repeat({numCols}, minmax(0,{pdpWidth}px)) was causing the charts to infinitely
+        expand when selecting "Scale locally" in Jupyter Lab.
+        This would happen even when replacing the PDP component with a div.
+
+        I don't exactly know why this was happening or why it was only in Jupyter Lab. It may be related
+        to the below links.
+
+        https://css-tricks.com/preventing-a-grid-blowout/
+        https://stackoverflow.com/questions/43311943/prevent-content-from-expanding-grid-items
+        https://stackoverflow.com/questions/52861086/why-does-minmax0-1fr-work-for-long-elements-while-1fr-doesnt
+       -->
       <div
         class="pdp-grid"
-        style:grid-template-columns="repeat({numCols}, 1fr)"
-        style:grid-template-rows="repeat({numRows}, 1fr)"
+        style:grid-template-columns="repeat({numCols}, minmax(0,{pdpWidth}px))"
+        style:grid-template-rows="repeat({numRows}, minmax(0,{pdpHeight}px))"
       >
         {#each pageCharts as pdp (pdp.id)}
           <div
