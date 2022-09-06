@@ -14,6 +14,8 @@
   let scaleLocally: boolean = false;
   let showTrendLine: boolean = false;
 
+  $: console.log('PDP', pdp.id);
+
   // one-way PDPs
   let xPdp: SinglePDPData | null = null;
   let yPdp: SinglePDPData | null = null;
@@ -39,6 +41,7 @@
     event: { currentTarget: HTMLSelectElement },
     whichFeature: number
   ) {
+    console.log('onChangeFeature', whichFeature, event.currentTarget.value);
     let f1: string = '';
     let f2: string = '';
 
@@ -58,6 +61,7 @@
       const pd = $single_pdps.find((d) => d.x_feature === f1);
 
       if (pd) {
+        console.log('dispatch single', pd.id);
         dispatch('zoom', pd);
       }
     } else {
@@ -68,7 +72,10 @@
       );
 
       if (pd) {
+        console.log('dispatch double', pd.id);
         dispatch('zoom', pd);
+      } else {
+        console.log(`did not find any pdp for ${f1} vs ${f2}`);
       }
     }
   }
@@ -114,6 +121,8 @@
   });
 
   $: if (pdp.num_features === 2) {
+    console.log('in if statement');
+
     let found = 0;
 
     xPdp = null;
@@ -137,9 +146,9 @@
 
 <div class="zoomed-pdp-container">
   <div class="zoomed-pdp-header">
-    <div class="feature-select">
+    <div class="feature-selects">
       <label>
-        Feat. 1
+        <span>Feat. 1</span>
         <select value={feature1} on:change={(e) => onChangeFeature(e, 1)}>
           {#each $features as feature}
             <option value={feature}>{feature}</option>
@@ -147,20 +156,25 @@
         </select>
       </label>
 
-      <label>
-        Feat. 2
-        <select value={feature2} on:change={(e) => onChangeFeature(e, 2)}>
-          <option value="" />
-          {#each $features as feature}
-            <option value={feature}>{feature}</option>
-          {/each}
-        </select>
-      </label>
+      {#if $double_pdps.length > 0}
+        <label>
+          <span>Feat. 2</span>
+          <select
+            class="feature-select"
+            value={feature2}
+            on:change={(e) => onChangeFeature(e, 2)}
+          >
+            <option value="" />
+            {#each $features as feature}
+              <option value={feature}>{feature}</option>
+            {/each}
+          </select>
+        </label>
+      {/if}
     </div>
 
     <label class="label-and-input">
-      <input type="checkbox" bind:checked={scaleLocally} />
-      Scale locally
+      <input type="checkbox" bind:checked={scaleLocally} />Scale locally
     </label>
 
     <label class="label-and-input">
@@ -172,20 +186,20 @@
 
     {#if pdp.num_features === 1 && pdp.kind === 'quantitative'}
       <label class="label-and-input">
-        <input type="checkbox" bind:checked={showTrendLine} />
-        Trend line
+        <input type="checkbox" bind:checked={showTrendLine} />Trend line
       </label>
     {/if}
 
     {#if pdp.num_features === 2}
       <label class="label-and-input">
-        <input type="checkbox" bind:checked={showOneWayChecked} />
-        One-way PDPs
+        <input type="checkbox" bind:checked={showOneWayChecked} />One-way PDPs
       </label>
 
       <label class="label-and-input">
-        <input type="checkbox" bind:checked={showInteractionsChecked} />
-        Interaction
+        <input
+          type="checkbox"
+          bind:checked={showInteractionsChecked}
+        />Interaction
       </label>
     {/if}
   </div>
@@ -251,10 +265,6 @@
 </div>
 
 <style>
-  .feature-select label + label {
-    margin-left: 0.25em;
-  }
-
   .zoomed-pdp-container {
     width: 100%;
     height: 100%;
@@ -274,6 +284,40 @@
     border-bottom: 1px solid var(--gray-1);
   }
 
+  /* .feature-selects contains the two labels and dropdowns.
+   In the header, we want the width of the dropdowns to shrink
+   so that the header stays on one line. The select menu is 3
+   levels down from the header. */
+
+  .feature-selects {
+    /* don't grow and do shrink */
+    flex: 0 1 auto;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+  }
+
+  .feature-selects label {
+    /* don't grow and do shrink */
+    flex: 0 1 auto;
+    display: flex;
+    align-items: center;
+    gap: 0.25em;
+  }
+
+  .feature-selects label span {
+    /* don't grow and don't shrink */
+    flex: 0 0 auto;
+  }
+
+  .feature-selects label select {
+    /* don't grow and do shrink */
+    flex: 0 1 auto;
+    min-width: 0;
+    text-overflow: ellipsis;
+  }
+
   .zoomed-pdp-content {
     flex: 1;
     display: grid;
@@ -281,6 +325,8 @@
   }
 
   .label-and-input {
+    /* don't grow and don't shrink */
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
     gap: 0.25em;
