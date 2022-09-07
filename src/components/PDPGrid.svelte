@@ -302,12 +302,6 @@
     gap: 0.5em;
   }
 
-  .toggle-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
   .hide-plots {
     flex: 0;
   }

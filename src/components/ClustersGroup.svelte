@@ -170,8 +170,10 @@
           {/each}
         </ul>
       </div>
+    {/if}
 
-      <div class="cluster-grid-main" bind:this={div}>
+    <div class="cluster-grid-main" bind:this={div}>
+      {#if expanded}
         <div
           class="cluster-grid"
           style:grid-template-columns="repeat({numCols}, 1fr)"
@@ -209,8 +211,8 @@
             </div>
           {/each}
         </div>
-      </div>
-    {/if}
+      {/if}
+    </div>
   </div>
 </div>
 
@@ -227,7 +229,7 @@
     display: flex;
     flex-direction: column;
 
-    min-height: 0;
+    min-height: 2em;
   }
 
   .group-title {
