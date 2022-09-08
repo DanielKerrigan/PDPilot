@@ -13,11 +13,12 @@
   export let pds: QuantitativeSinglePDPData[];
   export let width: number;
   export let height: number;
+  export let highlightPd: QuantitativeSinglePDPData | null;
 
   $: maxLength = Math.max(...pds.map((d) => d.mean_predictions.length));
   $: indices = range(maxLength);
 
-  $: margin = {
+  const margin = {
     top: 20,
     right: 10,
     bottom: 40,
@@ -61,6 +62,17 @@
       fill="none"
     />
   {/each}
+
+  {#if highlightPd}
+    <path
+      class="line"
+      d={pdpLine(highlightPd.mean_predictions)}
+      stroke="black"
+      stroke-width="2"
+      stroke-opacity="1"
+      fill="none"
+    />
+  {/if}
 
   <YAxis scale={y} x={margin.left} label={'average prediction'} />
 </svg>

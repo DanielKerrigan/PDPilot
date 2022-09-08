@@ -913,7 +913,10 @@ def categorical_feature_clustering(*, one_way_pds, feature_to_pd, first_id):
         for i in range(best_n_clusters)
     }
 
-    for feature, cluster, distance in zip(features, best_clusters, distances):
+    # sort features by distance to cluster center
+    feat_clust_dist = sorted(zip(features, best_clusters, distances), key=itemgetter(2))
+
+    for feature, cluster, distance in feat_clust_dist:
         p = feature_to_pd[feature]
         c = clusters_dict[cluster]
 

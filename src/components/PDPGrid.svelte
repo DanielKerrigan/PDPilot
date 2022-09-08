@@ -255,6 +255,7 @@
             on:click={() => onClickPdp(pdp)}
             tabindex="0"
             on:keydown={(e) => onKeyDownPdp(e, pdp)}
+            class="pdp-grid-element"
             style:cursor="pointer"
             style:max-width="{pdpWidth}px"
             style:max-height="{pdpHeight}px"
@@ -336,6 +337,7 @@
     align-items: center;
   }
 
+  /* this outlines the page change area when the user clicks there */
   .page-change:focus {
     outline: var(--blue) auto 1px;
   }
@@ -354,6 +356,14 @@
   .icon-tabler-chevron-down polyline {
     transition: transform 200ms;
     transform-origin: 50% 50%;
+  }
+
+  .pdp-grid-element {
+    cursor: pointer;
+  }
+
+  .pdp-grid-element:hover {
+    outline: var(--blue) auto 1px;
   }
 
   .rotate {

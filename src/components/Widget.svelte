@@ -33,7 +33,7 @@
   </div>
 
   <div class="clusters-content" class:noshow={$mode !== 'clusters'}>
-    <ClustersMain on:filterByCluster={onFilterByCluster} />
+    <ClustersMain on:filterByCluster={onFilterByCluster} on:zoom={onZoom} />
   </div>
 
   <div class="individual-content" class:noshow={$mode !== 'individual'}>
@@ -98,14 +98,6 @@
     margin: 0;
     padding: 0;
     line-height: 1.2;
-  }
-
-  .pdp-explorer-widget-container :global(a) {
-    color: var(--blue);
-  }
-
-  .pdp-explorer-widget-container :global(a:hover) {
-    text-decoration: none;
   }
 
   .pdp-explorer-widget-container :global(button) {

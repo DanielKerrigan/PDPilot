@@ -17,7 +17,7 @@ import { isCategoricalOneWayPd, isQuantitativeOneWayPd } from './types';
 
 import { scaleLinear, scaleSequential } from 'd3-scale';
 import { interpolateYlGnBu } from 'd3-scale-chromatic';
-import { group } from 'd3-array';
+import { group, ascending } from 'd3-array';
 
 interface WidgetWritable<T> extends Writable<T> {
   setModel: (m: DOMWidgetModel) => void;
@@ -144,13 +144,21 @@ export const globalColor: Readable<d3.ScaleSequential<string, string>> =
 export const clusteredQuantitativeOneWayPds: Readable<
   Map<number, QuantitativeSinglePDPData[]>
 > = derived(single_pdps, ($single_pdps) => {
-  const quantPds = $single_pdps.filter(isQuantitativeOneWayPd);
+  const quantPds = $single_pdps
+    .filter(isQuantitativeOneWayPd)
+    .sort((a, b) =>
+      ascending(a.distance_to_cluster_center, b.distance_to_cluster_center)
+    );
   return group(quantPds, (d) => d.cluster);
 });
 
 export const clusteredCategoricalOneWayPds: Readable<
   Map<number, CategoricalSinglePDPData[]>
 > = derived(single_pdps, ($single_pdps) => {
-  const catPds = $single_pdps.filter(isCategoricalOneWayPd);
+  const catPds = $single_pdps
+    .filter(isCategoricalOneWayPd)
+    .sort((a, b) =>
+      ascending(a.distance_to_cluster_center, b.distance_to_cluster_center)
+    );
   return group(catPds, (d) => d.cluster);
 });

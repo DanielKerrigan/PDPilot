@@ -20,6 +20,7 @@
     title={'One-way'}
     clusters={oneWayClusters}
     on:filterByCluster
+    on:zoom
   />
 </div>
 

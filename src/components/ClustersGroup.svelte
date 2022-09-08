@@ -1,8 +1,10 @@
 <script lang="ts">
   import type {
     Clusters,
+    DoublePDPData,
     OneWayCategoricalCluster,
     OneWayQuantitativeCluster,
+    SinglePDPData,
   } from '../types';
   import { createEventDispatcher, onMount } from 'svelte';
   import MultiLineChart from './vis/clusters/MultiLineChart.svelte';
@@ -80,16 +82,32 @@
     isClusterExpanded[id] = !isClusterExpanded[id];
   }
 
+  // highlighting
+
+  let highlightPd: SinglePDPData | DoublePDPData | null = null;
+
+  function setHighlight(cluster: number, feature: string) {
+    const pds = (clusters.quantitativePds.get(cluster) ??
+      clusters.categoricalPds.get(cluster) ??
+      []) as SinglePDPData[];
+
+    highlightPd = pds.find((pd) => pd.x_feature === feature) ?? null;
+  }
+
+  function resetHighlight() {
+    highlightPd = null;
+  }
+
   // events
 
-  const dispatch = createEventDispatcher<{
+  const clusterDispatch = createEventDispatcher<{
     filterByCluster: string[];
   }>();
 
   function onClickCluster(
     cluster: OneWayCategoricalCluster | OneWayQuantitativeCluster
   ) {
-    dispatch('filterByCluster', cluster.features);
+    clusterDispatch('filterByCluster', cluster.features);
   }
 
   function onKeyDownCluster(
@@ -98,6 +116,16 @@
   ) {
     if (ev.key === 'Enter' || ev.key === ' ') {
       onClickCluster(cluster);
+    }
+  }
+
+  const zoomDispatch = createEventDispatcher<{
+    zoom: SinglePDPData | DoublePDPData;
+  }>();
+
+  function onClickFeature() {
+    if (highlightPd) {
+      zoomDispatch('zoom', highlightPd);
     }
   }
 </script>
@@ -160,7 +188,20 @@
               {#if isClusterExpanded[c.id]}
                 <ul>
                   {#each c.features as feature}
-                    <li class="cluster-feature-list-item cutoff small">
+                    <li
+                      class="cluster-feature-list-item cutoff small"
+                      title={feature}
+                      tabindex="0"
+                      on:mouseenter={() => setHighlight(c.id, feature)}
+                      on:mouseleave={() => resetHighlight()}
+                      on:focusin={() => setHighlight(c.id, feature)}
+                      on:focusout={() => resetHighlight()}
+                      on:click={onClickFeature}
+                      class:highlight-feature={highlightPd &&
+                        highlightPd.num_features === 1 &&
+                        highlightPd.cluster === c.id &&
+                        highlightPd.x_feature === feature}
+                    >
                       {feature}
                     </li>
                   {/each}
@@ -176,8 +217,8 @@
       {#if expanded}
         <div
           class="cluster-grid"
-          style:grid-template-columns="repeat({numCols}, 1fr)"
-          style:grid-template-rows="repeat({numRows}, 1fr)"
+          style:grid-template-columns="repeat({numCols}, {chartWidth}px)"
+          style:grid-template-rows="repeat({numRows}, {chartHeight}px)"
         >
           {#each clusters.quantitativeClusters as c (c.id)}
             <div
@@ -191,6 +232,12 @@
                 pds={clusters.quantitativePds.get(c.id) ?? []}
                 width={chartWidth}
                 height={chartHeight}
+                highlightPd={highlightPd &&
+                highlightPd.num_features === 1 &&
+                highlightPd.kind === 'quantitative' &&
+                highlightPd.cluster === c.id
+                  ? highlightPd
+                  : null}
               />
             </div>
           {/each}
@@ -304,7 +351,7 @@
   }
 
   .cluster-id > button {
-    border: none;
+    border-color: transparent;
   }
 
   .cluster-list-item + .cluster-list-item {
@@ -315,7 +362,21 @@
     cursor: pointer;
   }
 
+  .cluster-container:hover {
+    outline: var(--blue) auto 1px;
+  }
+
   .cluster-feature-list-item {
+    cursor: pointer;
     margin-left: 1.25em;
+  }
+
+  /* the focus style is applied in .highlight-feature */
+  .cluster-feature-list-item:focus {
+    outline: none;
+  }
+
+  .highlight-feature {
+    text-decoration: underline;
   }
 </style>
