@@ -9,7 +9,6 @@ from operator import itemgetter
 from itertools import chain
 import json
 import math
-import sys
 from pathlib import Path
 
 import numpy as np
@@ -143,18 +142,24 @@ def partial_dependence(
 
     # min and max predictions
 
-    min_pred = min(one_way_pds, key=itemgetter("min_prediction"))["min_prediction"]
-    max_pred = max(one_way_pds, key=itemgetter("max_prediction"))["max_prediction"]
+    pdp_min = min(one_way_pds, key=itemgetter("pdp_min"))["pdp_min"]
+    pdp_max = max(one_way_pds, key=itemgetter("pdp_max"))["pdp_max"]
+
+    ice_min = min(one_way_pds, key=itemgetter("ice_min"))["ice_min"]
+    ice_max = max(one_way_pds, key=itemgetter("ice_max"))["ice_max"]
 
     if two_way_pds:
-        min_pred = min(
-            min_pred,
-            min(two_way_pds, key=itemgetter("min_prediction"))["min_prediction"],
+        pdp_min = min(
+            pdp_min,
+            min(two_way_pds, key=itemgetter("pdp_min"))["pdp_min"],
         )
-        max_pred = max(
-            max_pred,
-            max(two_way_pds, key=itemgetter("max_prediction"))["max_prediction"],
+        pdp_max = max(
+            pdp_max,
+            max(two_way_pds, key=itemgetter("pdp_max"))["pdp_max"],
         )
+
+        ice_min = min(ice_min, pdp_min)
+        ice_max = max(ice_max, pdp_max)
 
     # marginal distributions
 
@@ -169,7 +174,8 @@ def partial_dependence(
         "two_way_pds": two_way_pds,
         "one_way_quantitative_clusters": one_way_quantitative_clusters,
         "one_way_categorical_clusters": one_way_categorical_clusters,
-        "prediction_extent": [min_pred, max_pred],
+        "pdp_extent": [pdp_min, pdp_max],
+        "ice_extent": [ice_min, ice_max],
         "marginal_distributions": marginal_distributions,
         "n_instances": n_instances,
         "resolution": resolution,
@@ -196,7 +202,7 @@ def plot(
         if not path.exists():
             raise OSError(f"Cannot read {path}")
 
-        json_data = path.read_text()
+        json_data = path.read_text(encoding="utf-8")
         data = json.loads(json_data)
 
     # check that the output path existsm fail early if it doesn't
@@ -213,7 +219,7 @@ def plot(
             two_way_output_path = output_path.joinpath("two_way")
             two_way_output_path.mkdir()
 
-    min_pred, max_pred = data["prediction_extent"]
+    min_pred, max_pred = data["pdp_extent"]
 
     nice_prediction_limits = nice(min_pred, max_pred, 5)
     nice_prediction_breaks = ticks(
@@ -471,24 +477,13 @@ def _calc_one_way_pd(
 
     x_values = _get_feature_values(feature, feat_info, resolution)
 
-    mean_predictions = []
-
-    min_pred = math.inf
-    max_pred = -math.inf
+    ice_lines = []
 
     for value in x_values:
         _set_feature(feature, value, data, feat_info)
 
         predictions = predict(data)
-        mean_pred = np.mean(predictions).item()
-
-        mean_predictions.append(mean_pred)
-
-        if mean_pred < min_pred:
-            min_pred = mean_pred
-
-        if mean_pred > max_pred:
-            max_pred = mean_pred
+        ice_lines.append(predictions.tolist())
 
     _reset_feature(feature, data, data_copy, feat_info)
 
@@ -498,9 +493,18 @@ def _calc_one_way_pd(
         or feat_info["kind"] == "ordinal"
     )
 
-    mean_predictions_centered = (
-        np.array(mean_predictions) - np.mean(mean_predictions)
-    ).tolist()
+    ice_lines = np.array(ice_lines).T
+    mean_predictions = np.mean(ice_lines, axis=0)
+
+    mean_predictions_centered = (mean_predictions - mean_predictions).tolist()
+
+    pdp_min = mean_predictions.min().item()
+    pdp_max = mean_predictions.max().item()
+
+    mean_predictions = mean_predictions.tolist()
+
+    ice_min = ice_lines.min().item()
+    ice_max = ice_lines.max().item()
 
     par_dep = {
         "num_features": 1,
@@ -510,8 +514,11 @@ def _calc_one_way_pd(
         "x_values": x_values,
         "mean_predictions": mean_predictions,
         "mean_predictions_centered": mean_predictions_centered,
-        "min_prediction": min_pred,
-        "max_prediction": max_pred,
+        "pdp_min": pdp_min,
+        "pdp_max": pdp_max,
+        "ice_min": ice_min,
+        "ice_max": ice_max,
+        "ice_lines": ice_lines,
     }
 
     if x_is_quant:
@@ -600,8 +607,8 @@ def _calc_two_way_pd(
     y_pdp = feature_to_pd[y_feature]
     no_interactions = []
 
-    min_pred = math.inf
-    max_pred = -math.inf
+    pdp_min = math.inf
+    pdp_max = -math.inf
 
     for c, x_value in enumerate(x_axis):
         _set_feature(x_feature, x_value, data, x_feat_info)
@@ -624,11 +631,11 @@ def _calc_two_way_pd(
                 + y_pdp["mean_predictions_centered"][r]
             )
 
-            if mean_pred < min_pred:
-                min_pred = mean_pred
+            if mean_pred < pdp_min:
+                pdp_min = mean_pred
 
-            if mean_pred > max_pred:
-                max_pred = mean_pred
+            if mean_pred > pdp_max:
+                pdp_max = mean_pred
 
             _reset_feature(y_feature, data, data_copy, y_feat_info)
 
@@ -659,8 +666,8 @@ def _calc_two_way_pd(
         "y_axis": y_axis,
         "mean_predictions": mean_predictions,
         "interactions": interactions,
-        "min_prediction": min_pred,
-        "max_prediction": max_pred,
+        "pdp_min": pdp_min,
+        "pdp_max": pdp_max,
         "H": h_statistic,
         "deviation": np.std(mean_predictions).item(),
     }

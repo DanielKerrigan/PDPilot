@@ -26,9 +26,7 @@
   export let showInteractions: boolean;
   export let showColorLegend: boolean;
 
-  $: localColor = globalColor
-    .copy()
-    .domain([pdp.min_prediction, pdp.max_prediction]);
+  $: localColor = globalColor.copy().domain([pdp.pdp_min, pdp.pdp_max]);
 
   $: interactionMaxAbs = Math.max(
     Math.abs(Math.min(...pdp.interactions)),

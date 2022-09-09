@@ -8,7 +8,7 @@
   import { range } from 'd3-array';
   import XAxis from '../axis/XAxis.svelte';
   import YAxis from '../axis/YAxis.svelte';
-  import { nice_prediction_extent } from '../../../stores';
+  import { nice_pdp_extent, nice_ice_extent } from '../../../stores';
   import MarginalHistogram from '../marginal/MarginalHistogram.svelte';
 
   export let pdp: QuantitativeSinglePDPData;
@@ -16,6 +16,7 @@
   export let height: number;
   export let scaleLocally: boolean;
   export let showTrendLine: boolean;
+  export let numIceInstances: number;
   export let marginalDistributionX: QuantitativeMarginalDistribution | null;
 
   // this approach for generating a unique id to use for the
@@ -35,11 +36,15 @@
     .range([margin.left, width - margin.right]);
 
   $: yGlobal = scaleLinear()
-    .domain($nice_prediction_extent)
+    .domain(numIceInstances > 0 ? $nice_ice_extent : $nice_pdp_extent)
     .range([height - margin.bottom, margin.top]);
 
   $: yLocal = scaleLinear()
-    .domain([pdp.min_prediction, pdp.max_prediction])
+    .domain(
+      numIceInstances > 0
+        ? [pdp.ice_min, pdp.ice_max]
+        : [pdp.pdp_min, pdp.pdp_max]
+    )
     .nice()
     .range([height - margin.bottom, margin.top]);
 
@@ -54,9 +59,13 @@
     .x((i) => x(pdp.x_values[i]))
     .y((i) => y(pdp.mean_predictions[i]));
 
-  $: goodFitTrendLine = d3line<number>()
+  $: trendLine = d3line<number>()
     .x((i) => x(pdp.x_values[i]))
     .y((i) => y(pdp.trend_good_fit[i]));
+
+  $: iceLine = d3line<number>()
+    .x((_, i) => x(pdp.x_values[i]))
+    .y((d) => y(d));
 </script>
 
 <!--
@@ -86,14 +95,30 @@
   {#if showTrendLine}
     <path
       class="line"
-      d={goodFitTrendLine(indices)}
-      stroke="#7C7C7C"
+      d={trendLine(indices)}
+      stroke="var(--gray-5)"
       fill="none"
       stroke-width="2"
       clip-path="url(#{clipPathId})"
     />
   {/if}
 
+  <!-- ICE -->
+  <g>
+    {#each pdp.ice_lines.slice(0, numIceInstances) as ice}
+      <path
+        class="line"
+        d={iceLine(ice)}
+        stroke="var(--gray-3)"
+        stroke-opacity="0.4"
+        fill="none"
+        stroke-width="1"
+        clip-path="url(#{clipPathId})"
+      />
+    {/each}
+  </g>
+
+  <!-- PDP -->
   <path
     class="line"
     d={pdpLine(indices)}

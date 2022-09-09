@@ -5,7 +5,7 @@
   } from '../../../types';
   import { scaleLinear, scaleBand, scalePoint } from 'd3-scale';
   import { range } from 'd3-array';
-  import { nice_prediction_extent } from '../../../stores';
+  import { nice_pdp_extent } from '../../../stores';
 
   export let cluster: OneWayCategoricalCluster;
   export let pds: CategoricalSinglePDPData[];
@@ -50,9 +50,7 @@
     .range([0, fx.bandwidth()])
     .padding(0.5);
 
-  $: y = scaleLinear()
-    .domain($nice_prediction_extent)
-    .range([fy.bandwidth(), 0]);
+  $: y = scaleLinear().domain($nice_pdp_extent).range([fy.bandwidth(), 0]);
 
   $: radius = Math.min(3, x.step() / 2 - 1);
 </script>

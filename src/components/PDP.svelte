@@ -18,6 +18,7 @@
   export let scaleLocally: boolean;
   export let showTrendLine: boolean;
   export let showMarginalDistribution: boolean;
+  export let numIceInstances: number = 0;
   export let showInteractions: boolean = false;
   export let showColorLegend: boolean = false;
 
@@ -43,6 +44,7 @@
         {pdp}
         {scaleLocally}
         {showTrendLine}
+        {numIceInstances}
         marginalDistributionX={mdx}
       />
     {:else if pdp.kind === 'categorical' && (mdx === null || mdx.kind === 'categorical')}
@@ -51,6 +53,7 @@
         {height}
         {pdp}
         {scaleLocally}
+        {numIceInstances}
         marginalDistributionX={mdx}
       />
     {/if}

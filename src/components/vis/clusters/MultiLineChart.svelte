@@ -7,7 +7,7 @@
   import { line as d3line } from 'd3-shape';
   import { range } from 'd3-array';
   import YAxis from '../axis/YAxis.svelte';
-  import { nice_prediction_extent } from '../../../stores';
+  import { nice_pdp_extent } from '../../../stores';
 
   export let cluster: OneWayQuantitativeCluster;
   export let pds: QuantitativeSinglePDPData[];
@@ -30,7 +30,7 @@
     .range([margin.left, width - margin.right]);
 
   $: y = scaleLinear()
-    .domain($nice_prediction_extent)
+    .domain($nice_pdp_extent)
     .range([height - margin.bottom, margin.top]);
 
   // this approach with the indices is like what is done here

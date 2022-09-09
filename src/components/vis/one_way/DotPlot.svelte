@@ -6,7 +6,7 @@
   import { scalePoint, scaleLinear } from 'd3-scale';
   import XAxis from '../axis/XAxis.svelte';
   import YAxis from '../axis/YAxis.svelte';
-  import { nice_prediction_extent } from '../../../stores';
+  import { nice_pdp_extent, nice_ice_extent } from '../../../stores';
   import { range } from 'd3-array';
   import MarginalBarChart from '../marginal/MarginalBarChart.svelte';
 
@@ -14,6 +14,7 @@
   export let width: number;
   export let height: number;
   export let scaleLocally: boolean;
+  export let numIceInstances: number;
   export let marginalDistributionX: CategoricalMarginalDistribution | null;
 
   $: margin = {
@@ -29,11 +30,15 @@
     .padding(0.5);
 
   $: yGlobal = scaleLinear()
-    .domain($nice_prediction_extent)
+    .domain(numIceInstances > 0 ? $nice_ice_extent : $nice_pdp_extent)
     .range([height - margin.bottom, margin.top]);
 
   $: yLocal = scaleLinear()
-    .domain([pdp.min_prediction, pdp.max_prediction])
+    .domain(
+      numIceInstances > 0
+        ? [pdp.ice_min, pdp.ice_max]
+        : [pdp.pdp_min, pdp.pdp_max]
+    )
     .nice()
     .range([height - margin.bottom, margin.top]);
 
@@ -45,6 +50,24 @@
 </script>
 
 <svg class="pdp-dot-plot">
+  <!-- ICE -->
+  <!-- A categorical ICE plot like this isn't very helpful. Might want to add lines here. -->
+  <g>
+    {#each pdp.ice_lines.slice(0, numIceInstances) as ice}
+      {#each indices as i}
+        <circle
+          class="dot"
+          cx={x(pdp.x_values[i])}
+          cy={y(ice[i])}
+          r={radius}
+          fill="var(--gray-3)"
+          fill-opacity="0.4"
+        />
+      {/each}
+    {/each}
+  </g>
+
+  <!-- PDP -->
   <g>
     {#each indices as i}
       <circle

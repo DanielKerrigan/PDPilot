@@ -22,14 +22,23 @@
     selectedFeatures = event.detail;
     $mode = 'grid';
   }
+
+  let numIceInstances: number = 0;
+
+  function onChangeNumIceInstances(event: CustomEvent<number>) {
+    numIceInstances = event.detail;
+  }
 </script>
 
 <div class="pdp-explorer-widget-container" style:height="{$height}px">
   <Tabs />
 
   <div class="grid-content" class:noshow={$mode !== 'grid'}>
-    <PDPGridControls bind:selectedFeatures />
-    <PDPGridsMain {selectedFeatures} on:zoom={onZoom} />
+    <PDPGridControls
+      bind:selectedFeatures
+      on:changeNumIceInstances={onChangeNumIceInstances}
+    />
+    <PDPGridsMain {selectedFeatures} on:zoom={onZoom} {numIceInstances} />
   </div>
 
   <div class="clusters-content" class:noshow={$mode !== 'clusters'}>

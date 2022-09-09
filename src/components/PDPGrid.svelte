@@ -3,11 +3,13 @@
   import PDP from './PDP.svelte';
   import QuantitativeColorLegend from './vis/two_way/QuantitativeColorLegend.svelte';
   import { onMount, createEventDispatcher } from 'svelte';
-  import { globalColor } from '../stores';
+  import { globalColorPdpExtent, globalColorIceExtent } from '../stores';
 
   export let title: string;
   export let data: SinglePDPData[] | DoublePDPData[];
   export let showColorLegend: boolean = false;
+  export let showShowTrendLine: boolean = false;
+  export let numIceInstances: number = 0;
   export let sortingOptions: PDSortingOption[];
 
   let div: HTMLDivElement;
@@ -19,6 +21,12 @@
   let pdpHeight: number;
 
   let expanded = true;
+
+  let showTrendLine: boolean = false;
+
+  $: if (numIceInstances > 0) {
+    showTrendLine = false;
+  }
 
   onMount(() => {
     // Adapted from https://blog.sethcorker.com/question/how-do-you-use-the-resize-observer-api-in-svelte/
@@ -111,12 +119,12 @@
 
   // selecting pdp
 
-  const dispatch = createEventDispatcher<{
+  const dispatchZoom = createEventDispatcher<{
     zoom: SinglePDPData | DoublePDPData;
   }>();
 
   function onClickPdp(pd: SinglePDPData | DoublePDPData) {
-    dispatch('zoom', pd);
+    dispatchZoom('zoom', pd);
   }
 
   function onKeyDownPdp(ev: KeyboardEvent, pd: SinglePDPData | DoublePDPData) {
@@ -216,12 +224,22 @@
         >
       </label>
 
+      {#if showShowTrendLine && numIceInstances === 0}
+        <label class="label-and-input">
+          <input type="checkbox" bind:checked={showTrendLine} /><span
+            >Show trend line</span
+          >
+        </label>
+      {/if}
+
       {#if showColorLegend && !scaleLocally}
         <div class="legend">
           <QuantitativeColorLegend
             width={180}
             height={legendHeight}
-            color={$globalColor}
+            color={numIceInstances > 0
+              ? $globalColorIceExtent
+              : $globalColorPdpExtent}
             includeTitle={true}
             marginLeft={15}
             marginRight={15}
@@ -262,11 +280,14 @@
           >
             <PDP
               {pdp}
-              globalColor={$globalColor}
+              globalColor={numIceInstances > 0
+                ? $globalColorIceExtent
+                : $globalColorPdpExtent}
               width={pdpWidth}
               height={pdpHeight}
               {scaleLocally}
-              showTrendLine={true}
+              {numIceInstances}
+              {showTrendLine}
               showMarginalDistribution={false}
               showColorLegend={scaleLocally}
             />

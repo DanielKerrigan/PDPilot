@@ -85,8 +85,13 @@ export const total_num_instances = WidgetWritable<number>(
   0
 );
 
-export const prediction_extent = WidgetWritable<[number, number]>(
-  'prediction_extent',
+export const pdp_extent = WidgetWritable<[number, number]>(
+  'pdp_extent',
+  [0, 0]
+);
+
+export const ice_extent = WidgetWritable<[number, number]>(
+  'ice_extent',
   [0, 0]
 );
 
@@ -114,7 +119,8 @@ export function setStoreModels(model: DOMWidgetModel): void {
   num_instances_used.setModel(model);
   plot_button_clicked.setModel(model);
   total_num_instances.setModel(model);
-  prediction_extent.setModel(model);
+  pdp_extent.setModel(model);
+  ice_extent.setModel(model);
   marginal_distributions.setModel(model);
   one_way_quantitative_clusters.setModel(model);
   one_way_categorical_clusters.setModel(model);
@@ -127,19 +133,35 @@ export const mode: Writable<Mode> = writable('grid');
 
 // Derived stores
 
-export const nice_prediction_extent: Readable<[number, number]> = derived(
-  prediction_extent,
-  ($prediction_extent) =>
-    scaleLinear().domain($prediction_extent).nice().domain() as [number, number]
+export const nice_pdp_extent: Readable<[number, number]> = derived(
+  pdp_extent,
+  ($pdp_extent) =>
+    scaleLinear().domain($pdp_extent).nice().domain() as [number, number]
 );
 
-export const globalColor: Readable<d3.ScaleSequential<string, string>> =
-  derived(nice_prediction_extent, ($nice_prediction_extent) =>
-    scaleSequential()
-      .domain($nice_prediction_extent)
-      .interpolator(interpolateYlGnBu)
-      .unknown('black')
-  );
+export const nice_ice_extent: Readable<[number, number]> = derived(
+  ice_extent,
+  ($ice_extent) =>
+    scaleLinear().domain($ice_extent).nice().domain() as [number, number]
+);
+
+export const globalColorPdpExtent: Readable<
+  d3.ScaleSequential<string, string>
+> = derived(nice_pdp_extent, ($nice_pdp_extent) =>
+  scaleSequential()
+    .domain($nice_pdp_extent)
+    .interpolator(interpolateYlGnBu)
+    .unknown('black')
+);
+
+export const globalColorIceExtent: Readable<
+  d3.ScaleSequential<string, string>
+> = derived(nice_ice_extent, ($nice_ice_extent) =>
+  scaleSequential()
+    .domain($nice_ice_extent)
+    .interpolator(interpolateYlGnBu)
+    .unknown('black')
+);
 
 export const clusteredQuantitativeOneWayPds: Readable<
   Map<number, QuantitativeSinglePDPData[]>

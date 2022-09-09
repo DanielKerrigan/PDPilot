@@ -1,7 +1,13 @@
 <script lang="ts">
   import type { SinglePDPData, DoublePDPData } from '../types';
   import { createEventDispatcher, onMount } from 'svelte';
-  import { single_pdps, double_pdps, globalColor, features } from '../stores';
+  import {
+    single_pdps,
+    double_pdps,
+    globalColorPdpExtent,
+    features,
+    num_instances_used,
+  } from '../stores';
   import PDP from './PDP.svelte';
 
   export let pdp: SinglePDPData | DoublePDPData;
@@ -13,6 +19,11 @@
 
   let scaleLocally: boolean = false;
   let showTrendLine: boolean = false;
+  let numIceInstances: number = 0;
+
+  $: if (numIceInstances > 0) {
+    showTrendLine = false;
+  }
 
   // one-way PDPs
   let xPdp: SinglePDPData | null = null;
@@ -175,12 +186,6 @@
         : 'Marginal distributions'}
     </label>
 
-    {#if pdp.num_features === 1 && pdp.kind === 'quantitative'}
-      <label class="label-and-input">
-        <input type="checkbox" bind:checked={showTrendLine} />Trend line
-      </label>
-    {/if}
-
     {#if pdp.num_features === 2}
       <label class="label-and-input">
         <input type="checkbox" bind:checked={showOneWayChecked} />One-way PDPs
@@ -192,6 +197,22 @@
           bind:checked={showInteractionsChecked}
         />Interaction
       </label>
+    {:else}
+      <label class="label-and-input">
+        <span>ICE Instances</span><input
+          type="number"
+          min="0"
+          max={$num_instances_used}
+          bind:value={numIceInstances}
+          style:width="6ch"
+        />
+      </label>
+
+      {#if pdp.kind === 'quantitative' && numIceInstances === 0}
+        <label class="label-and-input">
+          <input type="checkbox" bind:checked={showTrendLine} />Trend line
+        </label>
+      {/if}
     {/if}
   </div>
   <div
@@ -202,7 +223,7 @@
       <div style:grid-area="one-way-left">
         <PDP
           pdp={xPdp}
-          globalColor={$globalColor}
+          globalColor={$globalColorPdpExtent}
           width={halfWidth}
           height={halfHeight}
           {scaleLocally}
@@ -214,7 +235,7 @@
       <div style:grid-area="one-way-right">
         <PDP
           pdp={yPdp}
-          globalColor={$globalColor}
+          globalColor={$globalColorPdpExtent}
           width={halfWidth}
           height={halfHeight}
           {scaleLocally}
@@ -227,12 +248,13 @@
     <div style:grid-area="two-way">
       <PDP
         {pdp}
-        globalColor={$globalColor}
+        globalColor={$globalColorPdpExtent}
         width={showOneWay && showInteractions ? halfWidth : gridWidth}
         height={showOneWay || showInteractions ? halfHeight : gridHeight}
         {scaleLocally}
         {showTrendLine}
         {showMarginalDistribution}
+        {numIceInstances}
         showColorLegend={true}
       />
     </div>
@@ -241,12 +263,13 @@
       <div style:grid-area="interaction">
         <PDP
           {pdp}
-          globalColor={$globalColor}
+          globalColor={$globalColorPdpExtent}
           width={showOneWay ? halfWidth : gridWidth}
           height={halfHeight}
           {scaleLocally}
           {showTrendLine}
           {showMarginalDistribution}
+          {numIceInstances}
           showInteractions={true}
           showColorLegend={true}
         />
