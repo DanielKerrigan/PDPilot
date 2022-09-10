@@ -77,6 +77,7 @@
   // header
 
   const legendHeight = 24;
+  let legendWidth = 140;
 
   // sorting
 
@@ -136,7 +137,7 @@
 
 <div class="group-container" class:hide-plots={!expanded}>
   <div class="group-header">
-    <div class="toggle-and-title">
+    <div class="toggle-and-title dont-shrink">
       <button class="toggle-button" on:click={toggle}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -159,7 +160,11 @@
     </div>
 
     {#if expanded && data.length > 0}
-      <div class="page-change" on:keydown={onKeyDownPageChange} tabindex="0">
+      <div
+        class="page-change dont-shrink"
+        on:keydown={onKeyDownPageChange}
+        tabindex="0"
+      >
         <button
           disabled={currentPage <= 1}
           on:click={() => setPage(currentPage - 1)}
@@ -209,7 +214,7 @@
         </button>
       </div>
 
-      <label>
+      <label class="dont-shrink">
         Sort by
         <select bind:value={sortingOption}>
           {#each sortingOptions as option}
@@ -218,14 +223,14 @@
         </select>
       </label>
 
-      <label class="label-and-input">
+      <label class="label-and-input dont-shrink">
         <input type="checkbox" bind:checked={scaleLocally} /><span
           >Scale locally</span
         >
       </label>
 
       {#if showShowTrendLine && numIceInstances === 0}
-        <label class="label-and-input">
+        <label class="label-and-input dont-shrink">
           <input type="checkbox" bind:checked={showTrendLine} /><span
             >Show trend line</span
           >
@@ -233,17 +238,20 @@
       {/if}
 
       {#if showColorLegend && !scaleLocally}
-        <div class="legend">
-          <QuantitativeColorLegend
-            width={180}
-            height={legendHeight}
-            color={numIceInstances > 0
-              ? $globalColorIceExtent
-              : $globalColorPdpExtent}
-            includeTitle={true}
-            marginLeft={15}
-            marginRight={15}
-          />
+        <div class="legend-container">
+          <div class="legend-title">Prediction</div>
+          <!-- why does bind:offsetWidth={legendWidth} not work here? -->
+          <div class="legend">
+            <QuantitativeColorLegend
+              width={legendWidth}
+              height={legendHeight}
+              color={numIceInstances > 0
+                ? $globalColorIceExtent
+                : $globalColorPdpExtent}
+              marginLeft={15}
+              marginRight={15}
+            />
+          </div>
         </div>
       {/if}
     {/if}
@@ -349,8 +357,16 @@
     padding-right: 0.5em;
   }
 
-  .legend {
+  .legend-container {
+    /* flex: 1; */
     margin-left: auto;
+
+    display: flex;
+    align-items: center;
+  }
+
+  .legend {
+    flex: 1;
   }
 
   .page-change {
@@ -389,5 +405,9 @@
 
   .rotate {
     transform: rotate(-90deg);
+  }
+
+  .dont-shrink {
+    flex: 0 0 auto;
   }
 </style>

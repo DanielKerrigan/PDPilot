@@ -117,7 +117,6 @@
       {width}
       height={legendHeight}
       {color}
-      includeTitle={false}
       marginLeft={margin.left}
       marginRight={margin.right}
     />

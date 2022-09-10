@@ -13,7 +13,6 @@
   export let color:
     | d3.ScaleSequential<string, string>
     | d3.ScaleDiverging<string, string>;
-  export let includeTitle: boolean;
 
   export let marginTop: number = 0;
   export let marginRight: number = 0;
@@ -84,36 +83,26 @@
   $: ticks = x.ticks(colorWidth / 60);
 </script>
 
-<div class="legend-container">
-  {#if includeTitle}
-    <div class="legend-title">Prediction</div>
-  {/if}
-  <div class="color-container" style="height: {height}px;">
-    <canvas bind:this={canvas} />
-    <svg {width} {height}>
-      {#each ticks as tick}
-        <g transform="translate({x(tick)},{marginTop})">
-          <line y1={0} y2={colorHeight} stroke="black" />
-          <text
-            y={colorHeight + spaceBetweenColorAndTickLabel}
-            dominant-baseline="hanging"
-            text-anchor="middle"
-            font-size={tickLabelHeight}
-          >
-            {defaultFormat(tick)}
-          </text>
-        </g>
-      {/each}
-    </svg>
-  </div>
+<div class="color-container" style="height: {height}px;">
+  <canvas bind:this={canvas} />
+  <svg {width} {height}>
+    {#each ticks as tick}
+      <g transform="translate({x(tick)},{marginTop})">
+        <line y1={0} y2={colorHeight} stroke="black" />
+        <text
+          y={colorHeight + spaceBetweenColorAndTickLabel}
+          dominant-baseline="hanging"
+          text-anchor="middle"
+          font-size={tickLabelHeight}
+        >
+          {defaultFormat(tick)}
+        </text>
+      </g>
+    {/each}
+  </svg>
 </div>
 
 <style>
-  .legend-container {
-    display: flex;
-    align-items: center;
-  }
-
   .color-container {
     position: relative;
   }
