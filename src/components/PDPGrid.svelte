@@ -13,6 +13,7 @@
   export let sortingOptions: PDSortingOption[];
 
   let div: HTMLDivElement;
+  let legendDiv: HTMLDivElement;
 
   let gridWidth: number;
   let gridHeight: number;
@@ -31,7 +32,7 @@
   onMount(() => {
     // Adapted from https://blog.sethcorker.com/question/how-do-you-use-the-resize-observer-api-in-svelte/
     // and https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver
-    const resizeObserver = new ResizeObserver(
+    const gridResizeObserver = new ResizeObserver(
       (entries: ResizeObserverEntry[]) => {
         if (entries.length !== 1) {
           return;
@@ -53,9 +54,36 @@
       }
     );
 
-    resizeObserver.observe(div);
+    gridResizeObserver.observe(div);
 
-    return () => resizeObserver.unobserve(div);
+    const legendResizeObserver = new ResizeObserver(
+      (entries: ResizeObserverEntry[]) => {
+        if (entries.length !== 1) {
+          return;
+        }
+
+        const entry: ResizeObserverEntry = entries[0];
+
+        if (entry.contentBoxSize) {
+          const contentBoxSize = Array.isArray(entry.contentBoxSize)
+            ? entry.contentBoxSize[0]
+            : entry.contentBoxSize;
+
+          legendWidth = contentBoxSize.inlineSize;
+        } else {
+          legendWidth = entry.contentRect.width;
+        }
+
+        console.log('legendWidth', legendWidth);
+      }
+    );
+
+    legendResizeObserver.observe(legendDiv);
+
+    return () => {
+      gridResizeObserver.unobserve(div);
+      legendResizeObserver.unobserve(div);
+    };
   });
 
   // expand and collapse
@@ -236,25 +264,31 @@
           >
         </label>
       {/if}
-
-      {#if showColorLegend && !scaleLocally}
-        <div class="legend-container">
-          <div class="legend-title">Prediction</div>
-          <!-- why does bind:offsetWidth={legendWidth} not work here? -->
-          <div class="legend">
-            <QuantitativeColorLegend
-              width={legendWidth}
-              height={legendHeight}
-              color={numIceInstances > 0
-                ? $globalColorIceExtent
-                : $globalColorPdpExtent}
-              marginLeft={15}
-              marginRight={15}
-            />
-          </div>
-        </div>
-      {/if}
     {/if}
+    <!--
+      The legend is outside the above if statement because we want this div
+      to persist so that the ResizeObserver works correctly.
+    -->
+    <div
+      class="legend-container"
+      class:dont-show={!expanded ||
+        data.length == 0 ||
+        !showColorLegend ||
+        scaleLocally}
+    >
+      <div class="legend-title">Prediction</div>
+      <div class="legend" bind:this={legendDiv}>
+        <QuantitativeColorLegend
+          width={legendWidth}
+          height={legendHeight}
+          color={numIceInstances > 0
+            ? $globalColorIceExtent
+            : $globalColorPdpExtent}
+          marginLeft={15}
+          marginRight={15}
+        />
+      </div>
+    </div>
   </div>
 
   <div class="pdp-grid-container" bind:this={div}>
@@ -358,7 +392,7 @@
   }
 
   .legend-container {
-    /* flex: 1; */
+    flex: 1;
     margin-left: auto;
 
     display: flex;
@@ -409,5 +443,9 @@
 
   .dont-shrink {
     flex: 0 0 auto;
+  }
+
+  .dont-show {
+    display: none;
   }
 </style>
