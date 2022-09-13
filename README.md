@@ -12,7 +12,7 @@ The easiest way to try out the widget is to install it in a conda environment an
 # Create a conda environment.
 conda create -n pdpexplorer
 conda activate pdpexplorer
-conda install nodejs yarn jupyterlab
+conda install python nodejs yarn jupyterlab
 
 # Install the package.
 # Run this from the pdp-explorer directory.
