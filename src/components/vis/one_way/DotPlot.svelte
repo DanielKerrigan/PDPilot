@@ -7,6 +7,7 @@
   import XAxis from '../axis/XAxis.svelte';
   import YAxis from '../axis/YAxis.svelte';
   import { nice_pdp_extent, nice_ice_extent } from '../../../stores';
+  import { line } from 'd3-shape';
   import { range } from 'd3-array';
   import MarginalBarChart from '../marginal/MarginalBarChart.svelte';
 
@@ -47,31 +48,43 @@
   $: radius = Math.min(3, x.step() / 2 - 1);
 
   $: indices = range(pdp.x_values.length);
+
+  // when there are ICE plots, use lines instead of dots
+  $: pdpLine = line<number>()
+    .x((i) => x(pdp.x_values[i]) ?? 0)
+    .y((i) => y(pdp.mean_predictions[i]));
+
+  $: iceLine = line<number>()
+    .x((_, i) => x(pdp.x_values[i]) ?? 0)
+    .y((d) => y(d));
 </script>
 
 <svg class="pdp-dot-plot">
   <!-- ICE -->
-  <!-- A categorical ICE plot like this isn't very helpful. Might want to add lines here. -->
   <g>
     {#each pdp.ice_lines.slice(0, numIceInstances) as ice}
-      {#each indices as i}
-        <circle
-          class="dot"
-          cx={x(pdp.x_values[i])}
-          cy={y(ice[i])}
-          r={radius}
-          fill="var(--gray-3)"
-          fill-opacity="0.4"
-        />
-      {/each}
+      <path
+        d={iceLine(ice)}
+        stroke="var(--gray-3)"
+        fill="none"
+        stroke-opacity="0.4"
+        stroke-width="1"
+      />
     {/each}
   </g>
 
   <!-- PDP -->
   <g>
+    {#if numIceInstances > 0}
+      <path
+        d={pdpLine(indices)}
+        stroke="var(--magenta)"
+        fill="none"
+        stroke-width="2"
+      />
+    {/if}
     {#each indices as i}
       <circle
-        class="dot"
         cx={x(pdp.x_values[i])}
         cy={y(pdp.mean_predictions[i])}
         r={radius}
