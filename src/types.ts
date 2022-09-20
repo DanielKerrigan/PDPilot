@@ -1,3 +1,17 @@
+// ICE
+
+export type ICE = {
+  ice_min: number;
+  ice_max: number;
+  mean_min: number;
+  mean_max: number;
+  clusters: {
+    id: number;
+    ice_lines: number[][];
+    mean: number[];
+  }[];
+};
+
 // partial dependence
 
 export type QuantitativeSinglePDPData = {
@@ -9,15 +23,13 @@ export type QuantitativeSinglePDPData = {
   mean_predictions: number[];
   pdp_min: number;
   pdp_max: number;
-  ice_lines: number[][];
-  ice_min: number;
-  ice_max: number;
   trend_good_fit: number[];
   nrmse_good_fit: number;
   knots_good_fit: number;
   deviation: number;
   distance_to_cluster_center: number;
   cluster: number;
+  ice: ICE;
 };
 
 export type CategoricalSinglePDPData = {
@@ -29,14 +41,12 @@ export type CategoricalSinglePDPData = {
   mean_predictions: number[];
   pdp_min: number;
   pdp_max: number;
-  ice_lines: number[][];
-  ice_min: number;
-  ice_max: number;
   nrmse_good_fit: number;
   knots_good_fit: number;
   deviation: number;
   distance_to_cluster_center: number;
   cluster: number;
+  ice: ICE;
 };
 
 export type SinglePDPData =

@@ -100,6 +100,7 @@ def partial_dependence(
             "md": md,
             "iqr": iqr,
             "feature_to_pd": None,
+            "n_jobs": n_jobs,
         }
         for feature in one_way_features
     ]
@@ -441,6 +442,7 @@ def _calc_pd(
     md,
     iqr,
     feature_to_pd,
+    n_jobs,
 ):
     if isinstance(feature, tuple) or isinstance(feature, list):
         return _calc_two_way_pd(
@@ -451,6 +453,7 @@ def _calc_pd(
             resolution,
             md,
             feature_to_pd,
+            n_jobs,
         )
     else:
         return _calc_one_way_pd(
@@ -461,6 +464,7 @@ def _calc_pd(
             resolution,
             md,
             iqr,
+            n_jobs,
         )
 
 
@@ -472,6 +476,7 @@ def _calc_one_way_pd(
     resolution,
     md,
     iqr,
+    n_jobs,
 ):
     feat_info = md.feature_info[feature]
 
@@ -503,8 +508,7 @@ def _calc_one_way_pd(
 
     mean_predictions = mean_predictions.tolist()
 
-    ice_min = ice_lines.min().item()
-    ice_max = ice_lines.max().item()
+    ice = calculate_ice(ice_lines=ice_lines, n_jobs=n_jobs)
 
     par_dep = {
         "num_features": 1,
@@ -516,9 +520,7 @@ def _calc_one_way_pd(
         "mean_predictions_centered": mean_predictions_centered,
         "pdp_min": pdp_min,
         "pdp_max": pdp_max,
-        "ice_min": ice_min,
-        "ice_max": ice_max,
-        "ice_lines": ice_lines,
+        "ice": ice,
     }
 
     if x_is_quant:
@@ -569,6 +571,7 @@ def _calc_two_way_pd(
     resolution,
     md,
     feature_to_pd,
+    n_jobs,
 ):
     x_feature, y_feature = pair
 
@@ -939,3 +942,55 @@ def categorical_feature_clustering(*, one_way_pds, feature_to_pd, first_id):
         c["mean_distance"] = c["mean_distance"] / len(c["features"])
 
     return clusters
+
+
+def calculate_ice(ice_lines, n_jobs):
+    timeseries_dataset = []
+
+    for instance in ice_lines:
+        timeseries_dataset.append(instance - instance.mean())
+
+    timeseries_dataset = to_time_series_dataset(timeseries_dataset)
+
+    best_labels = []
+    best_score = -math.inf
+    best_n_clusters = -1
+
+    for n in range(2, 5):
+        cluster_model = TimeSeriesKMeans(
+            n_clusters=n, metric="dtw", max_iter=50, n_init=1, n_jobs=n_jobs
+        )
+        cluster_model.fit(timeseries_dataset)
+        labels = cluster_model.predict(timeseries_dataset)
+
+        score = ts_silhouette_score(timeseries_dataset, labels, metric="dtw")
+
+        if score > best_score:
+            best_score = score
+            best_n_clusters = n
+            best_labels = labels
+
+    clusters = []
+
+    for n in range(best_n_clusters):
+        lines = ice_lines[best_labels == n]
+
+        mean = lines.mean(axis=0)
+
+        clusters.append(
+            {
+                "id": n,
+                "ice_lines": lines.tolist(),
+                "mean": mean.tolist(),
+            }
+        )
+
+    ice = {
+        "ice_min": ice_lines.min().item(),
+        "ice_max": ice_lines.max().item(),
+        "mean_min": mean.min().item(),
+        "mean_max": mean.max().item(),
+        "clusters": clusters,
+    }
+
+    return ice
