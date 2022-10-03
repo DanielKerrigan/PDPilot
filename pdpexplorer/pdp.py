@@ -26,22 +26,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.metrics import mean_squared_error, silhouette_score
 from sklearn.cluster import KMeans
 
-from plotnine import (
-    ggplot,
-    geom_line,
-    geom_point,
-    geom_tile,
-    aes,
-    labs,
-    scale_fill_distiller,
-    scale_y_continuous,
-    theme_light,
-    ggtitle,
-    coord_cartesian,
-)
-
 from pdpexplorer.metadata import Metadata
-from pdpexplorer.ticks import nice, ticks
 
 
 def partial_dependence(
@@ -130,6 +115,7 @@ def partial_dependence(
             "md": md,
             "iqr": iqr,
             "feature_to_pd": feature_to_pd,
+            "n_jobs": n_jobs,
         }
         for pair in two_way_feature_pairs
     ]
@@ -146,8 +132,12 @@ def partial_dependence(
     pdp_min = min(one_way_pds, key=itemgetter("pdp_min"))["pdp_min"]
     pdp_max = max(one_way_pds, key=itemgetter("pdp_max"))["pdp_max"]
 
-    ice_min = min(one_way_pds, key=itemgetter("ice_min"))["ice_min"]
-    ice_max = max(one_way_pds, key=itemgetter("ice_max"))["ice_max"]
+    cluster_min = min(one_way_pds, key=lambda d: d["ice"]["mean_min"])["ice"][
+        "mean_min"
+    ]
+    cluster_max = max(one_way_pds, key=lambda d: d["ice"]["mean_max"])["ice"][
+        "mean_max"
+    ]
 
     if two_way_pds:
         pdp_min = min(
@@ -158,9 +148,6 @@ def partial_dependence(
             pdp_max,
             max(two_way_pds, key=itemgetter("pdp_max"))["pdp_max"],
         )
-
-        ice_min = min(ice_min, pdp_min)
-        ice_max = max(ice_max, pdp_max)
 
     # marginal distributions
 
@@ -176,7 +163,7 @@ def partial_dependence(
         "one_way_quantitative_clusters": one_way_quantitative_clusters,
         "one_way_categorical_clusters": one_way_categorical_clusters,
         "pdp_extent": [pdp_min, pdp_max],
-        "ice_extent": [ice_min, ice_max],
+        "cluster_extent": [cluster_min, cluster_max],
         "marginal_distributions": marginal_distributions,
         "n_instances": n_instances,
         "resolution": resolution,
@@ -186,222 +173,6 @@ def partial_dependence(
         path.write_text(json.dumps(results), encoding="utf-8")
     else:
         return results
-
-
-def plot(
-    *,
-    data,
-    one_way_sort_by=None,
-    two_way_sort_by=None,
-    same_prediction_scale=True,
-    output_path=None,
-):
-    # if data is a path or string, then read the file at that path
-    if isinstance(data, Path) or isinstance(data, str):
-        path = Path(data).resolve()
-
-        if not path.exists():
-            raise OSError(f"Cannot read {path}")
-
-        json_data = path.read_text(encoding="utf-8")
-        data = json.loads(json_data)
-
-    # check that the output path existsm fail early if it doesn't
-    if output_path:
-        output_path = Path(output_path).resolve()
-
-        if not output_path.exists():
-            raise OSError(f"Cannot write to {output_path}")
-
-        one_way_output_path = output_path.joinpath("one_way")
-        one_way_output_path.mkdir()
-
-        if data["two_way_pds"]:
-            two_way_output_path = output_path.joinpath("two_way")
-            two_way_output_path.mkdir()
-
-    min_pred, max_pred = data["pdp_extent"]
-
-    nice_prediction_limits = nice(min_pred, max_pred, 5)
-    nice_prediction_breaks = ticks(
-        nice_prediction_limits[0], nice_prediction_limits[1], 5
-    )
-
-    # one-way
-
-    one_way_pdps = []
-
-    if one_way_sort_by == "good_fit":
-        sorted_one_way_pds = sorted(
-            data["one_way_pds"],
-            key=lambda x: (-x["knots_good_fit"], -x["nrmse_good_fit"]),
-        )
-    elif one_way_sort_by == "deviation":
-        sorted_one_way_pds = sorted(data["one_way_pds"], key=lambda x: -x["deviation"])
-    else:
-        sorted_one_way_pds = data["one_way_pds"]
-
-    num_digits = math.floor(math.log10(len(sorted_one_way_pds))) + 1
-
-    for i, par_dep in enumerate(sorted_one_way_pds):
-        if par_dep["kind"] == "quantitative":
-            df = pd.DataFrame(
-                {
-                    "x_values": par_dep["x_values"],
-                    "mean_predictions": par_dep["mean_predictions"],
-                    "trend": par_dep["trend_good_fit"],
-                }
-            )
-
-            pdp = (
-                ggplot(data=df, mapping=aes(x="x_values"))
-                + geom_line(aes(y="trend"), color="#7C7C7C")
-                + geom_line(aes(y="mean_predictions"), color="#792367")
-                + labs(x=par_dep["x_feature"], y="prediction")
-                + theme_light()
-            )
-
-            if same_prediction_scale:
-                pdp += coord_cartesian(ylim=nice_prediction_limits, expand=False)
-        else:
-            df = pd.DataFrame(
-                {
-                    "x_values": par_dep["x_values"],
-                    "mean_predictions": par_dep["mean_predictions"],
-                }
-            )
-
-            pdp = (
-                ggplot(data=df, mapping=aes(x="factor(x_values)", y="mean_predictions"))
-                + geom_point(color="#792367")
-                + labs(x=par_dep["x_feature"], y="prediction")
-                + theme_light()
-            )
-
-            if same_prediction_scale:
-                pdp += scale_y_continuous(limits=nice_prediction_limits, expand=(0, 0))
-
-        if output_path:
-            pdp.save(
-                filename=one_way_output_path.joinpath(
-                    f'{i:0>{num_digits}}_{par_dep["id"]}.png'
-                ),
-                format="png",
-                dpi=300,
-                verbose=False,
-            )
-        else:
-            one_way_pdps.append(pdp)
-
-    # two-way
-
-    two_way_pdps = []
-
-    if data["two_way_pds"]:
-        if two_way_sort_by == "h":
-            sorted_two_way_pds = sorted(data["two_way_pds"], key=lambda x: -x["H"])
-        elif two_way_sort_by == "deviation":
-            sorted_two_way_pds = sorted(
-                data["two_way_pds"], key=lambda x: -x["deviation"]
-            )
-        else:
-            sorted_two_way_pds = data["two_way_pds"]
-
-        num_digits = math.floor(math.log10(len(sorted_two_way_pds))) + 1
-
-        for i, par_dep in enumerate(sorted_two_way_pds):
-            limits_and_breaks = (
-                {"limits": nice_prediction_limits, "breaks": nice_prediction_breaks}
-                if same_prediction_scale
-                else {}
-            )
-
-            if par_dep["kind"] == "quantitative":
-                df = pd.DataFrame(
-                    {
-                        "x_values": par_dep["x_values"],
-                        "y_values": par_dep["y_values"],
-                        "mean_predictions": par_dep["mean_predictions"],
-                    }
-                )
-
-                pdp = (
-                    ggplot(data=df, mapping=aes(x="x_values", y="y_values"))
-                    + geom_tile(mapping=aes(fill="mean_predictions"))
-                    + scale_fill_distiller(
-                        palette="YlGnBu", direction=1, **limits_and_breaks
-                    )
-                    + labs(
-                        fill="prediction",
-                        x=par_dep["x_feature"],
-                        y=par_dep["y_feature"],
-                    )
-                    + ggtitle(f'H* = {par_dep["H"]:.3f}')
-                    + theme_light()
-                )
-            elif par_dep["kind"] == "categorical":
-                df = pd.DataFrame(
-                    {
-                        "x_values": par_dep["x_values"],
-                        "y_values": par_dep["y_values"],
-                        "mean_predictions": par_dep["mean_predictions"],
-                    }
-                )
-
-                pdp = (
-                    ggplot(
-                        data=df, mapping=aes(x="factor(x_values)", y="factor(y_values)")
-                    )
-                    + geom_tile(mapping=aes(fill="mean_predictions"))
-                    + scale_fill_distiller(
-                        palette="YlGnBu", direction=1, **limits_and_breaks
-                    )
-                    + labs(
-                        fill="prediction",
-                        x=par_dep["x_feature"],
-                        y=par_dep["y_feature"],
-                    )
-                    + ggtitle(f'H* = {par_dep["H"]:.3f}')
-                    + theme_light()
-                )
-            else:
-                df = pd.DataFrame(
-                    {
-                        "x_values": par_dep["x_values"],
-                        "y_values": par_dep["y_values"],
-                        "mean_predictions": par_dep["mean_predictions"],
-                    }
-                )
-
-                pdp = (
-                    ggplot(data=df, mapping=aes(x="x_values", y="factor(y_values)"))
-                    + geom_tile(mapping=aes(fill="mean_predictions"))
-                    + scale_fill_distiller(
-                        palette="YlGnBu", direction=1, **limits_and_breaks
-                    )
-                    + labs(
-                        fill="prediction",
-                        x=par_dep["x_feature"],
-                        y=par_dep["y_feature"],
-                    )
-                    + ggtitle(f'H* = {par_dep["H"]:.3f}')
-                    + theme_light()
-                )
-
-            if output_path:
-                pdp.save(
-                    filename=two_way_output_path.joinpath(
-                        f'{i:0>{num_digits}}_{par_dep["id"]}.png'
-                    ),
-                    format="png",
-                    dpi=300,
-                    verbose=False,
-                )
-            else:
-                two_way_pdps.append(pdp)
-
-    if not output_path:
-        return one_way_pdps, two_way_pdps
 
 
 def widget_partial_dependence(
@@ -501,7 +272,7 @@ def _calc_one_way_pd(
     ice_lines = np.array(ice_lines).T
     mean_predictions = np.mean(ice_lines, axis=0)
 
-    mean_predictions_centered = (mean_predictions - mean_predictions).tolist()
+    mean_predictions_centered = (mean_predictions - mean_predictions.mean()).tolist()
 
     pdp_min = mean_predictions.min().item()
     pdp_max = mean_predictions.max().item()
@@ -945,12 +716,15 @@ def categorical_feature_clustering(*, one_way_pds, feature_to_pd, first_id):
 
 
 def calculate_ice(ice_lines, n_jobs):
-    timeseries_dataset = []
+    centered_ice_lines = []
 
+    # todo - vectorize
     for instance in ice_lines:
-        timeseries_dataset.append(instance - instance.mean())
+        centered_ice_lines.append(instance - instance[0])
 
-    timeseries_dataset = to_time_series_dataset(timeseries_dataset)
+    centered_ice_lines = np.array(centered_ice_lines)
+
+    timeseries_dataset = to_time_series_dataset(centered_ice_lines)
 
     best_labels = []
     best_score = -math.inf
@@ -958,12 +732,12 @@ def calculate_ice(ice_lines, n_jobs):
 
     for n in range(2, 5):
         cluster_model = TimeSeriesKMeans(
-            n_clusters=n, metric="dtw", max_iter=50, n_init=1, n_jobs=n_jobs
+            n_clusters=n, metric="euclidean", max_iter=50, n_init=1, n_jobs=1
         )
         cluster_model.fit(timeseries_dataset)
         labels = cluster_model.predict(timeseries_dataset)
 
-        score = ts_silhouette_score(timeseries_dataset, labels, metric="dtw")
+        score = ts_silhouette_score(timeseries_dataset, labels, metric="euclidean")
 
         if score > best_score:
             best_score = score
@@ -972,25 +746,57 @@ def calculate_ice(ice_lines, n_jobs):
 
     clusters = []
 
+    mean_min = math.inf
+    mean_max = -math.inf
+
     for n in range(best_n_clusters):
         lines = ice_lines[best_labels == n]
+        centered_lines = centered_ice_lines[best_labels == n]
 
         mean = lines.mean(axis=0)
+        centered_mean = centered_lines.mean(axis=0)
+        compared_mean = mean - mean[0]
 
         clusters.append(
             {
                 "id": n,
                 "ice_lines": lines.tolist(),
+                "centered_ice_lines": centered_lines.tolist(),
                 "mean": mean.tolist(),
+                "p0": np.percentile(centered_lines, 0, axis=0).tolist(),
+                "p10": np.percentile(centered_lines, 10, axis=0).tolist(),
+                "p25": np.percentile(centered_lines, 25, axis=0).tolist(),
+                "p75": np.percentile(centered_lines, 75, axis=0).tolist(),
+                "p90": np.percentile(centered_lines, 90, axis=0).tolist(),
+                "p100": np.percentile(centered_lines, 100, axis=0).tolist(),
+                "centered_mean": centered_mean.tolist(),
+                "compared_mean": compared_mean.tolist(),
             }
+        )
+
+        mean_min = min(mean_min, mean.min())
+        mean_max = max(mean_max, mean.max())
+
+    centered_pdp = centered_ice_lines.mean(axis=0)
+
+    cluster_distance = 0
+
+    for cluster in clusters:
+        cluster_distance += np.mean(
+            np.absolute(cluster["centered_mean"] - centered_pdp)
         )
 
     ice = {
         "ice_min": ice_lines.min().item(),
         "ice_max": ice_lines.max().item(),
-        "mean_min": mean.min().item(),
-        "mean_max": mean.max().item(),
+        "centered_ice_min": centered_ice_lines.min().item(),
+        "centered_ice_max": centered_ice_lines.max().item(),
+        "mean_min": mean_min.item(),
+        "mean_max": mean_max.item(),
         "clusters": clusters,
+        "centered_pdp": centered_pdp.tolist(),
+        "compare_pdp": (ice_lines.mean(axis=0) - ice_lines.mean(axis=0)[0]).tolist(),
+        "cluster_distance": cluster_distance.item(),
     }
 
     return ice

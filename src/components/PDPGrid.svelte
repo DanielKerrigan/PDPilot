@@ -9,7 +9,7 @@
   export let data: SinglePDPData[] | DoublePDPData[];
   export let showColorLegend: boolean = false;
   export let showShowTrendLine: boolean = false;
-  export let numIceInstances: number = 0;
+  export let showIceClusters: boolean;
   export let sortingOptions: PDSortingOption[];
 
   let div: HTMLDivElement;
@@ -25,7 +25,7 @@
 
   let showTrendLine: boolean = false;
 
-  $: if (numIceInstances > 0) {
+  $: if (showIceClusters) {
     showTrendLine = false;
   }
 
@@ -73,8 +73,6 @@
         } else {
           legendWidth = entry.contentRect.width;
         }
-
-        console.log('legendWidth', legendWidth);
       }
     );
 
@@ -257,7 +255,7 @@
         >
       </label>
 
-      {#if showShowTrendLine && numIceInstances === 0}
+      {#if showShowTrendLine && !showIceClusters}
         <label class="label-and-input dont-shrink">
           <input type="checkbox" bind:checked={showTrendLine} /><span
             >Show trend line</span
@@ -281,7 +279,7 @@
         <QuantitativeColorLegend
           width={legendWidth}
           height={legendHeight}
-          color={numIceInstances > 0
+          color={showIceClusters
             ? $globalColorIceExtent
             : $globalColorPdpExtent}
           marginLeft={15}
@@ -322,16 +320,16 @@
           >
             <PDP
               {pdp}
-              globalColor={numIceInstances > 0
+              globalColor={showIceClusters
                 ? $globalColorIceExtent
                 : $globalColorPdpExtent}
               width={pdpWidth}
               height={pdpHeight}
               {scaleLocally}
-              {numIceInstances}
               {showTrendLine}
               showMarginalDistribution={false}
               showColorLegend={scaleLocally}
+              {showIceClusters}
             />
           </div>
         {/each}

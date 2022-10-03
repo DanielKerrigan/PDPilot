@@ -6,7 +6,7 @@
   import { scalePoint, scaleLinear } from 'd3-scale';
   import XAxis from '../axis/XAxis.svelte';
   import YAxis from '../axis/YAxis.svelte';
-  import { nice_pdp_extent, nice_ice_extent } from '../../../stores';
+  import { nice_pdp_extent, nice_cluster_extent } from '../../../stores';
   import { line } from 'd3-shape';
   import { range } from 'd3-array';
   import MarginalBarChart from '../marginal/MarginalBarChart.svelte';
@@ -16,6 +16,7 @@
   export let height: number;
   export let scaleLocally: boolean;
   export let numIceInstances: number;
+  export let showIceClusters: boolean;
   export let marginalDistributionX: CategoricalMarginalDistribution | null;
 
   $: margin = {
@@ -31,13 +32,15 @@
     .padding(0.5);
 
   $: yGlobal = scaleLinear()
-    .domain(numIceInstances > 0 ? $nice_ice_extent : $nice_pdp_extent)
+    .domain(showIceClusters ? $nice_cluster_extent : $nice_pdp_extent)
     .range([height - margin.bottom, margin.top]);
 
   $: yLocal = scaleLinear()
     .domain(
       numIceInstances > 0
-        ? [pdp.ice_min, pdp.ice_max]
+        ? [pdp.ice.ice_min, pdp.ice.ice_max]
+        : showIceClusters
+        ? [pdp.ice.mean_min, pdp.ice.mean_max]
         : [pdp.pdp_min, pdp.pdp_max]
     )
     .nice()
@@ -60,25 +63,27 @@
 </script>
 
 <svg class="pdp-dot-plot">
-  <!-- ICE -->
-  <g>
-    {#each pdp.ice_lines.slice(0, numIceInstances) as ice}
-      <path
-        d={iceLine(ice)}
-        stroke="var(--gray-3)"
-        fill="none"
-        stroke-opacity="0.4"
-        stroke-width="1"
-      />
-    {/each}
-  </g>
+  <!-- ICE clusters -->
+  {#if showIceClusters}
+    <g>
+      {#each pdp.ice.clusters as cluster}
+        <path
+          d={iceLine(cluster.mean)}
+          stroke="var(--gray-3)"
+          fill="none"
+          stroke-opacity="1"
+          stroke-width="1"
+        />
+      {/each}
+    </g>
+  {/if}
 
   <!-- PDP -->
   <g>
-    {#if numIceInstances > 0}
+    {#if showIceClusters}
       <path
         d={pdpLine(indices)}
-        stroke="var(--magenta)"
+        stroke="var(--black)"
         fill="none"
         stroke-width="2"
       />
@@ -88,7 +93,7 @@
         cx={x(pdp.x_values[i])}
         cy={y(pdp.mean_predictions[i])}
         r={radius}
-        fill="var(--magenta)"
+        fill="var(--black)"
       />
     {/each}
   </g>

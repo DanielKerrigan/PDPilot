@@ -23,10 +23,10 @@
     $mode = 'grid';
   }
 
-  let numIceInstances: number = 0;
+  let showIceClusters: boolean = false;
 
-  function onChangeNumIceInstances(event: CustomEvent<number>) {
-    numIceInstances = event.detail;
+  function onChangeShowIceClusters(event: CustomEvent<boolean>) {
+    showIceClusters = event.detail;
   }
 </script>
 
@@ -36,9 +36,9 @@
   <div class="grid-content" class:noshow={$mode !== 'grid'}>
     <PDPGridControls
       bind:selectedFeatures
-      on:changeNumIceInstances={onChangeNumIceInstances}
+      on:changeShowIceClusters={onChangeShowIceClusters}
     />
-    <PDPGridsMain {selectedFeatures} on:zoom={onZoom} {numIceInstances} />
+    <PDPGridsMain {selectedFeatures} on:zoom={onZoom} {showIceClusters} />
   </div>
 
   <div class="clusters-content" class:noshow={$mode !== 'clusters'}>
@@ -75,8 +75,9 @@
     --gray-7: rgb(71, 71, 71);
     --gray-8: rgb(48, 48, 48);
     --gray-9: rgb(27, 27, 27);
+    --black: black;
 
-    --red: red;
+    --red: #d62728;
   }
 
   .grid-content {

@@ -90,8 +90,8 @@ export const pdp_extent = WidgetWritable<[number, number]>(
   [0, 0]
 );
 
-export const ice_extent = WidgetWritable<[number, number]>(
-  'ice_extent',
+export const cluster_extent = WidgetWritable<[number, number]>(
+  'cluster_extent',
   [0, 0]
 );
 
@@ -120,7 +120,7 @@ export function setStoreModels(model: DOMWidgetModel): void {
   plot_button_clicked.setModel(model);
   total_num_instances.setModel(model);
   pdp_extent.setModel(model);
-  ice_extent.setModel(model);
+  cluster_extent.setModel(model);
   marginal_distributions.setModel(model);
   one_way_quantitative_clusters.setModel(model);
   one_way_categorical_clusters.setModel(model);
@@ -139,10 +139,10 @@ export const nice_pdp_extent: Readable<[number, number]> = derived(
     scaleLinear().domain($pdp_extent).nice().domain() as [number, number]
 );
 
-export const nice_ice_extent: Readable<[number, number]> = derived(
-  ice_extent,
-  ($ice_extent) =>
-    scaleLinear().domain($ice_extent).nice().domain() as [number, number]
+export const nice_cluster_extent: Readable<[number, number]> = derived(
+  cluster_extent,
+  ($cluster_extent) =>
+    scaleLinear().domain($cluster_extent).nice().domain() as [number, number]
 );
 
 export const globalColorPdpExtent: Readable<
@@ -156,9 +156,9 @@ export const globalColorPdpExtent: Readable<
 
 export const globalColorIceExtent: Readable<
   d3.ScaleSequential<string, string>
-> = derived(nice_ice_extent, ($nice_ice_extent) =>
+> = derived(nice_cluster_extent, ($nice_cluster_extent) =>
   scaleSequential()
-    .domain($nice_ice_extent)
+    .domain($nice_cluster_extent)
     .interpolator(interpolateYlGnBu)
     .unknown('black')
 );

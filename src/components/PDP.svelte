@@ -21,6 +21,7 @@
   export let numIceInstances: number = 0;
   export let showInteractions: boolean = false;
   export let showColorLegend: boolean = false;
+  export let showIceClusters: boolean = false;
 
   let mdx: MarginalDistribution | null = null;
   let mdy: MarginalDistribution | null = null;
@@ -45,6 +46,7 @@
         {scaleLocally}
         {showTrendLine}
         {numIceInstances}
+        {showIceClusters}
         marginalDistributionX={mdx}
       />
     {:else if pdp.kind === 'categorical' && (mdx === null || mdx.kind === 'categorical')}
@@ -54,6 +56,7 @@
         {pdp}
         {scaleLocally}
         {numIceInstances}
+        {showIceClusters}
         marginalDistributionX={mdx}
       />
     {/if}

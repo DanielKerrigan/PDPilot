@@ -23,6 +23,20 @@ const singlePDPSortingOptions: PDSortingOption[] = [
     },
   },
   {
+    name: 'interaction',
+    sort: function (
+      data: SinglePDPData[] | DoublePDPData[]
+    ): SinglePDPData[] | DoublePDPData[] {
+      if (data.length === 0 || !isOneWayPdArray(data)) {
+        return data;
+      }
+
+      return data.sort((a, b) =>
+        descending(a.ice.cluster_distance, b.ice.cluster_distance)
+      );
+    },
+  },
+  {
     name: 'variance',
     sort: function (
       data: SinglePDPData[] | DoublePDPData[]

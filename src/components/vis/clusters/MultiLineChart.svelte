@@ -56,7 +56,7 @@
     <path
       class="line"
       d={pdpLine(pd.mean_predictions)}
-      stroke="var(--magenta)"
+      stroke="var(--black)"
       stroke-width="1"
       stroke-opacity="0.5"
       fill="none"
@@ -67,7 +67,7 @@
     <path
       class="line"
       d={pdpLine(highlightPd.mean_predictions)}
-      stroke="black"
+      stroke="var(--red)"
       stroke-width="2"
       stroke-opacity="1"
       fill="none"

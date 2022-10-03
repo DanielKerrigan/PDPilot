@@ -3,13 +3,14 @@
     QuantitativeMarginalDistribution,
     QuantitativeSinglePDPData,
   } from '../../../types';
-  import { scaleLinear } from 'd3-scale';
+  import { scaleLinear, scaleOrdinal } from 'd3-scale';
   import { line as d3line } from 'd3-shape';
   import { range } from 'd3-array';
   import XAxis from '../axis/XAxis.svelte';
   import YAxis from '../axis/YAxis.svelte';
-  import { nice_pdp_extent, nice_ice_extent } from '../../../stores';
+  import { nice_pdp_extent, nice_cluster_extent } from '../../../stores';
   import MarginalHistogram from '../marginal/MarginalHistogram.svelte';
+  import { schemeTableau10 } from 'd3-scale-chromatic';
 
   export let pdp: QuantitativeSinglePDPData;
   export let width: number;
@@ -17,6 +18,7 @@
   export let scaleLocally: boolean;
   export let showTrendLine: boolean;
   export let numIceInstances: number;
+  export let showIceClusters: boolean;
   export let marginalDistributionX: QuantitativeMarginalDistribution | null;
 
   // this approach for generating a unique id to use for the
@@ -36,19 +38,33 @@
     .range([margin.left, width - margin.right]);
 
   $: yGlobal = scaleLinear()
-    .domain(numIceInstances > 0 ? $nice_ice_extent : $nice_pdp_extent)
+    .domain(showIceClusters ? $nice_cluster_extent : $nice_pdp_extent)
     .range([height - margin.bottom, margin.top]);
 
   $: yLocal = scaleLinear()
     .domain(
       numIceInstances > 0
-        ? [pdp.ice_min, pdp.ice_max]
+        ? [pdp.ice.ice_min, pdp.ice.ice_max]
+        : showIceClusters
+        ? [pdp.ice.mean_min, pdp.ice.mean_max]
         : [pdp.pdp_min, pdp.pdp_max]
     )
     .nice()
     .range([height - margin.bottom, margin.top]);
 
   $: y = scaleLocally ? yLocal : yGlobal;
+
+  $: color = scaleOrdinal<number, string>()
+    .domain(pdp.ice.clusters.map((d) => d.id))
+    .range(schemeTableau10);
+
+  function iceColor(id: number, numIceInstances: number): string {
+    if (numIceInstances > 0) {
+      return color(id);
+    } else {
+      return 'var(--gray-3)';
+    }
+  }
 
   // this approach with the indices is like what is done here
   // https://observablehq.com/@d3/line-chart
@@ -80,19 +96,20 @@
   was causing issues with resizing.
 -->
 <svg class="pdp-line-chart">
-  <g>
-    <clipPath id={clipPathId}>
-      <rect
-        x={margin.left}
-        y={margin.top}
-        width={width - margin.left - margin.right}
-        height={height - margin.top - margin.bottom}
-        fill="white"
-      />
-    </clipPath>
-  </g>
-
+  <!-- trend line -->
   {#if showTrendLine}
+    <g>
+      <clipPath id={clipPathId}>
+        <rect
+          x={margin.left}
+          y={margin.top}
+          width={width - margin.left - margin.right}
+          height={height - margin.top - margin.bottom}
+          fill="white"
+        />
+      </clipPath>
+    </g>
+
     <path
       class="line"
       d={trendLine(indices)}
@@ -103,26 +120,40 @@
     />
   {/if}
 
-  <!-- ICE -->
-  <g>
-    {#each pdp.ice_lines.slice(0, numIceInstances) as ice}
-      <path
-        class="line"
-        d={iceLine(ice)}
-        stroke="var(--gray-3)"
-        stroke-opacity="0.4"
-        fill="none"
-        stroke-width="1"
-        clip-path="url(#{clipPathId})"
-      />
-    {/each}
-  </g>
+  <!-- ICE clusters -->
+  {#if showIceClusters}
+    <g>
+      {#each pdp.ice.clusters as cluster}
+        {#if numIceInstances > 0}
+          {#each cluster.ice_lines.slice(0, numIceInstances) as ice}
+            <path
+              class="line"
+              d={iceLine(ice)}
+              stroke={iceColor(cluster.id, numIceInstances)}
+              stroke-opacity="0.4"
+              fill="none"
+              stroke-width="1"
+            />
+          {/each}
+        {/if}
+
+        <path
+          class="line"
+          d={iceLine(cluster.mean)}
+          stroke={iceColor(cluster.id, numIceInstances)}
+          stroke-opacity="1"
+          fill="none"
+          stroke-width="2"
+        />
+      {/each}
+    </g>
+  {/if}
 
   <!-- PDP -->
   <path
     class="line"
     d={pdpLine(indices)}
-    stroke="var(--magenta)"
+    stroke="var(--black)"
     stroke-width="2"
     fill="none"
   />

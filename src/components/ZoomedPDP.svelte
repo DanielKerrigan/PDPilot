@@ -19,9 +19,10 @@
 
   let scaleLocally: boolean = false;
   let showTrendLine: boolean = false;
+  let showIceClusters: boolean = false;
   let numIceInstances: number = 0;
 
-  $: if (numIceInstances > 0) {
+  $: if (showIceClusters) {
     showTrendLine = false;
   }
 
@@ -199,16 +200,23 @@
       </label>
     {:else}
       <label class="label-and-input">
-        <span>ICE Instances</span><input
-          type="number"
-          min="0"
-          max={$num_instances_used}
-          bind:value={numIceInstances}
-          style:width="6ch"
-        />
+        <input type="checkbox" bind:checked={showIceClusters} /><span
+          >ICE Clusters</span
+        >
       </label>
+      {#if showIceClusters}
+        <label class="label-and-input">
+          <span>ICE Instances</span><input
+            type="number"
+            min="0"
+            max={$num_instances_used}
+            bind:value={numIceInstances}
+            style:width="6ch"
+          />
+        </label>
+      {/if}
 
-      {#if pdp.kind === 'quantitative' && numIceInstances === 0}
+      {#if pdp.kind === 'quantitative' && !showIceClusters}
         <label class="label-and-input">
           <input type="checkbox" bind:checked={showTrendLine} />Trend line
         </label>
@@ -255,6 +263,7 @@
         {showTrendLine}
         {showMarginalDistribution}
         {numIceInstances}
+        {showIceClusters}
         showColorLegend={true}
       />
     </div>
@@ -292,7 +301,7 @@
     display: flex;
     align-items: center;
     background-color: white;
-    gap: 2em;
+    gap: 1.5em;
     padding-left: 0.5em;
     padding-right: 0.5em;
     border-top: 1px solid var(--gray-1);

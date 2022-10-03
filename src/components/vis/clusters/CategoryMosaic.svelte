@@ -76,7 +76,7 @@
       />
 
       {#each pd.mean_predictions as pred, i}
-        <circle cx={x(i)} cy={y(pred)} r={radius} fill="var(--magenta)" />
+        <circle cx={x(i)} cy={y(pred)} r={radius} fill="var(--black)" />
       {/each}
     </g>
   {/each}

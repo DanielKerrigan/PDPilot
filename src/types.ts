@@ -10,6 +10,7 @@ export type ICE = {
     ice_lines: number[][];
     mean: number[];
   }[];
+  cluster_distance: number;
 };
 
 // partial dependence

@@ -4,7 +4,7 @@
   import { doublePDPSortingOptions, singlePDPSortingOptions } from '../sorting';
 
   export let selectedFeatures: string[];
-  export let numIceInstances: number;
+  export let showIceClusters: boolean;
 
   $: filteredOneWayPds = $single_pdps.filter((p) =>
     selectedFeatures.includes(p.x_feature)
@@ -23,7 +23,7 @@
     data={filteredOneWayPds}
     showColorLegend={false}
     showShowTrendLine={true}
-    {numIceInstances}
+    {showIceClusters}
     sortingOptions={singlePDPSortingOptions}
     on:zoom
   />
@@ -33,7 +33,7 @@
       title={'Two-way'}
       data={filteredTwoWayPds}
       showColorLegend={true}
-      {numIceInstances}
+      {showIceClusters}
       sortingOptions={doublePDPSortingOptions}
       on:zoom
     />

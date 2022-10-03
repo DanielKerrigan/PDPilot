@@ -28,7 +28,7 @@ export class PDPExplorerModel extends DOMWidgetModel {
       plot_button_clicked: 0,
       total_num_instances: 0,
       pdp_extent: [0, 0],
-      ice_extent: [0, 0],
+      cluster_extent: [0, 0],
       marginal_distributions: {},
       one_way_quantitative_clusters: [],
       one_way_categorical_clusters: [],

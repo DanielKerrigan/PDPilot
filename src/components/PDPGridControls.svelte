@@ -1,16 +1,15 @@
 <script lang="ts">
   import FeatureSelector from './FeatureSelector.svelte';
-  import { num_instances_used } from '../stores';
   import { createEventDispatcher } from 'svelte';
 
   export let selectedFeatures: string[];
 
-  let numIceInstances: number = 0;
+  let showIceClusters: boolean = false;
 
-  const dispatchIce = createEventDispatcher<{
-    changeNumIceInstances: number;
+  const dispatchClusters = createEventDispatcher<{
+    changeShowIceClusters: boolean;
   }>();
-  $: dispatchIce('changeNumIceInstances', numIceInstances);
+  $: dispatchClusters('changeShowIceClusters', showIceClusters);
 </script>
 
 <div class="controls-container">
@@ -19,12 +18,9 @@
   </div>
 
   <label class="label-and-input">
-    <span>ICE Instances</span><input
-      type="number"
-      min="0"
-      max={$num_instances_used}
-      bind:value={numIceInstances}
-      style:width="6ch"
+    <span>Show ICE Clusters</span><input
+      type="checkbox"
+      bind:checked={showIceClusters}
     />
   </label>
 </div>

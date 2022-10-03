@@ -3,15 +3,16 @@ module.exports = {
     'eslint:recommended',
     'plugin:@typescript-eslint/eslint-recommended',
     'plugin:@typescript-eslint/recommended',
-    'plugin:prettier/recommended'
+    'plugin:prettier/recommended',
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
     project: 'tsconfig.eslint.json',
-    sourceType: 'module'
+    sourceType: 'module',
+    extraFileExtensions: ['.svelte'],
   },
   plugins: ['@typescript-eslint', 'svelte3'],
-  overrides: [{files: ['*.svelte'], processor: 'svelte3/svelte3'}],
+  overrides: [{ files: ['*.svelte'], processor: 'svelte3/svelte3' }],
   rules: {
     '@typescript-eslint/no-unused-vars': ['warn', { args: 'none' }],
     '@typescript-eslint/no-explicit-any': 'off',
@@ -20,13 +21,13 @@ module.exports = {
     '@typescript-eslint/quotes': [
       'error',
       'single',
-      { avoidEscape: true, allowTemplateLiterals: false }
+      { avoidEscape: true, allowTemplateLiterals: false },
     ],
     curly: ['error', 'all'],
     eqeqeq: 'error',
-    'prefer-arrow-callback': 'error'
+    'prefer-arrow-callback': 'error',
   },
   settings: {
-    'svelte3/typescript': true
-  }
+    'svelte3/typescript': true,
+  },
 };

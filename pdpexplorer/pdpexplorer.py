@@ -42,7 +42,7 @@ class PDPExplorerWidget(DOMWidget):
     plot_button_clicked = Int(0).tag(sync=True)
 
     pdp_extent = List([0, 0]).tag(sync=True)
-    ice_extent = List([0, 0]).tag(sync=True)
+    cluster_extent = List([0, 0]).tag(sync=True)
 
     marginal_distributions = Dict({}).tag(sync=True)
 
@@ -91,7 +91,7 @@ class PDPExplorerWidget(DOMWidget):
         self.double_pdps = pd_data["two_way_pds"]
 
         self.pdp_extent = pd_data["pdp_extent"]
-        self.ice_extent = pd_data["ice_extent"]
+        self.cluster_extent = pd_data["cluster_extent"]
 
         self.one_way_quantitative_clusters = pd_data["one_way_quantitative_clusters"]
         self.one_way_categorical_clusters = pd_data["one_way_categorical_clusters"]
