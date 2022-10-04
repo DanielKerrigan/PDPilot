@@ -3,6 +3,7 @@
     SinglePDPData,
     DoublePDPData,
     MarginalDistribution,
+    ICELevel,
   } from '../types';
   import { marginal_distributions } from '../stores';
   import LineChart from './vis/one_way/LineChart.svelte';
@@ -18,10 +19,9 @@
   export let scaleLocally: boolean;
   export let showTrendLine: boolean;
   export let showMarginalDistribution: boolean;
-  export let numIceInstances: number = 0;
   export let showInteractions: boolean = false;
   export let showColorLegend: boolean = false;
-  export let showIceClusters: boolean = false;
+  export let iceLevel: ICELevel;
 
   let mdx: MarginalDistribution | null = null;
   let mdy: MarginalDistribution | null = null;
@@ -45,8 +45,7 @@
         {pdp}
         {scaleLocally}
         {showTrendLine}
-        {numIceInstances}
-        {showIceClusters}
+        {iceLevel}
         marginalDistributionX={mdx}
       />
     {:else if pdp.kind === 'categorical' && (mdx === null || mdx.kind === 'categorical')}
@@ -55,8 +54,7 @@
         {height}
         {pdp}
         {scaleLocally}
-        {numIceInstances}
-        {showIceClusters}
+        {iceLevel}
         marginalDistributionX={mdx}
       />
     {/if}

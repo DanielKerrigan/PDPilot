@@ -1,12 +1,11 @@
 <script lang="ts">
-  import type { SinglePDPData, DoublePDPData } from '../types';
+  import type { SinglePDPData, DoublePDPData, ICELevel } from '../types';
   import { createEventDispatcher, onMount } from 'svelte';
   import {
     single_pdps,
     double_pdps,
     globalColorPdpExtent,
     features,
-    num_instances_used,
   } from '../stores';
   import PDP from './PDP.svelte';
 
@@ -19,10 +18,11 @@
 
   let scaleLocally: boolean = false;
   let showTrendLine: boolean = false;
-  let showIceClusters: boolean = false;
-  let numIceInstances: number = 0;
+  let iceLevel: ICELevel = 'none';
 
-  $: if (showIceClusters) {
+  const levels: ICELevel[] = ['none', 'mean', 'band', 'line'];
+
+  $: if (iceLevel !== 'none') {
     showTrendLine = false;
   }
 
@@ -200,23 +200,15 @@
       </label>
     {:else}
       <label class="label-and-input">
-        <input type="checkbox" bind:checked={showIceClusters} /><span
-          >ICE Clusters</span
-        >
+        <span>ICE:</span>
+        <select bind:value={iceLevel}>
+          {#each levels as level}
+            <option value={level}>{level}</option>
+          {/each}
+        </select>
       </label>
-      {#if showIceClusters}
-        <label class="label-and-input">
-          <span>ICE Instances</span><input
-            type="number"
-            min="0"
-            max={$num_instances_used}
-            bind:value={numIceInstances}
-            style:width="6ch"
-          />
-        </label>
-      {/if}
 
-      {#if pdp.kind === 'quantitative' && !showIceClusters}
+      {#if pdp.kind === 'quantitative' && iceLevel === 'none'}
         <label class="label-and-input">
           <input type="checkbox" bind:checked={showTrendLine} />Trend line
         </label>
@@ -237,6 +229,7 @@
           {scaleLocally}
           showTrendLine={false}
           {showMarginalDistribution}
+          iceLevel="none"
         />
       </div>
 
@@ -249,6 +242,7 @@
           {scaleLocally}
           showTrendLine={false}
           {showMarginalDistribution}
+          iceLevel="none"
         />
       </div>
     {/if}
@@ -262,8 +256,7 @@
         {scaleLocally}
         {showTrendLine}
         {showMarginalDistribution}
-        {numIceInstances}
-        {showIceClusters}
+        {iceLevel}
         showColorLegend={true}
       />
     </div>
@@ -278,7 +271,7 @@
           {scaleLocally}
           {showTrendLine}
           {showMarginalDistribution}
-          {numIceInstances}
+          iceLevel="none"
           showInteractions={true}
           showColorLegend={true}
         />

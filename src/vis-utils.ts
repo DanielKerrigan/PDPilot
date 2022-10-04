@@ -1,5 +1,12 @@
+import { scaleLinear } from 'd3-scale';
 import { format } from 'd3-format';
-export { scaleCanvas, defaultFormat };
+import type {
+  ICELevel,
+  QuantitativeSinglePDPData,
+  CategoricalSinglePDPData,
+} from './types';
+import type { ScaleLinear } from 'd3-scale';
+export { scaleCanvas, defaultFormat, getYScale };
 
 // Adapted from https://www.html5rocks.com/en/tutorials/canvas/hidpi/
 function scaleCanvas(
@@ -31,5 +38,75 @@ function defaultFormat(x: number): string {
     return format('.3~f')(x);
   } else {
     return format('~s')(x);
+  }
+}
+
+function getYScale(
+  pdp: QuantitativeSinglePDPData | CategoricalSinglePDPData,
+  height: number,
+  bandHeight: number,
+  iceLevel: ICELevel,
+  scaleLocally: boolean,
+  nicePdpExtent: [number, number],
+  niceIceMeanExtent: [number, number],
+  niceIceBandExtent: [number, number],
+  niceIceLineExtent: [number, number],
+  margin: { top: number; right: number; bottom: number; left: number }
+): ScaleLinear<number, number> {
+  const globalPdp = scaleLinear()
+    .domain(nicePdpExtent)
+    .range([height - margin.bottom, margin.top]);
+
+  const globalIceClusterMean = scaleLinear()
+    .domain(niceIceMeanExtent)
+    .range([height - margin.bottom, margin.top]);
+
+  const globalIceBand = scaleLinear()
+    .domain(niceIceBandExtent)
+    .range([bandHeight, margin.top]);
+
+  const globalIceLines = scaleLinear()
+    .domain(niceIceLineExtent)
+    .range([bandHeight, margin.top]);
+
+  const localPdp = scaleLinear()
+    .domain([pdp.pdp_min, pdp.pdp_max])
+    .range([height - margin.bottom, margin.top]);
+
+  const localIceClusterMean = scaleLinear()
+    .domain([pdp.ice.centered_mean_min, pdp.ice.centered_mean_max])
+    .nice()
+    .range([height - margin.bottom, margin.top]);
+
+  const localIceBand = scaleLinear()
+    .domain([pdp.ice.p10_min, pdp.ice.p90_max])
+    .nice()
+    .range([bandHeight, 0]);
+
+  const localIceLines = scaleLinear()
+    .domain([pdp.ice.centered_ice_min, pdp.ice.centered_ice_max])
+    .nice()
+    .range([bandHeight, 0]);
+
+  if (scaleLocally) {
+    if (iceLevel === 'none') {
+      return localPdp;
+    } else if (iceLevel === 'mean') {
+      return localIceClusterMean;
+    } else if (iceLevel === 'band') {
+      return localIceBand;
+    } else {
+      return localIceLines;
+    }
+  } else {
+    if (iceLevel === 'none') {
+      return globalPdp;
+    } else if (iceLevel === 'mean') {
+      return globalIceClusterMean;
+    } else if (iceLevel === 'band') {
+      return globalIceBand;
+    } else {
+      return globalIceLines;
+    }
   }
 }

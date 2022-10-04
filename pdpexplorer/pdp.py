@@ -85,7 +85,6 @@ def partial_dependence(
             "md": md,
             "iqr": iqr,
             "feature_to_pd": None,
-            "n_jobs": n_jobs,
         }
         for feature in one_way_features
     ]
@@ -115,7 +114,6 @@ def partial_dependence(
             "md": md,
             "iqr": iqr,
             "feature_to_pd": feature_to_pd,
-            "n_jobs": n_jobs,
         }
         for pair in two_way_feature_pairs
     ]
@@ -129,15 +127,25 @@ def partial_dependence(
 
     # min and max predictions
 
+    ice_min = min(one_way_pds, key=lambda d: d["ice"]["centered_ice_min"])["ice"][
+        "centered_ice_min"
+    ]
+    ice_max = max(one_way_pds, key=lambda d: d["ice"]["centered_ice_max"])["ice"][
+        "centered_ice_max"
+    ]
+
+    cluster_min = min(one_way_pds, key=lambda d: d["ice"]["centered_mean_min"])["ice"][
+        "centered_mean_min"
+    ]
+    cluster_max = max(one_way_pds, key=lambda d: d["ice"]["centered_mean_max"])["ice"][
+        "centered_mean_max"
+    ]
+
+    p10_min = min(one_way_pds, key=lambda d: d["ice"]["p10_min"])["ice"]["p10_min"]
+    p90_max = max(one_way_pds, key=lambda d: d["ice"]["p90_max"])["ice"]["p90_max"]
+
     pdp_min = min(one_way_pds, key=itemgetter("pdp_min"))["pdp_min"]
     pdp_max = max(one_way_pds, key=itemgetter("pdp_max"))["pdp_max"]
-
-    cluster_min = min(one_way_pds, key=lambda d: d["ice"]["mean_min"])["ice"][
-        "mean_min"
-    ]
-    cluster_max = max(one_way_pds, key=lambda d: d["ice"]["mean_max"])["ice"][
-        "mean_max"
-    ]
 
     if two_way_pds:
         pdp_min = min(
@@ -163,7 +171,9 @@ def partial_dependence(
         "one_way_quantitative_clusters": one_way_quantitative_clusters,
         "one_way_categorical_clusters": one_way_categorical_clusters,
         "pdp_extent": [pdp_min, pdp_max],
-        "cluster_extent": [cluster_min, cluster_max],
+        "ice_mean_extent": [cluster_min, cluster_max],
+        "ice_band_extent": [p10_min, p90_max],
+        "ice_line_extent": [ice_min, ice_max],
         "marginal_distributions": marginal_distributions,
         "n_instances": n_instances,
         "resolution": resolution,
@@ -213,7 +223,6 @@ def _calc_pd(
     md,
     iqr,
     feature_to_pd,
-    n_jobs,
 ):
     if isinstance(feature, tuple) or isinstance(feature, list):
         return _calc_two_way_pd(
@@ -224,7 +233,6 @@ def _calc_pd(
             resolution,
             md,
             feature_to_pd,
-            n_jobs,
         )
     else:
         return _calc_one_way_pd(
@@ -235,7 +243,6 @@ def _calc_pd(
             resolution,
             md,
             iqr,
-            n_jobs,
         )
 
 
@@ -247,7 +254,6 @@ def _calc_one_way_pd(
     resolution,
     md,
     iqr,
-    n_jobs,
 ):
     feat_info = md.feature_info[feature]
 
@@ -279,7 +285,7 @@ def _calc_one_way_pd(
 
     mean_predictions = mean_predictions.tolist()
 
-    ice = calculate_ice(ice_lines=ice_lines, n_jobs=n_jobs)
+    ice = calculate_ice(ice_lines=ice_lines)
 
     par_dep = {
         "num_features": 1,
@@ -342,7 +348,6 @@ def _calc_two_way_pd(
     resolution,
     md,
     feature_to_pd,
-    n_jobs,
 ):
     x_feature, y_feature = pair
 
@@ -715,7 +720,7 @@ def categorical_feature_clustering(*, one_way_pds, feature_to_pd, first_id):
     return clusters
 
 
-def calculate_ice(ice_lines, n_jobs):
+def calculate_ice(ice_lines):
     centered_ice_lines = []
 
     # todo - vectorize
@@ -749,6 +754,12 @@ def calculate_ice(ice_lines, n_jobs):
     mean_min = math.inf
     mean_max = -math.inf
 
+    p10_min = math.inf
+    p90_max = -math.inf
+
+    centered_mean_min = math.inf
+    centered_mean_max = -math.inf
+
     for n in range(best_n_clusters):
         lines = ice_lines[best_labels == n]
         centered_lines = centered_ice_lines[best_labels == n]
@@ -757,25 +768,34 @@ def calculate_ice(ice_lines, n_jobs):
         centered_mean = centered_lines.mean(axis=0)
         compared_mean = mean - mean[0]
 
+        p10 = np.percentile(centered_lines, 10, axis=0)
+        p25 = np.percentile(centered_lines, 25, axis=0)
+        p75 = np.percentile(centered_lines, 75, axis=0)
+        p90 = np.percentile(centered_lines, 90, axis=0)
+
         clusters.append(
             {
                 "id": n,
                 "ice_lines": lines.tolist(),
                 "centered_ice_lines": centered_lines.tolist(),
                 "mean": mean.tolist(),
-                "p0": np.percentile(centered_lines, 0, axis=0).tolist(),
-                "p10": np.percentile(centered_lines, 10, axis=0).tolist(),
-                "p25": np.percentile(centered_lines, 25, axis=0).tolist(),
-                "p75": np.percentile(centered_lines, 75, axis=0).tolist(),
-                "p90": np.percentile(centered_lines, 90, axis=0).tolist(),
-                "p100": np.percentile(centered_lines, 100, axis=0).tolist(),
+                "p10": p10.tolist(),
+                "p25": p25.tolist(),
+                "p75": p75.tolist(),
+                "p90": p90.tolist(),
                 "centered_mean": centered_mean.tolist(),
                 "compared_mean": compared_mean.tolist(),
             }
         )
 
+        p10_min = min(p10_min, p10.min())
+        p90_max = max(p90_max, p90.max())
+
         mean_min = min(mean_min, mean.min())
         mean_max = max(mean_max, mean.max())
+
+        centered_mean_min = min(centered_mean_min, centered_mean.min())
+        centered_mean_max = max(centered_mean_max, centered_mean.max())
 
     centered_pdp = centered_ice_lines.mean(axis=0)
 
@@ -793,6 +813,10 @@ def calculate_ice(ice_lines, n_jobs):
         "centered_ice_max": centered_ice_lines.max().item(),
         "mean_min": mean_min.item(),
         "mean_max": mean_max.item(),
+        "centered_mean_min": centered_mean_min.item(),
+        "centered_mean_max": centered_mean_max.item(),
+        "p10_min": p10_min.item(),
+        "p90_max": p90_max.item(),
         "clusters": clusters,
         "centered_pdp": centered_pdp.tolist(),
         "compare_pdp": (ice_lines.mean(axis=0) - ice_lines.mean(axis=0)[0]).tolist(),

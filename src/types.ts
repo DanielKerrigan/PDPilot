@@ -3,15 +3,29 @@
 export type ICE = {
   ice_min: number;
   ice_max: number;
+  centered_ice_min: number;
+  centered_ice_max: number;
   mean_min: number;
   mean_max: number;
+  centered_mean_min: number;
+  centered_mean_max: number;
+  p10_min: number;
+  p90_max: number;
   clusters: {
     id: number;
-    ice_lines: number[][];
+    centered_ice_lines: number[][];
+    p10: number[];
+    p25: number[];
+    p75: number[];
+    p90: number[];
     mean: number[];
+    centered_mean: number[];
   }[];
+  centered_pdp: number[];
   cluster_distance: number;
 };
+
+export type ICELevel = 'none' | 'mean' | 'band' | 'line';
 
 // partial dependence
 

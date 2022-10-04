@@ -11,7 +11,8 @@
   export let y: number = 0;
   export let format = defaultFormat;
   export let gridHeight: number = 0;
-  export let showLabels: boolean = true;
+  export let showTickLabels: boolean = true;
+  export let showAxisLabel: boolean = true;
   export let fontSize: number = 10;
   export let tickSize: number = 5;
 
@@ -36,7 +37,7 @@
             x2={scale.bandwidth() / 2}
             stroke="black"
           />
-          {#if showLabels}
+          {#if showTickLabels}
             <Label
               width={scale.bandwidth() || scale.step()}
               height={fontSize * lineHeight}
@@ -53,7 +54,7 @@
       {#each scale.ticks(width / 80) as tick}
         <g transform="translate({scale(tick)})">
           <line y1={gridHeight} y2={tickSize} stroke="black" />
-          {#if showLabels}
+          {#if showTickLabels}
             <text
               y={tickSize + gapBetweenTickAndTickLabel}
               text-anchor="middle"
@@ -68,18 +69,20 @@
     {/if}
   </g>
 
-  <Label
-    {width}
-    height={fontSize * lineHeight}
-    x={left}
-    y={tickSize +
-      gapBetweenTickAndTickLabel +
-      fontSize +
-      gapBetweenTicksAndAxisLabel}
-    bold={true}
-    {label}
-    {fontSize}
-  />
+  {#if showAxisLabel}
+    <Label
+      {width}
+      height={fontSize * lineHeight}
+      x={left}
+      y={tickSize +
+        gapBetweenTickAndTickLabel +
+        fontSize +
+        gapBetweenTicksAndAxisLabel}
+      bold={true}
+      {label}
+      {fontSize}
+    />
+  {/if}
 </g>
 
 <style>

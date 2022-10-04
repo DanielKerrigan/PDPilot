@@ -22,23 +22,14 @@
     selectedFeatures = event.detail;
     $mode = 'grid';
   }
-
-  let showIceClusters: boolean = false;
-
-  function onChangeShowIceClusters(event: CustomEvent<boolean>) {
-    showIceClusters = event.detail;
-  }
 </script>
 
 <div class="pdp-explorer-widget-container" style:height="{$height}px">
   <Tabs />
 
   <div class="grid-content" class:noshow={$mode !== 'grid'}>
-    <PDPGridControls
-      bind:selectedFeatures
-      on:changeShowIceClusters={onChangeShowIceClusters}
-    />
-    <PDPGridsMain {selectedFeatures} on:zoom={onZoom} {showIceClusters} />
+    <PDPGridControls bind:selectedFeatures />
+    <PDPGridsMain {selectedFeatures} on:zoom={onZoom} />
   </div>
 
   <div class="clusters-content" class:noshow={$mode !== 'clusters'}>

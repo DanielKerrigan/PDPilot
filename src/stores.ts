@@ -90,8 +90,18 @@ export const pdp_extent = WidgetWritable<[number, number]>(
   [0, 0]
 );
 
-export const cluster_extent = WidgetWritable<[number, number]>(
-  'cluster_extent',
+export const ice_mean_extent = WidgetWritable<[number, number]>(
+  'ice_mean_extent',
+  [0, 0]
+);
+
+export const ice_band_extent = WidgetWritable<[number, number]>(
+  'ice_band_extent',
+  [0, 0]
+);
+
+export const ice_line_extent = WidgetWritable<[number, number]>(
+  'ice_line_extent',
   [0, 0]
 );
 
@@ -120,7 +130,9 @@ export function setStoreModels(model: DOMWidgetModel): void {
   plot_button_clicked.setModel(model);
   total_num_instances.setModel(model);
   pdp_extent.setModel(model);
-  cluster_extent.setModel(model);
+  ice_mean_extent.setModel(model);
+  ice_band_extent.setModel(model);
+  ice_line_extent.setModel(model);
   marginal_distributions.setModel(model);
   one_way_quantitative_clusters.setModel(model);
   one_way_categorical_clusters.setModel(model);
@@ -139,10 +151,22 @@ export const nice_pdp_extent: Readable<[number, number]> = derived(
     scaleLinear().domain($pdp_extent).nice().domain() as [number, number]
 );
 
-export const nice_cluster_extent: Readable<[number, number]> = derived(
-  cluster_extent,
-  ($cluster_extent) =>
-    scaleLinear().domain($cluster_extent).nice().domain() as [number, number]
+export const nice_ice_mean_extent: Readable<[number, number]> = derived(
+  ice_mean_extent,
+  ($ice_mean_extent) =>
+    scaleLinear().domain($ice_mean_extent).nice().domain() as [number, number]
+);
+
+export const nice_ice_band_extent: Readable<[number, number]> = derived(
+  ice_band_extent,
+  ($ice_band_extent) =>
+    scaleLinear().domain($ice_band_extent).nice().domain() as [number, number]
+);
+
+export const nice_ice_line_extent: Readable<[number, number]> = derived(
+  ice_line_extent,
+  ($ice_line_extent) =>
+    scaleLinear().domain($ice_line_extent).nice().domain() as [number, number]
 );
 
 export const globalColorPdpExtent: Readable<
@@ -150,15 +174,6 @@ export const globalColorPdpExtent: Readable<
 > = derived(nice_pdp_extent, ($nice_pdp_extent) =>
   scaleSequential()
     .domain($nice_pdp_extent)
-    .interpolator(interpolateYlGnBu)
-    .unknown('black')
-);
-
-export const globalColorIceExtent: Readable<
-  d3.ScaleSequential<string, string>
-> = derived(nice_cluster_extent, ($nice_cluster_extent) =>
-  scaleSequential()
-    .domain($nice_cluster_extent)
     .interpolator(interpolateYlGnBu)
     .unknown('black')
 );

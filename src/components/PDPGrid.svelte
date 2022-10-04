@@ -3,14 +3,16 @@
   import PDP from './PDP.svelte';
   import QuantitativeColorLegend from './vis/two_way/QuantitativeColorLegend.svelte';
   import { onMount, createEventDispatcher } from 'svelte';
-  import { globalColorPdpExtent, globalColorIceExtent } from '../stores';
+  import { globalColorPdpExtent } from '../stores';
 
   export let title: string;
   export let data: SinglePDPData[] | DoublePDPData[];
   export let showColorLegend: boolean = false;
   export let showShowTrendLine: boolean = false;
-  export let showIceClusters: boolean;
+  export let showShowIceClusters: boolean = false;
   export let sortingOptions: PDSortingOption[];
+
+  let showIceClusters: boolean = false;
 
   let div: HTMLDivElement;
   let legendDiv: HTMLDivElement;
@@ -262,6 +264,14 @@
           >
         </label>
       {/if}
+
+      {#if showShowIceClusters}
+        <label class="label-and-input">
+          <input type="checkbox" bind:checked={showIceClusters} /><span
+            >Centered ICE Clusters</span
+          >
+        </label>
+      {/if}
     {/if}
     <!--
       The legend is outside the above if statement because we want this div
@@ -279,9 +289,7 @@
         <QuantitativeColorLegend
           width={legendWidth}
           height={legendHeight}
-          color={showIceClusters
-            ? $globalColorIceExtent
-            : $globalColorPdpExtent}
+          color={$globalColorPdpExtent}
           marginLeft={15}
           marginRight={15}
         />
@@ -320,16 +328,14 @@
           >
             <PDP
               {pdp}
-              globalColor={showIceClusters
-                ? $globalColorIceExtent
-                : $globalColorPdpExtent}
+              globalColor={$globalColorPdpExtent}
               width={pdpWidth}
               height={pdpHeight}
               {scaleLocally}
               {showTrendLine}
               showMarginalDistribution={false}
               showColorLegend={scaleLocally}
-              {showIceClusters}
+              iceLevel={showIceClusters ? 'mean' : 'none'}
             />
           </div>
         {/each}
