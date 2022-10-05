@@ -92,7 +92,7 @@ setup_args = dict(
         "plotnine>=0.8.0",
         "joblib>=1.1.0",
         "scikit-learn>=1.0.2",
-        "tslearn @ git+https://github.com/DanielKerrigan/tslearn.git",
+        "tslearn-m1",
     ],
     extras_require={
         "examples": ["pmlb", "xgboost"],
