@@ -10,6 +10,7 @@ from itertools import chain
 import json
 import math
 from pathlib import Path
+from collections import defaultdict
 
 import numpy as np
 import pandas as pd
@@ -25,6 +26,7 @@ from sklearn.preprocessing import SplineTransformer, StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.metrics import mean_squared_error, silhouette_score
 from sklearn.cluster import KMeans
+from sklearn.tree import DecisionTreeClassifier, export_text
 
 from pdpexplorer.metadata import Metadata
 
@@ -90,11 +92,14 @@ def partial_dependence(
     ]
 
     if n_jobs == 1:
-        one_way_pds = [_calc_pd(**args) for args in one_way_work]
+        one_way_results = [_calc_pd(**args) for args in one_way_work]
     else:
-        one_way_pds = Parallel(n_jobs=n_jobs)(
+        one_way_results = Parallel(n_jobs=n_jobs)(
             delayed(_calc_pd)(**args) for args in one_way_work
         )
+
+    one_way_pds = [x[0] for x in one_way_results]
+    pairs = {pair for x in one_way_results for pair in x[1]}
 
     feature_to_pd = _get_feature_to_pd(one_way_pds) if one_way_pds else None
 
@@ -115,7 +120,7 @@ def partial_dependence(
             "iqr": iqr,
             "feature_to_pd": feature_to_pd,
         }
-        for pair in two_way_feature_pairs
+        for pair in pairs
     ]
 
     if n_jobs == 1:
@@ -285,7 +290,7 @@ def _calc_one_way_pd(
 
     mean_predictions = mean_predictions.tolist()
 
-    ice = calculate_ice(ice_lines=ice_lines)
+    ice, pairs = calculate_ice(ice_lines=ice_lines, data=data, feature=feature, md=md)
 
     par_dep = {
         "num_features": 1,
@@ -337,7 +342,7 @@ def _calc_one_way_pd(
 
     par_dep["deviation"] = np.std(mean_predictions)
 
-    return par_dep
+    return par_dep, pairs
 
 
 def _calc_two_way_pd(
@@ -720,7 +725,7 @@ def categorical_feature_clustering(*, one_way_pds, feature_to_pd, first_id):
     return clusters
 
 
-def calculate_ice(ice_lines):
+def calculate_ice(ice_lines, data, feature, md):
     centered_ice_lines = []
 
     # todo - vectorize
@@ -760,9 +765,15 @@ def calculate_ice(ice_lines):
     centered_mean_min = math.inf
     centered_mean_max = -math.inf
 
+    pairs = set()
+
     for n in range(best_n_clusters):
         lines = ice_lines[best_labels == n]
         centered_lines = centered_ice_lines[best_labels == n]
+
+        y = (best_labels == n).astype(int)
+        rules, interactions = describe_cluster(data, y, list(data.columns), feature, md)
+        pairs.update(interactions)
 
         mean = lines.mean(axis=0)
         centered_mean = centered_lines.mean(axis=0)
@@ -785,6 +796,7 @@ def calculate_ice(ice_lines):
                 "p90": p90.tolist(),
                 "centered_mean": centered_mean.tolist(),
                 "compared_mean": compared_mean.tolist(),
+                "rules": rules,
             }
         )
 
@@ -823,4 +835,86 @@ def calculate_ice(ice_lines):
         "cluster_distance": cluster_distance.item(),
     }
 
-    return ice
+    return ice, pairs
+
+
+def describe_cluster(X, y, feature_names, current_feature, md):
+    # This code is adapted from
+    # https://scikit-learn.org/stable/auto_examples/tree/plot_unveil_tree_structure.html
+    clf = DecisionTreeClassifier(max_depth=3, ccp_alpha=0.01)
+    clf.fit(X, y)
+
+    children_left = clf.tree_.children_left
+    children_right = clf.tree_.children_right
+    threshold = clf.tree_.threshold
+    feature = clf.tree_.feature
+    value = clf.tree_.value
+    label = np.argmax(clf.tree_.value, axis=2).ravel()
+
+    stack = [(0, [])]
+
+    rules = []
+
+    interacting_features = set()
+
+    while len(stack) > 0:
+        node_id, path = stack.pop()
+        is_split_node = children_left[node_id] != children_right[node_id]
+
+        if is_split_node:
+            left_condition = {
+                "feature": feature_names[feature[node_id]],
+                "sign": "lte",
+                "threshold": threshold[node_id],
+            }
+            stack.append((children_left[node_id], path + [left_condition]))
+
+            right_condition = {
+                "feature": feature_names[feature[node_id]],
+                "sign": "gt",
+                "threshold": threshold[node_id],
+            }
+            stack.append((children_right[node_id], path + [right_condition]))
+
+        elif label[node_id] == 1:
+            num_instances = value[node_id].sum()
+            num_correct = value[node_id][0, 1]
+
+            for c in path:
+                if c["feature"] in md.features:
+                    interacting_features.add(c["feature"])
+                else:
+                    interacting_features.add(md.one_hot_to_feature[c["feature"]])
+
+            group_conditions_by_feature_sign = defaultdict(list)
+            for c in path:
+                group_conditions_by_feature_sign[(c["feature"], c["sign"])].append(c)
+
+            conditions = []
+
+            for (_, sign), conds in group_conditions_by_feature_sign.items():
+                op = max if sign == "gt" else min
+                conditions.append(op(conds, key=itemgetter("threshold")))
+
+            conditions.sort(key=itemgetter("feature"))
+
+            rule = {
+                "conditions": conditions,
+                "num_instances": num_instances,
+                "num_correct": num_correct,
+                "accuracy": num_correct / num_instances,
+            }
+
+            rules.append(rule)
+
+    rules.sort(key=lambda x: (x["num_correct"], -x["num_instances"]), reverse=True)
+
+    pairs = [
+        (
+            min(current_feature, interacting_feature),
+            max(current_feature, interacting_feature),
+        )
+        for interacting_feature in interacting_features
+    ]
+
+    return rules, pairs

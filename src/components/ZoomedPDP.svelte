@@ -26,6 +26,11 @@
     showTrendLine = false;
   }
 
+  let showClusterDescriptions: boolean = false;
+  $: if (iceLevel !== 'band' && iceLevel !== 'line') {
+    showClusterDescriptions = false;
+  }
+
   // one-way PDPs
   let xPdp: SinglePDPData | null = null;
   let yPdp: SinglePDPData | null = null;
@@ -208,6 +213,13 @@
         </select>
       </label>
 
+      {#if iceLevel === 'band' || iceLevel === 'line'}
+        <label class="label-and-input">
+          <input type="checkbox" bind:checked={showClusterDescriptions} />Show
+          cluster descriptions
+        </label>
+      {/if}
+
       {#if pdp.kind === 'quantitative' && iceLevel === 'none'}
         <label class="label-and-input">
           <input type="checkbox" bind:checked={showTrendLine} />Trend line
@@ -257,6 +269,7 @@
         {showTrendLine}
         {showMarginalDistribution}
         {iceLevel}
+        {showClusterDescriptions}
         showColorLegend={true}
       />
     </div>
@@ -321,6 +334,7 @@
     display: flex;
     align-items: center;
     gap: 0.25em;
+    min-width: 0;
   }
 
   .feature-selects label span {

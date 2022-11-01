@@ -1,5 +1,18 @@
 // ICE
 
+export type Condition = {
+  feature: string;
+  sign: 'lte' | 'gt';
+  threshold: number;
+};
+
+export type Rule = {
+  conditions: Condition[];
+  num_instances: number;
+  num_correct: number;
+  accuracy: number;
+};
+
 export type ICE = {
   ice_min: number;
   ice_max: number;
@@ -20,6 +33,7 @@ export type ICE = {
     p90: number[];
     mean: number[];
     centered_mean: number[];
+    rules: Rule[];
   }[];
   centered_pdp: number[];
   cluster_distance: number;

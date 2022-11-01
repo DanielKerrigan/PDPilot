@@ -93,6 +93,7 @@ setup_args = dict(
         "joblib>=1.1.0",
         "scikit-learn>=1.0.2",
         "tslearn-m1",
+        "h5py",
     ],
     extras_require={
         "examples": ["pmlb", "xgboost"],

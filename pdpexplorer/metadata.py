@@ -20,6 +20,12 @@ class Metadata:
             for encoded_col_name, _ in col_and_value
         }
 
+        self.one_hot_to_feature = {
+            encoded_col_name: feature
+            for feature, col_and_value in one_hot_features.items()
+            for encoded_col_name, _ in col_and_value
+        }
+
         non_one_hot_features = [
             feat for feat in df.columns if feat not in one_hot_encoded_col_names
         ]

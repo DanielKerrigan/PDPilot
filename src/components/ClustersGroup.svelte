@@ -4,6 +4,7 @@
     DoublePDPData,
     OneWayCategoricalCluster,
     OneWayQuantitativeCluster,
+    QuantitativeSinglePDPData,
     SinglePDPData,
   } from '../types';
   import { createEventDispatcher, onMount } from 'svelte';
@@ -98,6 +99,14 @@
     highlightPd = null;
   }
 
+  function onLineHover(event: CustomEvent<QuantitativeSinglePDPData | null>) {
+    highlightPd = event.detail;
+  }
+
+  function onLineClick(event: CustomEvent<string>) {
+    onClickFeature(event.detail);
+  }
+
   // events
 
   const clusterDispatch = createEventDispatcher<{
@@ -110,21 +119,12 @@
     clusterDispatch('filterByCluster', cluster.features);
   }
 
-  function onKeyDownCluster(
-    ev: KeyboardEvent,
-    cluster: OneWayCategoricalCluster | OneWayQuantitativeCluster
-  ) {
-    if (ev.key === 'Enter' || ev.key === ' ') {
-      onClickCluster(cluster);
-    }
-  }
-
   const zoomDispatch = createEventDispatcher<{
     zoom: SinglePDPData | DoublePDPData;
   }>();
 
-  function onClickFeature() {
-    if (highlightPd) {
+  function onClickFeature(feature: string) {
+    if (highlightPd && highlightPd.x_feature === feature) {
       zoomDispatch('zoom', highlightPd);
     }
   }
@@ -196,7 +196,7 @@
                       on:mouseleave={() => resetHighlight()}
                       on:focusin={() => setHighlight(c.id, feature)}
                       on:focusout={() => resetHighlight()}
-                      on:click={onClickFeature}
+                      on:click={() => onClickFeature(feature)}
                       class:highlight-feature={highlightPd &&
                         highlightPd.num_features === 1 &&
                         highlightPd.cluster === c.id &&
@@ -221,13 +221,13 @@
           style:grid-template-rows="repeat({numRows}, {chartHeight}px)"
         >
           {#each clusters.quantitativeClusters as c (c.id)}
-            <div
-              class="cluster-container"
-              tabindex="0"
-              on:click={() => onClickCluster(c)}
-              on:keydown={(e) => onKeyDownCluster(e, c)}
-            >
+            <div class="cluster-container">
+              <button on:click={() => onClickCluster(c)}
+                >Cluster {c.id + 1}</button
+              >
               <MultiLineChart
+                on:hover={onLineHover}
+                on:click={onLineClick}
                 cluster={c}
                 pds={clusters.quantitativePds.get(c.id) ?? []}
                 width={chartWidth}
@@ -243,12 +243,10 @@
           {/each}
 
           {#each clusters.categoricalClusters as c (c.id)}
-            <div
-              class="cluster-container"
-              tabindex="0"
-              on:click={() => onClickCluster(c)}
-              on:keydown={(e) => onKeyDownCluster(e, c)}
-            >
+            <div class="cluster-container">
+              <button on:click={() => onClickCluster(c)}
+                >Cluster {c.id + 1}</button
+              >
               <CategoryMosaic
                 cluster={c}
                 pds={clusters.categoricalPds.get(c.id) ?? []}
@@ -356,14 +354,6 @@
 
   .cluster-list-item + .cluster-list-item {
     margin-top: 0.5em;
-  }
-
-  .cluster-container {
-    cursor: pointer;
-  }
-
-  .cluster-container:hover {
-    outline: var(--blue) auto 1px;
   }
 
   .cluster-feature-list-item {

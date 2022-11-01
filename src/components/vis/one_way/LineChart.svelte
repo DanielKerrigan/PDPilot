@@ -4,7 +4,7 @@
     QuantitativeMarginalDistribution,
     QuantitativeSinglePDPData,
   } from '../../../types';
-  import { scaleBand, scaleLinear, scaleOrdinal } from 'd3-scale';
+  import { scaleLinear, scaleOrdinal } from 'd3-scale';
   import { line as d3line, area as d3area } from 'd3-shape';
   import { zip } from 'd3-array';
   import XAxis from '../axis/XAxis.svelte';
@@ -16,7 +16,11 @@
     nice_ice_line_extent,
   } from '../../../stores';
   import MarginalHistogram from '../marginal/MarginalHistogram.svelte';
-  import { getYScale } from '../../../vis-utils';
+  import {
+    categoricalColors,
+    defaultFormat,
+    getYScale,
+  } from '../../../vis-utils';
 
   export let pdp: QuantitativeSinglePDPData;
   export let width: number;
@@ -25,6 +29,7 @@
   export let showTrendLine: boolean;
   export let iceLevel: ICELevel;
   export let marginalDistributionX: QuantitativeMarginalDistribution | null;
+  export let showClusterDescriptions: boolean;
 
   // this approach for generating a unique id to use for the
   // clip path comes from https://observablehq.com/@d3/difference-chart
@@ -38,19 +43,20 @@
     left: 50,
   };
 
+  $: facetHeight =
+    (height - margin.top - margin.bottom) / pdp.ice.clusters.length;
+
   $: x = scaleLinear()
     .domain([pdp.x_values[0], pdp.x_values[pdp.x_values.length - 1]])
-    .range([margin.left, width - margin.right]);
-
-  $: fy = scaleBand<number>()
-    .domain(pdp.ice.clusters.map((d) => d.id))
-    .range([margin.top, height - margin.bottom])
-    .paddingInner(0.2);
+    .range([
+      margin.left,
+      (showClusterDescriptions ? width / 2 : width) - margin.right,
+    ]);
 
   $: y = getYScale(
     pdp,
     height,
-    fy.bandwidth(),
+    facetHeight,
     iceLevel,
     scaleLocally,
     $nice_pdp_extent,
@@ -64,15 +70,15 @@
 
   $: dark = scaleOrdinal<number, string>()
     .domain(clusterIds)
-    .range(['#2171b5', '#238b45', '#cb181d', '#d94701', '#6a51a3']);
+    .range(categoricalColors.dark);
 
   $: medium = scaleOrdinal<number, string>()
     .domain(clusterIds)
-    .range(['#6baed6', '#74c476', '#fb6a4a', '#fd8d3c', '#9e9ac8']);
+    .range(categoricalColors.medium);
 
   $: light = scaleOrdinal<number, string>()
     .domain(clusterIds)
-    .range(['#bdd7e7', '#bae4b3', '#fcae91', '#fdbe85', '#cbc9e2']);
+    .range(categoricalColors.light);
 
   // this approach with the indices is like what is done here
   // https://observablehq.com/@d3/line-chart
@@ -87,19 +93,19 @@
     .y0((d) => y(d[0]));
 </script>
 
-<!--
-  setting the width and height in pixels, as with
+{#if iceLevel === 'none'}
+  <!--
+    setting the width and height in pixels, as with
 
-  <svg width={width} height={height}>
+    <svg width={width} height={height}>
 
-  or
+    or
 
-  <svg style="width: {width}; height: {height};">
+    <svg style="width: {width}; height: {height};">
 
-  was causing issues with resizing.
--->
-<svg class="pdp-line-chart">
-  {#if iceLevel === 'none'}
+    was causing issues with resizing.
+  -->
+  <svg class="pdp-line-chart">
     <!-- trend line -->
     {#if showTrendLine}
       <g>
@@ -134,7 +140,9 @@
     <XAxis scale={x} y={height - margin.bottom} label={pdp.x_feature} />
 
     <YAxis scale={y} x={margin.left} label={'average prediction'} />
-  {:else if iceLevel === 'mean'}
+  </svg>
+{:else if iceLevel === 'mean'}
+  <svg class="pdp-line-chart">
     <!-- cluster means -->
     <g>
       {#each pdp.ice.clusters as cluster}
@@ -158,114 +166,186 @@
     <XAxis scale={x} y={height - margin.bottom} label={pdp.x_feature} />
 
     <YAxis scale={y} x={margin.left} label={'centered average prediction'} />
-  {:else if iceLevel === 'band'}
-    <g>
-      {#each pdp.ice.clusters as cluster}
-        <g transform="translate(0,{fy(cluster.id)})">
-          <path
-            d={area(zip(cluster.p10, cluster.p90))}
-            fill={light(cluster.id)}
-          />
+  </svg>
+{:else if iceLevel === 'band' || iceLevel === 'line'}
+  <div class="ice-cluster-container">
+    {#each pdp.ice.clusters as cluster}
+      <div class="ice-cluster">
+        <svg class="ice-cluster-chart">
+          {#if iceLevel === 'band'}
+            <path
+              d={area(zip(cluster.p10, cluster.p90))}
+              fill={light(cluster.id)}
+            />
 
-          <path
-            d={area(zip(cluster.p25, cluster.p75))}
-            fill={medium(cluster.id)}
-          />
+            <path
+              d={area(zip(cluster.p25, cluster.p75))}
+              fill={medium(cluster.id)}
+            />
 
-          <path
-            d={line(cluster.centered_mean)}
-            stroke={dark(cluster.id)}
-            stroke-opacity="1"
-            fill="none"
-            stroke-width="2"
-          />
+            <path
+              d={line(cluster.centered_mean)}
+              stroke={dark(cluster.id)}
+              stroke-opacity="1"
+              fill="none"
+              stroke-width="2"
+            />
 
-          <path
-            d={line(pdp.ice.centered_pdp)}
-            stroke="var(--black)"
-            stroke-opacity="1"
-            fill="none"
-            stroke-width="2"
-          />
+            <path
+              d={line(pdp.ice.centered_pdp)}
+              stroke="var(--black)"
+              stroke-opacity="1"
+              fill="none"
+              stroke-width="2"
+            />
 
-          <YAxis
-            scale={y}
-            x={margin.left}
-            label={'centered average prediction'}
-          />
+            <YAxis
+              scale={y}
+              x={margin.left}
+              label={'centered average prediction'}
+            />
 
-          <XAxis
-            scale={x}
-            y={fy.bandwidth()}
-            showTickLabels={cluster.id === pdp.ice.clusters.length - 1}
-            showAxisLabel={cluster.id === pdp.ice.clusters.length - 1}
-            label={pdp.x_feature}
-          />
-        </g>
-      {/each}
-    </g>
-  {:else if iceLevel === 'line'}
-    <g>
-      {#each pdp.ice.clusters as cluster}
-        <g transform="translate(0,{fy(cluster.id)})">
-          <g>
-            {#each cluster.centered_ice_lines as ice}
+            <XAxis
+              scale={x}
+              y={facetHeight}
+              showTickLabels={cluster.id === pdp.ice.clusters.length - 1}
+              showAxisLabel={cluster.id === pdp.ice.clusters.length - 1}
+              label={pdp.x_feature}
+            />
+          {:else if iceLevel === 'line'}
+            <g>
+              <g>
+                {#each cluster.centered_ice_lines as ice}
+                  <path
+                    d={line(ice)}
+                    stroke={medium(cluster.id)}
+                    stroke-opacity="1"
+                    fill="none"
+                    stroke-width="1"
+                  />
+                {/each}
+              </g>
+
               <path
-                d={line(ice)}
-                stroke={light(cluster.id)}
+                d={line(cluster.centered_mean)}
+                stroke={dark(cluster.id)}
                 stroke-opacity="1"
                 fill="none"
-                stroke-width="1"
+                stroke-width="2"
               />
+
+              <path
+                d={line(pdp.ice.centered_pdp)}
+                stroke="var(--black)"
+                stroke-opacity="1"
+                fill="none"
+                stroke-width="2"
+              />
+
+              <YAxis
+                scale={y}
+                x={margin.left}
+                label={'centered average prediction'}
+              />
+              <XAxis
+                scale={x}
+                y={facetHeight}
+                showTickLabels={cluster.id === pdp.ice.clusters.length - 1}
+                showAxisLabel={cluster.id === pdp.ice.clusters.length - 1}
+                label={pdp.x_feature}
+              />
+            </g>
+          {/if}
+        </svg>
+        {#if showClusterDescriptions}
+          <div class="ice-cluster-description">
+            <div class="ice-cluster-description-header">Rule</div>
+            <div class="ice-cluster-description-header ice-cluster-justify-end">
+              Accuracy
+            </div>
+            {#each cluster.rules as rule}
+              <div class="ice-cluster-rule">
+                {#each rule.conditions as condition, i}
+                  <div class="ice-cluster-condition">
+                    {condition.feature}
+                    {#if condition.sign === 'lte'}
+                      ≤
+                    {:else if condition.sign === 'gt'}
+                      >
+                    {/if}
+                    {defaultFormat(condition.threshold)}
+                  </div>
+                  {#if i < rule.conditions.length - 1}
+                    <div>and</div>
+                  {/if}
+                {/each}
+              </div>
+              <div class="ice-cluster-rule-stats ice-cluster-justify-end">
+                {rule.num_correct}/{rule.num_instances}
+              </div>
             {/each}
-          </g>
+          </div>
+        {/if}
+      </div>
+    {/each}
+  </div>
+{/if}
 
-          <path
-            d={line(cluster.centered_mean)}
-            stroke={dark(cluster.id)}
-            stroke-opacity="1"
-            fill="none"
-            stroke-width="2"
-          />
-
-          <path
-            d={line(pdp.ice.centered_pdp)}
-            stroke="var(--black)"
-            stroke-opacity="1"
-            fill="none"
-            stroke-width="2"
-          />
-
-          <YAxis
-            scale={y}
-            x={margin.left}
-            label={'centered average prediction'}
-          />
-          <XAxis
-            scale={x}
-            y={fy.bandwidth()}
-            showTickLabels={cluster.id === pdp.ice.clusters.length - 1}
-            showAxisLabel={cluster.id === pdp.ice.clusters.length - 1}
-            label={pdp.x_feature}
-          />
-        </g>
-      {/each}
-    </g>
-  {/if}
-
-  {#if marginalDistributionX !== null}
-    <MarginalHistogram
-      data={marginalDistributionX}
-      {x}
-      height={margin.top}
-      direction="horizontal"
-    />
-  {/if}
-</svg>
+{#if marginalDistributionX !== null}
+  <MarginalHistogram
+    data={marginalDistributionX}
+    {x}
+    height={margin.top}
+    direction="horizontal"
+  />
+{/if}
 
 <style>
   .pdp-line-chart {
     width: 100%;
     height: 100%;
+  }
+
+  .ice-cluster-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .ice-cluster {
+    display: flex;
+    height: 100%;
+  }
+
+  .ice-cluster-chart {
+    flex: 1;
+  }
+
+  .ice-cluster-description {
+    flex: 1;
+
+    display: grid;
+    grid-template-columns: 1fr min-content;
+    grid-auto-rows: max-content;
+    column-gap: 0.25em;
+  }
+
+  .ice-cluster-rule {
+    display: flex;
+    gap: 0.5em;
+    overflow-x: auto;
+  }
+
+  .ice-cluster-description-header {
+    font-weight: bold;
+  }
+
+  .ice-cluster-condition {
+    white-space: nowrap;
+  }
+
+  .ice-cluster-justify-end {
+    justify-self: end;
   }
 </style>

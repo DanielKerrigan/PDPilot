@@ -31,7 +31,7 @@
   }
 
   const margin = {
-    top: 20,
+    top: 10,
     right: 10,
     bottom: 40,
     left: 50,
@@ -56,16 +56,6 @@
 </script>
 
 <svg class="category-mosaic">
-  <text
-    dominant-baseline="hanging"
-    x={margin.left}
-    y={2}
-    font-size={12}
-    font-weight="bold"
-  >
-    Cluster {cluster.id + 1}
-  </text>
-
   {#each filteredPds as pd, i}
     <g transform="translate({fx(getCol(i))},{fy(getRow(i))})">
       <rect

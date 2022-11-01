@@ -6,7 +6,7 @@ import type {
   CategoricalSinglePDPData,
 } from './types';
 import type { ScaleLinear } from 'd3-scale';
-export { scaleCanvas, defaultFormat, getYScale };
+export { scaleCanvas, defaultFormat, getYScale, categoricalColors };
 
 // Adapted from https://www.html5rocks.com/en/tutorials/canvas/hidpi/
 function scaleCanvas(
@@ -110,3 +110,42 @@ function getYScale(
     }
   }
 }
+
+const categoricalColors = {
+  dark: [
+    '#1f77b4',
+    '#ff7f0e',
+    '#2ca02c',
+    '#d62728',
+    '#9467bd',
+    '#8c564b',
+    '#e377c2',
+    '#7f7f7f',
+    '#bcbd22',
+    '#17becf',
+  ],
+  medium: [
+    '#5da6e6',
+    '#ffb048',
+    '#65d25c',
+    '#ff6151',
+    '#c696f0',
+    '#be8377',
+    '#ffa8f5',
+    '#aeaeae',
+    '#f1ef5a',
+    '#66f1ff',
+  ],
+  light: [
+    '#92d7ff',
+    '#ffe479',
+    '#9aff8c',
+    '#ff967e',
+    '#fac7ff',
+    '#f2b3a6',
+    '#ffdcff',
+    '#e0e0e0',
+    '#ffff8d',
+    '#9fffff',
+  ],
+};
