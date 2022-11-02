@@ -851,63 +851,25 @@ def describe_cluster(X, y, feature_names, current_feature, md):
     value = clf.tree_.value
     label = np.argmax(clf.tree_.value, axis=2).ravel()
 
-    stack = [(0, [])]
+    interacting_features = {
+        md.one_hot_to_feature.get(feature_names[f], feature_names[f]) for f in feature
+    }
 
-    rules = []
+    root = {"id": 0, "depth": 0, "kind": "empty"}
 
-    interacting_features = set()
+    traverse(
+        children_left,
+        children_right,
+        threshold,
+        feature,
+        feature_names,
+        value,
+        label,
+        root,
+    )
 
-    while len(stack) > 0:
-        node_id, path = stack.pop()
-        is_split_node = children_left[node_id] != children_right[node_id]
-
-        if is_split_node:
-            left_condition = {
-                "feature": feature_names[feature[node_id]],
-                "sign": "lte",
-                "threshold": threshold[node_id],
-            }
-            stack.append((children_left[node_id], path + [left_condition]))
-
-            right_condition = {
-                "feature": feature_names[feature[node_id]],
-                "sign": "gt",
-                "threshold": threshold[node_id],
-            }
-            stack.append((children_right[node_id], path + [right_condition]))
-
-        elif label[node_id] == 1:
-            num_instances = value[node_id].sum()
-            num_correct = value[node_id][0, 1]
-
-            for c in path:
-                if c["feature"] in md.features:
-                    interacting_features.add(c["feature"])
-                else:
-                    interacting_features.add(md.one_hot_to_feature[c["feature"]])
-
-            group_conditions_by_feature_sign = defaultdict(list)
-            for c in path:
-                group_conditions_by_feature_sign[(c["feature"], c["sign"])].append(c)
-
-            conditions = []
-
-            for (_, sign), conds in group_conditions_by_feature_sign.items():
-                op = max if sign == "gt" else min
-                conditions.append(op(conds, key=itemgetter("threshold")))
-
-            conditions.sort(key=itemgetter("feature"))
-
-            rule = {
-                "conditions": conditions,
-                "num_instances": num_instances,
-                "num_correct": num_correct,
-                "accuracy": num_correct / num_instances,
-            }
-
-            rules.append(rule)
-
-    rules.sort(key=lambda x: (x["num_correct"], -x["num_instances"]), reverse=True)
+    print(current_feature)
+    print(root)
 
     pairs = [
         (
@@ -917,4 +879,73 @@ def describe_cluster(X, y, feature_names, current_feature, md):
         for interacting_feature in interacting_features
     ]
 
-    return rules, pairs
+    return root, pairs
+
+
+def traverse(
+    children_left, children_right, threshold, feature, feature_names, value, label, node
+):
+    node_id = node["id"]
+    is_split_node = children_left[node_id] != children_right[node_id]
+
+    children = []
+
+    if is_split_node:
+        node["kind"] = "split"
+
+        left = {
+            "id": children_left[node_id],
+            "feature": feature_names[feature[node_id]],
+            "sign": "lte",
+            "threshold": threshold[node_id],
+            "depth": node["depth"] + 1,
+        }
+        left_good = traverse(
+            children_left,
+            children_right,
+            threshold,
+            feature,
+            feature_names,
+            value,
+            label,
+            left,
+        )
+        if left_good:
+            children.append(left)
+
+        right = {
+            "id": children_right[node_id],
+            "feature": feature_names[feature[node_id]],
+            "sign": "gt",
+            "threshold": threshold[node_id],
+            "depth": node["depth"] + 1,
+        }
+        right_good = traverse(
+            children_left,
+            children_right,
+            threshold,
+            feature,
+            feature_names,
+            value,
+            label,
+            right,
+        )
+        if right_good:
+            children.append(right)
+
+        node["children"] = children
+
+        return left_good or right_good
+
+    elif label[node_id] == 1:
+        num_instances = value[node_id].sum()
+        num_correct = value[node_id][0, 1]
+
+        node["kind"] = "leaf"
+        node["num_instances"] = num_instances
+        node["num_correct"] = num_correct
+        node["accuracy"] = num_correct / num_instances
+
+        return True
+    else:
+        return False

@@ -16,11 +16,8 @@
     nice_ice_line_extent,
   } from '../../../stores';
   import MarginalHistogram from '../marginal/MarginalHistogram.svelte';
-  import {
-    categoricalColors,
-    defaultFormat,
-    getYScale,
-  } from '../../../vis-utils';
+  import { categoricalColors, getYScale } from '../../../vis-utils';
+  import Tree from './Tree.svelte';
 
   export let pdp: QuantitativeSinglePDPData;
   export let width: number;
@@ -259,31 +256,7 @@
         </svg>
         {#if showClusterDescriptions}
           <div class="ice-cluster-description">
-            <div class="ice-cluster-description-header">Rule</div>
-            <div class="ice-cluster-description-header ice-cluster-justify-end">
-              Accuracy
-            </div>
-            {#each cluster.rules as rule}
-              <div class="ice-cluster-rule">
-                {#each rule.conditions as condition, i}
-                  <div class="ice-cluster-condition">
-                    {condition.feature}
-                    {#if condition.sign === 'lte'}
-                      ≤
-                    {:else if condition.sign === 'gt'}
-                      >
-                    {/if}
-                    {defaultFormat(condition.threshold)}
-                  </div>
-                  {#if i < rule.conditions.length - 1}
-                    <div>and</div>
-                  {/if}
-                {/each}
-              </div>
-              <div class="ice-cluster-rule-stats ice-cluster-justify-end">
-                {rule.num_correct}/{rule.num_instances}
-              </div>
-            {/each}
+            <Tree node={cluster.rules} />
           </div>
         {/if}
       </div>
@@ -324,28 +297,6 @@
 
   .ice-cluster-description {
     flex: 1;
-
-    display: grid;
-    grid-template-columns: 1fr min-content;
-    grid-auto-rows: max-content;
-    column-gap: 0.25em;
-  }
-
-  .ice-cluster-rule {
-    display: flex;
-    gap: 0.5em;
-    overflow-x: auto;
-  }
-
-  .ice-cluster-description-header {
-    font-weight: bold;
-  }
-
-  .ice-cluster-condition {
-    white-space: nowrap;
-  }
-
-  .ice-cluster-justify-end {
-    justify-self: end;
+    overflow: auto;
   }
 </style>

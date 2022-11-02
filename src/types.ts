@@ -33,7 +33,7 @@ export type ICE = {
     p90: number[];
     mean: number[];
     centered_mean: number[];
-    rules: Rule[];
+    rules: any;
   }[];
   centered_pdp: number[];
   cluster_distance: number;
