@@ -44,7 +44,7 @@ function defaultFormat(x: number): string {
 function getYScale(
   pdp: QuantitativeSinglePDPData | CategoricalSinglePDPData,
   height: number,
-  bandHeight: number,
+  facetHeight: number,
   iceLevel: ICELevel,
   scaleLocally: boolean,
   nicePdpExtent: [number, number],
@@ -63,11 +63,15 @@ function getYScale(
 
   const globalIceBand = scaleLinear()
     .domain(niceIceBandExtent)
-    .range([bandHeight, margin.top]);
+    .range([facetHeight - margin.bottom, margin.top]);
 
   const globalIceLines = scaleLinear()
     .domain(niceIceLineExtent)
-    .range([bandHeight, margin.top]);
+    .range([facetHeight - margin.bottom, margin.top]);
+
+  const globalFiltLines = scaleLinear()
+    .domain(niceIceLineExtent)
+    .range([height - margin.bottom, margin.top]);
 
   const localPdp = scaleLinear()
     .domain([pdp.pdp_min, pdp.pdp_max])
@@ -81,12 +85,16 @@ function getYScale(
   const localIceBand = scaleLinear()
     .domain([pdp.ice.p10_min, pdp.ice.p90_max])
     .nice()
-    .range([bandHeight, 0]);
+    .range([facetHeight - margin.bottom, margin.top]);
 
   const localIceLines = scaleLinear()
     .domain([pdp.ice.centered_ice_min, pdp.ice.centered_ice_max])
     .nice()
-    .range([bandHeight, 0]);
+    .range([facetHeight - margin.bottom, margin.top]);
+
+  const localFiltLines = scaleLinear()
+    .domain([pdp.ice.centered_ice_min, pdp.ice.centered_ice_max])
+    .range([height - margin.bottom, margin.top]);
 
   if (scaleLocally) {
     if (iceLevel === 'none') {
@@ -95,8 +103,10 @@ function getYScale(
       return localIceClusterMean;
     } else if (iceLevel === 'band') {
       return localIceBand;
-    } else {
+    } else if (iceLevel === 'line') {
       return localIceLines;
+    } else {
+      return localFiltLines;
     }
   } else {
     if (iceLevel === 'none') {
@@ -105,8 +115,10 @@ function getYScale(
       return globalIceClusterMean;
     } else if (iceLevel === 'band') {
       return globalIceBand;
-    } else {
+    } else if (iceLevel === 'line') {
       return globalIceLines;
+    } else {
+      return globalFiltLines;
     }
   }
 }

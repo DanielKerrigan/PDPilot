@@ -26,9 +26,9 @@
     showTrendLine = false;
   }
 
-  let showClusterDescriptions: boolean = false;
+  let clusterDescriptions: 'none' | 'table' | 'tree' = 'none';
   $: if (iceLevel !== 'band' && iceLevel !== 'line') {
-    showClusterDescriptions = false;
+    clusterDescriptions = 'none';
   }
 
   // one-way PDPs
@@ -215,8 +215,12 @@
 
       {#if iceLevel === 'band' || iceLevel === 'line'}
         <label class="label-and-input">
-          <input type="checkbox" bind:checked={showClusterDescriptions} />Show
-          cluster descriptions
+          <span>Descriptions:</span>
+          <select bind:value={clusterDescriptions}>
+            <option value="none">None</option>
+            <option value="tree">Tree</option>
+            <option value="table">Table</option>
+          </select>
         </label>
       {/if}
 
@@ -259,7 +263,7 @@
       </div>
     {/if}
 
-    <div style:grid-area="two-way">
+    <div style:grid-area="main">
       <PDP
         {pdp}
         globalColor={$globalColorPdpExtent}
@@ -269,7 +273,7 @@
         {showTrendLine}
         {showMarginalDistribution}
         {iceLevel}
-        {showClusterDescriptions}
+        {clusterDescriptions}
         showColorLegend={true}
       />
     </div>
@@ -368,7 +372,7 @@
     grid-template-columns: 1fr 1fr;
     grid-template-areas:
       'one-way-left one-way-right'
-      'two-way interaction';
+      'main interaction';
   }
 
   .showOneWay-true-showInteraction-false {
@@ -376,14 +380,14 @@
     grid-template-columns: 1fr 1fr;
     grid-template-areas:
       'one-way-left one-way-right'
-      'two-way two-way';
+      'main main';
   }
 
   .showOneWay-false-showInteraction-true {
     grid-template-rows: 1fr 1fr;
     grid-template-columns: 1fr 1fr;
     grid-template-areas:
-      'two-way two-way'
+      'main main'
       'interaction interaction';
   }
 
@@ -391,7 +395,7 @@
     grid-template-rows: 1fr 1fr;
     grid-template-columns: 1fr 1fr;
     grid-template-areas:
-      'two-way two-way'
-      'two-way two-way';
+      'main main'
+      'main main';
   }
 </style>

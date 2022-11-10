@@ -24,6 +24,7 @@ export type ICE = {
   centered_mean_max: number;
   p10_min: number;
   p90_max: number;
+  centered_ice_lines: number[][];
   clusters: {
     id: number;
     centered_ice_lines: number[][];
@@ -33,13 +34,14 @@ export type ICE = {
     p90: number[];
     mean: number[];
     centered_mean: number[];
-    rules: any;
+    rule_tree: any;
+    rule_list: any;
   }[];
   centered_pdp: number[];
   cluster_distance: number;
 };
 
-export type ICELevel = 'none' | 'mean' | 'band' | 'line';
+export type ICELevel = 'none' | 'mean' | 'band' | 'line' | 'filt';
 
 // partial dependence
 

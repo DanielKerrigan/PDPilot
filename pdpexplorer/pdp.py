@@ -9,6 +9,7 @@ from operator import itemgetter
 from itertools import chain
 import json
 import math
+from copy import deepcopy
 from pathlib import Path
 from collections import defaultdict
 
@@ -772,7 +773,9 @@ def calculate_ice(ice_lines, data, feature, md):
         centered_lines = centered_ice_lines[best_labels == n]
 
         y = (best_labels == n).astype(int)
-        rules, interactions = describe_cluster(data, y, list(data.columns), feature, md)
+        rule_tree, rule_list, interactions = describe_cluster(
+            data, y, list(data.columns), feature, md
+        )
         pairs.update(interactions)
 
         mean = lines.mean(axis=0)
@@ -796,7 +799,8 @@ def calculate_ice(ice_lines, data, feature, md):
                 "p90": p90.tolist(),
                 "centered_mean": centered_mean.tolist(),
                 "compared_mean": compared_mean.tolist(),
-                "rules": rules,
+                "rule_tree": rule_tree,
+                "rule_list": rule_list,
             }
         )
 
@@ -830,6 +834,7 @@ def calculate_ice(ice_lines, data, feature, md):
         "p10_min": p10_min.item(),
         "p90_max": p90_max.item(),
         "clusters": clusters,
+        "centered_ice_lines": centered_ice_lines,
         "centered_pdp": centered_pdp.tolist(),
         "compare_pdp": (ice_lines.mean(axis=0) - ice_lines.mean(axis=0)[0]).tolist(),
         "cluster_distance": cluster_distance.item(),
@@ -843,6 +848,7 @@ def describe_cluster(X, y, feature_names, current_feature, md):
     # https://scikit-learn.org/stable/auto_examples/tree/plot_unveil_tree_structure.html
     clf = DecisionTreeClassifier(max_depth=3, ccp_alpha=0.01)
     clf.fit(X, y)
+    leaves = clf.apply(X)
 
     children_left = clf.tree_.children_left
     children_right = clf.tree_.children_right
@@ -852,12 +858,14 @@ def describe_cluster(X, y, feature_names, current_feature, md):
     label = np.argmax(clf.tree_.value, axis=2).ravel()
 
     interacting_features = {
-        md.one_hot_to_feature.get(feature_names[f], feature_names[f]) for f in feature
+        md.one_hot_to_feature.get(feature_names[f], feature_names[f])
+        for f in feature
+        if feature_names[f] != current_feature
     }
 
     root = {"id": 0, "depth": 0, "kind": "empty"}
 
-    traverse(
+    rules = traverse(
         children_left,
         children_right,
         threshold,
@@ -865,11 +873,10 @@ def describe_cluster(X, y, feature_names, current_feature, md):
         feature_names,
         value,
         label,
+        leaves,
         root,
+        {},
     )
-
-    print(current_feature)
-    print(root)
 
     pairs = [
         (
@@ -879,28 +886,51 @@ def describe_cluster(X, y, feature_names, current_feature, md):
         for interacting_feature in interacting_features
     ]
 
-    return root, pairs
+    return root, rules, pairs
 
 
 def traverse(
-    children_left, children_right, threshold, feature, feature_names, value, label, node
+    children_left,
+    children_right,
+    threshold,
+    feature,
+    feature_names,
+    value,
+    label,
+    leaves,
+    node,
+    path,
 ):
     node_id = node["id"]
     is_split_node = children_left[node_id] != children_right[node_id]
 
     children = []
 
+    feature_name = feature_names[feature[node_id]]
+
     if is_split_node:
         node["kind"] = "split"
 
-        left = {
+        node_left = {
             "id": children_left[node_id],
-            "feature": feature_names[feature[node_id]],
+            "feature": feature_name,
             "sign": "lte",
             "threshold": threshold[node_id],
             "depth": node["depth"] + 1,
         }
-        left_good = traverse(
+
+        path_left = deepcopy(path)
+
+        if feature_name in path_left and "lte" in path_left[feature_name]:
+            path_left[feature_name]["lte"] = min(
+                threshold[node_id], path_left[feature_name]["lte"]
+            )
+        elif feature_name in path_left and "gt" in path_left[feature_name]:
+            path_left[feature_name]["lte"] = threshold[node_id]
+        else:
+            path_left[feature_name] = {"lte": threshold[node_id]}
+
+        left_rules = traverse(
             children_left,
             children_right,
             threshold,
@@ -908,19 +938,33 @@ def traverse(
             feature_names,
             value,
             label,
-            left,
+            leaves,
+            node_left,
+            path_left,
         )
-        if left_good:
-            children.append(left)
+        if len(left_rules) > 0:
+            children.append(node_left)
 
-        right = {
+        node_right = {
             "id": children_right[node_id],
-            "feature": feature_names[feature[node_id]],
+            "feature": feature_name,
             "sign": "gt",
             "threshold": threshold[node_id],
             "depth": node["depth"] + 1,
         }
-        right_good = traverse(
+
+        path_right = deepcopy(path)
+
+        if feature_name in path_right and "gt" in path_right[feature_name]:
+            path_right[feature_name]["gt"] = max(
+                threshold[node_id], path_right[feature_name]["gt"]
+            )
+        elif feature_name in path_right and "lte" in path_right[feature_name]:
+            path_right[feature_name]["gt"] = threshold[node_id]
+        else:
+            path_right[feature_name] = {"gt": threshold[node_id]}
+
+        right_rules = traverse(
             children_left,
             children_right,
             threshold,
@@ -928,14 +972,16 @@ def traverse(
             feature_names,
             value,
             label,
-            right,
+            leaves,
+            node_right,
+            path_right,
         )
-        if right_good:
-            children.append(right)
+        if len(right_rules) > 0:
+            children.append(node_right)
 
         node["children"] = children
 
-        return left_good or right_good
+        return left_rules + right_rules
 
     elif label[node_id] == 1:
         num_instances = value[node_id].sum()
@@ -945,7 +991,15 @@ def traverse(
         node["num_instances"] = num_instances
         node["num_correct"] = num_correct
         node["accuracy"] = num_correct / num_instances
+        node["indices"] = np.where(leaves == node_id)[0]
 
-        return True
+        rule = {
+            "num_instances": num_instances,
+            "num_correct": num_correct,
+            "accuracy": num_correct / num_instances,
+            "conditions": path,
+        }
+
+        return [rule]
     else:
-        return False
+        return []

@@ -17,7 +17,8 @@
   } from '../../../stores';
   import MarginalHistogram from '../marginal/MarginalHistogram.svelte';
   import { categoricalColors, getYScale } from '../../../vis-utils';
-  import Tree from './Tree.svelte';
+  import RuleTree from '../rule/RuleTree.svelte';
+  import RuleTable from '../rule/RuleTable.svelte';
 
   export let pdp: QuantitativeSinglePDPData;
   export let width: number;
@@ -26,33 +27,32 @@
   export let showTrendLine: boolean;
   export let iceLevel: ICELevel;
   export let marginalDistributionX: QuantitativeMarginalDistribution | null;
-  export let showClusterDescriptions: boolean;
+  export let clusterDescriptions: 'none' | 'tree' | 'table';
+  export let iceLines: number[] = [];
+
+  $: console.log(iceLines);
 
   // this approach for generating a unique id to use for the
   // clip path comes from https://observablehq.com/@d3/difference-chart
 
   const clipPathId: string = Math.random().toString(16).slice(2);
 
-  $: margin = {
-    top: marginalDistributionX !== null ? 100 : 10,
-    right: 10,
-    bottom: 40,
-    left: 50,
-  };
+  $: marginalChartHeight = marginalDistributionX !== null ? 100 : 0;
 
-  $: facetHeight =
-    (height - margin.top - margin.bottom) / pdp.ice.clusters.length;
+  const margin = { top: 10, right: 10, bottom: 35, left: 50 };
+
+  $: chartHeight = height - marginalChartHeight;
+  $: facetHeight = chartHeight / pdp.ice.clusters.length;
+
+  $: chartAndFacetWidth = clusterDescriptions !== 'none' ? width / 2 : width;
 
   $: x = scaleLinear()
     .domain([pdp.x_values[0], pdp.x_values[pdp.x_values.length - 1]])
-    .range([
-      margin.left,
-      (showClusterDescriptions ? width / 2 : width) - margin.right,
-    ]);
+    .range([margin.left, chartAndFacetWidth - margin.right]);
 
   $: y = getYScale(
     pdp,
-    height,
+    chartHeight,
     facetHeight,
     iceLevel,
     scaleLocally,
@@ -88,7 +88,26 @@
     .x((_, i) => x(pdp.x_values[i]))
     .y1((d) => y(d[1]))
     .y0((d) => y(d[0]));
+
+  $: interactingFeatures = [
+    ...new Set(
+      pdp.ice.clusters
+        .map((c) => c.rule_list.map((r: any) => Object.keys(r.conditions)))
+        .flat(2)
+    ),
+  ];
 </script>
+
+{#if marginalDistributionX !== null}
+  <svg width={chartAndFacetWidth} height={marginalChartHeight}>
+    <MarginalHistogram
+      data={marginalDistributionX}
+      {x}
+      height={marginalChartHeight}
+      direction="horizontal"
+    />
+  </svg>
+{/if}
 
 {#if iceLevel === 'none'}
   <!--
@@ -110,8 +129,8 @@
           <rect
             x={margin.left}
             y={margin.top}
-            width={width - margin.left - margin.right}
-            height={height - margin.top - margin.bottom}
+            width={chartAndFacetWidth - margin.left - margin.right}
+            height={chartHeight - margin.top - margin.bottom}
             fill="white"
           />
         </clipPath>
@@ -134,7 +153,7 @@
       fill="none"
     />
 
-    <XAxis scale={x} y={height - margin.bottom} label={pdp.x_feature} />
+    <XAxis scale={x} y={chartHeight - margin.bottom} label={pdp.x_feature} />
 
     <YAxis scale={y} x={margin.left} label={'average prediction'} />
   </svg>
@@ -160,7 +179,26 @@
       fill="none"
     />
 
-    <XAxis scale={x} y={height - margin.bottom} label={pdp.x_feature} />
+    <XAxis scale={x} y={chartHeight - margin.bottom} label={pdp.x_feature} />
+
+    <YAxis scale={y} x={margin.left} label={'centered average prediction'} />
+  </svg>
+{:else if iceLevel === 'filt'}
+  <svg class="pdp-line-chart">
+    <!-- ice lines -->
+    <g>
+      {#each iceLines as i}
+        <path
+          d={line(pdp.ice.centered_ice_lines[i])}
+          stroke={'black'}
+          stroke-width="2"
+          stroke-opacity={0.5}
+          fill="none"
+        />
+      {/each}
+    </g>
+
+    <XAxis scale={x} y={chartHeight - margin.bottom} label={pdp.x_feature} />
 
     <YAxis scale={y} x={margin.left} label={'centered average prediction'} />
   </svg>
@@ -168,7 +206,11 @@
   <div class="ice-cluster-container">
     {#each pdp.ice.clusters as cluster}
       <div class="ice-cluster">
-        <svg class="ice-cluster-chart">
+        <svg
+          class="ice-cluster-chart"
+          style:height={facetHeight}
+          style:width={chartAndFacetWidth}
+        >
           {#if iceLevel === 'band'}
             <path
               d={area(zip(cluster.p10, cluster.p90))}
@@ -204,7 +246,7 @@
 
             <XAxis
               scale={x}
-              y={facetHeight}
+              y={facetHeight - margin.bottom}
               showTickLabels={cluster.id === pdp.ice.clusters.length - 1}
               showAxisLabel={cluster.id === pdp.ice.clusters.length - 1}
               label={pdp.x_feature}
@@ -254,23 +296,29 @@
             </g>
           {/if}
         </svg>
-        {#if showClusterDescriptions}
-          <div class="ice-cluster-description">
-            <Tree node={cluster.rules} />
+        {#if clusterDescriptions !== 'none'}
+          <div
+            class="ice-cluster-description-container"
+            style:max-height="{facetHeight}px"
+            style:max-width="{chartAndFacetWidth}px"
+            style:padding="{margin.top}px 0 {margin.bottom}px 0"
+          >
+            <div class="ice-cluster-description-content">
+              {#if clusterDescriptions === 'tree'}
+                <RuleTree node={cluster.rule_tree} pd={pdp} />
+              {:else if clusterDescriptions === 'table'}
+                <RuleTable
+                  rules={cluster.rule_list}
+                  features={interactingFeatures}
+                  showFeatureNames={true}
+                />
+              {/if}
+            </div>
           </div>
         {/if}
       </div>
     {/each}
   </div>
-{/if}
-
-{#if marginalDistributionX !== null}
-  <MarginalHistogram
-    data={marginalDistributionX}
-    {x}
-    height={margin.top}
-    direction="horizontal"
-  />
 {/if}
 
 <style>
@@ -282,21 +330,15 @@
   .ice-cluster-container {
     width: 100%;
     height: 100%;
-    display: flex;
-    flex-direction: column;
   }
 
   .ice-cluster {
     display: flex;
-    height: 100%;
   }
 
-  .ice-cluster-chart {
-    flex: 1;
-  }
-
-  .ice-cluster-description {
-    flex: 1;
+  .ice-cluster-description-content {
     overflow: auto;
+    width: 100%;
+    height: 100%;
   }
 </style>

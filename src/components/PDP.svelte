@@ -21,8 +21,9 @@
   export let showMarginalDistribution: boolean;
   export let showInteractions: boolean = false;
   export let showColorLegend: boolean = false;
-  export let showClusterDescriptions: boolean = false;
+  export let clusterDescriptions: 'none' | 'tree' | 'table' = 'none';
   export let iceLevel: ICELevel;
+  export let iceLines: number[] = [];
 
   let mdx: MarginalDistribution | null = null;
   let mdy: MarginalDistribution | null = null;
@@ -47,7 +48,8 @@
         {scaleLocally}
         {showTrendLine}
         {iceLevel}
-        {showClusterDescriptions}
+        {clusterDescriptions}
+        {iceLines}
         marginalDistributionX={mdx}
       />
     {:else if pdp.kind === 'categorical' && (mdx === null || mdx.kind === 'categorical')}
