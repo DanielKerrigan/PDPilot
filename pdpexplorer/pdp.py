@@ -9,7 +9,6 @@ from operator import itemgetter
 from itertools import chain
 import json
 import math
-from copy import deepcopy
 from pathlib import Path
 from collections import defaultdict
 
@@ -766,17 +765,14 @@ def calculate_ice(ice_lines, data, feature, md):
     centered_mean_min = math.inf
     centered_mean_max = -math.inf
 
-    pairs = set()
+    interacting_features = set()
 
     for n in range(best_n_clusters):
         lines = ice_lines[best_labels == n]
         centered_lines = centered_ice_lines[best_labels == n]
 
         y = (best_labels == n).astype(int)
-        rule_tree, rule_list, interactions = describe_cluster(
-            data, y, list(data.columns), feature, md
-        )
-        pairs.update(interactions)
+        interacting_features.update(get_interacting_features(data, y, md))
 
         mean = lines.mean(axis=0)
         centered_mean = centered_lines.mean(axis=0)
@@ -799,8 +795,7 @@ def calculate_ice(ice_lines, data, feature, md):
                 "p90": p90.tolist(),
                 "centered_mean": centered_mean.tolist(),
                 "compared_mean": compared_mean.tolist(),
-                "rule_tree": rule_tree,
-                "rule_list": rule_list,
+                "interacting_features": list(interacting_features),
             }
         )
 
@@ -812,6 +807,12 @@ def calculate_ice(ice_lines, data, feature, md):
 
         centered_mean_min = min(centered_mean_min, centered_mean.min())
         centered_mean_max = max(centered_mean_max, centered_mean.max())
+
+    pairs = {
+        (min(feature, other), max(feature, other))
+        for other in interacting_features
+        if feature != other
+    }
 
     centered_pdp = centered_ice_lines.mean(axis=0)
 
@@ -834,7 +835,6 @@ def calculate_ice(ice_lines, data, feature, md):
         "p10_min": p10_min.item(),
         "p90_max": p90_max.item(),
         "clusters": clusters,
-        "centered_ice_lines": centered_ice_lines,
         "centered_pdp": centered_pdp.tolist(),
         "compare_pdp": (ice_lines.mean(axis=0) - ice_lines.mean(axis=0)[0]).tolist(),
         "cluster_distance": cluster_distance.item(),
@@ -843,163 +843,11 @@ def calculate_ice(ice_lines, data, feature, md):
     return ice, pairs
 
 
-def describe_cluster(X, y, feature_names, current_feature, md):
-    # This code is adapted from
-    # https://scikit-learn.org/stable/auto_examples/tree/plot_unveil_tree_structure.html
+def get_interacting_features(X, y, md):
     clf = DecisionTreeClassifier(max_depth=3, ccp_alpha=0.01)
     clf.fit(X, y)
-    leaves = clf.apply(X)
 
-    children_left = clf.tree_.children_left
-    children_right = clf.tree_.children_right
-    threshold = clf.tree_.threshold
-    feature = clf.tree_.feature
-    value = clf.tree_.value
-    label = np.argmax(clf.tree_.value, axis=2).ravel()
-
-    interacting_features = {
-        md.one_hot_to_feature.get(feature_names[f], feature_names[f])
-        for f in feature
-        if feature_names[f] != current_feature
+    return {
+        md.one_hot_encoded_col_name_to_feature.get(X.columns[i], X.columns[i])
+        for i in clf.tree_.feature
     }
-
-    root = {"id": 0, "depth": 0, "kind": "empty"}
-
-    rules = traverse(
-        children_left,
-        children_right,
-        threshold,
-        feature,
-        feature_names,
-        value,
-        label,
-        leaves,
-        root,
-        {},
-    )
-
-    pairs = [
-        (
-            min(current_feature, interacting_feature),
-            max(current_feature, interacting_feature),
-        )
-        for interacting_feature in interacting_features
-    ]
-
-    return root, rules, pairs
-
-
-def traverse(
-    children_left,
-    children_right,
-    threshold,
-    feature,
-    feature_names,
-    value,
-    label,
-    leaves,
-    node,
-    path,
-):
-    node_id = node["id"]
-    is_split_node = children_left[node_id] != children_right[node_id]
-
-    children = []
-
-    feature_name = feature_names[feature[node_id]]
-
-    if is_split_node:
-        node["kind"] = "split"
-
-        node_left = {
-            "id": children_left[node_id],
-            "feature": feature_name,
-            "sign": "lte",
-            "threshold": threshold[node_id],
-            "depth": node["depth"] + 1,
-        }
-
-        path_left = deepcopy(path)
-
-        if feature_name in path_left and "lte" in path_left[feature_name]:
-            path_left[feature_name]["lte"] = min(
-                threshold[node_id], path_left[feature_name]["lte"]
-            )
-        elif feature_name in path_left and "gt" in path_left[feature_name]:
-            path_left[feature_name]["lte"] = threshold[node_id]
-        else:
-            path_left[feature_name] = {"lte": threshold[node_id]}
-
-        left_rules = traverse(
-            children_left,
-            children_right,
-            threshold,
-            feature,
-            feature_names,
-            value,
-            label,
-            leaves,
-            node_left,
-            path_left,
-        )
-        if len(left_rules) > 0:
-            children.append(node_left)
-
-        node_right = {
-            "id": children_right[node_id],
-            "feature": feature_name,
-            "sign": "gt",
-            "threshold": threshold[node_id],
-            "depth": node["depth"] + 1,
-        }
-
-        path_right = deepcopy(path)
-
-        if feature_name in path_right and "gt" in path_right[feature_name]:
-            path_right[feature_name]["gt"] = max(
-                threshold[node_id], path_right[feature_name]["gt"]
-            )
-        elif feature_name in path_right and "lte" in path_right[feature_name]:
-            path_right[feature_name]["gt"] = threshold[node_id]
-        else:
-            path_right[feature_name] = {"gt": threshold[node_id]}
-
-        right_rules = traverse(
-            children_left,
-            children_right,
-            threshold,
-            feature,
-            feature_names,
-            value,
-            label,
-            leaves,
-            node_right,
-            path_right,
-        )
-        if len(right_rules) > 0:
-            children.append(node_right)
-
-        node["children"] = children
-
-        return left_rules + right_rules
-
-    elif label[node_id] == 1:
-        num_instances = value[node_id].sum()
-        num_correct = value[node_id][0, 1]
-
-        node["kind"] = "leaf"
-        node["num_instances"] = num_instances
-        node["num_correct"] = num_correct
-        node["accuracy"] = num_correct / num_instances
-        node["indices"] = np.where(leaves == node_id)[0]
-
-        rule = {
-            "num_instances": num_instances,
-            "num_correct": num_correct,
-            "accuracy": num_correct / num_instances,
-            "conditions": path,
-        }
-
-        return [rule]
-    else:
-        return []
