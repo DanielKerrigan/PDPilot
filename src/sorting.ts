@@ -1,4 +1,4 @@
-import type { SinglePDPData, DoublePDPData, PDSortingOption } from './types';
+import type { OneWayPD, TwoWayPD, PDSortingOption } from './types';
 
 import { isOneWayPdArray } from './types';
 
@@ -9,24 +9,33 @@ export { singlePDPSortingOptions, doublePDPSortingOptions };
 const singlePDPSortingOptions: PDSortingOption[] = [
   {
     name: 'complexity',
-    sort: function (
-      data: SinglePDPData[] | DoublePDPData[]
-    ): SinglePDPData[] | DoublePDPData[] {
+    sort: function (data: OneWayPD[] | TwoWayPD[]): OneWayPD[] | TwoWayPD[] {
       if (data.length === 0 || !isOneWayPdArray(data)) {
         return data;
       }
 
-      data.sort((a, b) => descending(a.nrmse_good_fit, b.nrmse_good_fit));
-      return data.sort((a, b) =>
-        descending(a.knots_good_fit, b.knots_good_fit)
-      );
+      data.sort((a, b) => {
+        if (!a.ordered) {
+          return 1;
+        } else if (!b.ordered) {
+          return -1;
+        }
+
+        if (a.knots_good_fit === b.knots_good_fit) {
+          return descending(a.nrmse_good_fit, b.nrmse_good_fit);
+        } else {
+          return descending(a.knots_good_fit, b.knots_good_fit);
+        }
+      });
+
+      console.log('sorted', JSON.stringify(data.map((d) => d.x_feature)));
+
+      return data;
     },
   },
   {
     name: 'interaction',
-    sort: function (
-      data: SinglePDPData[] | DoublePDPData[]
-    ): SinglePDPData[] | DoublePDPData[] {
+    sort: function (data: OneWayPD[] | TwoWayPD[]): OneWayPD[] | TwoWayPD[] {
       if (data.length === 0 || !isOneWayPdArray(data)) {
         return data;
       }
@@ -38,9 +47,7 @@ const singlePDPSortingOptions: PDSortingOption[] = [
   },
   {
     name: 'variance',
-    sort: function (
-      data: SinglePDPData[] | DoublePDPData[]
-    ): SinglePDPData[] | DoublePDPData[] {
+    sort: function (data: OneWayPD[] | TwoWayPD[]): OneWayPD[] | TwoWayPD[] {
       if (data.length === 0 || !isOneWayPdArray(data)) {
         return data;
       }
@@ -50,9 +57,7 @@ const singlePDPSortingOptions: PDSortingOption[] = [
   },
   {
     name: 'alphabetical',
-    sort: function (
-      data: SinglePDPData[] | DoublePDPData[]
-    ): SinglePDPData[] | DoublePDPData[] {
+    sort: function (data: OneWayPD[] | TwoWayPD[]): OneWayPD[] | TwoWayPD[] {
       if (data.length === 0 || !isOneWayPdArray(data)) {
         return data;
       }
@@ -65,9 +70,7 @@ const singlePDPSortingOptions: PDSortingOption[] = [
 const doublePDPSortingOptions: PDSortingOption[] = [
   {
     name: 'H-statistic',
-    sort: function (
-      data: SinglePDPData[] | DoublePDPData[]
-    ): SinglePDPData[] | DoublePDPData[] {
+    sort: function (data: OneWayPD[] | TwoWayPD[]): OneWayPD[] | TwoWayPD[] {
       if (data.length === 0 || isOneWayPdArray(data)) {
         return data;
       }
@@ -77,9 +80,7 @@ const doublePDPSortingOptions: PDSortingOption[] = [
   },
   {
     name: 'variance',
-    sort: function (
-      data: SinglePDPData[] | DoublePDPData[]
-    ): SinglePDPData[] | DoublePDPData[] {
+    sort: function (data: OneWayPD[] | TwoWayPD[]): OneWayPD[] | TwoWayPD[] {
       if (data.length === 0 || isOneWayPdArray(data)) {
         return data;
       }
@@ -89,9 +90,7 @@ const doublePDPSortingOptions: PDSortingOption[] = [
   },
   {
     name: 'alphabetical',
-    sort: function (
-      data: SinglePDPData[] | DoublePDPData[]
-    ): SinglePDPData[] | DoublePDPData[] {
+    sort: function (data: OneWayPD[] | TwoWayPD[]): OneWayPD[] | TwoWayPD[] {
       if (data.length === 0 || isOneWayPdArray(data)) {
         return data;
       }

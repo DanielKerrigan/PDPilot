@@ -1,6 +1,6 @@
 <script lang="ts">
   import type {
-    CategoricalSinglePDPData,
+    UnorderedOneWayPD,
     CategoricalMarginalDistribution,
     ICELevel,
   } from '../../../types';
@@ -18,7 +18,7 @@
   import MarginalBarChart from '../marginal/MarginalBarChart.svelte';
   import { getYScale } from '../../../vis-utils';
 
-  export let pdp: CategoricalSinglePDPData;
+  export let pdp: UnorderedOneWayPD;
   export let width: number;
   export let height: number;
   export let scaleLocally: boolean;

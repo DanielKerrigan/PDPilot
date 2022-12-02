@@ -10,6 +10,13 @@ include package.json
 include webpack.config.js
 include pdpexplorer/labextension/*.tgz
 
+# Documentation
+graft docs
+exclude docs/\#*
+prune docs/build
+prune docs/gh-pages
+prune docs/dist
+
 # Examples
 graft examples
 prune examples/scratch

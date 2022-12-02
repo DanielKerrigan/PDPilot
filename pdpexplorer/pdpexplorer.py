@@ -10,7 +10,6 @@ import json
 from ipywidgets import DOMWidget
 from traitlets import Unicode, List, Int, Dict
 
-from pdpexplorer.metadata import Metadata
 from ._frontend import module_name, module_version
 
 
@@ -26,39 +25,29 @@ class PDPExplorerWidget(DOMWidget):
 
     """widget state that is synced between backend and frontend"""
 
-    features = List([]).tag(sync=True)
+    feature_names = List([]).tag(sync=True)
+    feature_info = Dict({}).tag(sync=True)
 
-    selected_features = List([]).tag(sync=True)
-    resolution = Int(20).tag(sync=True)
-    num_instances_used = Int(100).tag(sync=True)
-    total_num_instances = Int(100).tag(sync=True)
+    dataset = Dict({}).tag(sync=True)
 
-    single_pdps = List([]).tag(sync=True)
-    double_pdps = List([]).tag(sync=True)
+    num_instances = Int(0).tag(sync=True)
 
-    one_way_quantitative_clusters = List([]).tag(sync=True)
-    one_way_categorical_clusters = List([]).tag(sync=True)
-
-    plot_button_clicked = Int(0).tag(sync=True)
+    one_way_pds = List([]).tag(sync=True)
+    two_way_pds = List([]).tag(sync=True)
 
     pdp_extent = List([0, 0]).tag(sync=True)
     ice_mean_extent = List([0, 0]).tag(sync=True)
     ice_band_extent = List([0, 0]).tag(sync=True)
     ice_line_extent = List([0, 0]).tag(sync=True)
 
-    marginal_distributions = Dict({}).tag(sync=True)
+    one_way_quantitative_clusters = List([]).tag(sync=True)
+    one_way_categorical_clusters = List([]).tag(sync=True)
 
     height = Int(600).tag(sync=True)
 
     def __init__(
         self,
-        predict,
-        df,
         pd_data,
-        one_hot_features=None,
-        categorical_features=None,
-        ordinal_features=None,
-        n_jobs=1,
         height=600,
         **kwargs,
     ):
@@ -74,23 +63,15 @@ class PDPExplorerWidget(DOMWidget):
             json_data = path.read_text(encoding="utf-8")
             pd_data = json.loads(json_data)
 
-        # model predict function
-        self.predict = predict
+        self.feature_names = sorted([p["x_feature"] for p in pd_data["one_way_pds"]])
+        self.feature_info = pd_data["feature_info"]
 
-        # pandas dataframe
-        self.df = df
-        self.md = Metadata(df, one_hot_features, categorical_features, ordinal_features)
+        self.dataset = pd_data["dataset"]
 
-        self.features = sorted([p["x_feature"] for p in pd_data["one_way_pds"]])
+        self.num_instances = pd_data["num_instances"]
 
-        self.total_num_instances = self.md.size
-        self.num_instances_used = pd_data["n_instances"]
-        self.resolution = pd_data["resolution"]
-
-        self.marginal_distributions = pd_data["marginal_distributions"]
-
-        self.single_pdps = pd_data["one_way_pds"]
-        self.double_pdps = pd_data["two_way_pds"]
+        self.one_way_pds = pd_data["one_way_pds"]
+        self.two_way_pds = pd_data["two_way_pds"]
 
         self.pdp_extent = pd_data["pdp_extent"]
         self.ice_mean_extent = pd_data["ice_mean_extent"]
@@ -101,4 +82,3 @@ class PDPExplorerWidget(DOMWidget):
         self.one_way_categorical_clusters = pd_data["one_way_categorical_clusters"]
 
         self.height = height
-        self.n_jobs = n_jobs

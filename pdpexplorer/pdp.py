@@ -6,13 +6,11 @@ Compute partial dependence plots
 """
 
 from operator import itemgetter
-from itertools import chain
 import json
 import math
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
 from joblib import Parallel, delayed
 
 from scipy.stats import iqr as inner_quartile_range
@@ -20,26 +18,29 @@ from scipy.stats import iqr as inner_quartile_range
 from tslearn.utils import to_time_series_dataset
 from tslearn.clustering import TimeSeriesKMeans, silhouette_score as ts_silhouette_score
 
+from tqdm import tqdm
+
 from sklearn.linear_model import Ridge
 from sklearn.preprocessing import SplineTransformer, StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.metrics import mean_squared_error, silhouette_score
 from sklearn.cluster import KMeans
+from sklearn.tree import DecisionTreeClassifier
 
 from pdpexplorer.metadata import Metadata
+from pdpexplorer.tqdm_joblib import tqdm_joblib
 
 
 def partial_dependence(
     *,
     predict,
     df,
-    one_way_features=None,
-    two_way_feature_pairs=None,
-    n_instances=100,
+    features,
     resolution=20,
     one_hot_features=None,
-    categorical_features=None,
+    nominal_features=None,
     ordinal_features=None,
+    feature_value_mappings=None,
     n_jobs=1,
     output_path=None,
 ):
@@ -53,22 +54,16 @@ def partial_dependence(
         if not path.parent.is_dir():
             raise OSError(f"Cannot write to {path.parent}")
 
-    # handle default list arguments
-    if one_way_features is None:
-        one_way_features = []
-
-    if two_way_feature_pairs is None:
-        two_way_feature_pairs = []
-
-    # we need to compute one-way partial dependencies for all features that are included in
-    # two-way plots
-    one_way_features = list(
-        set(chain.from_iterable(two_way_feature_pairs)).union(one_way_features)
+    md = Metadata(
+        df,
+        resolution,
+        one_hot_features,
+        nominal_features,
+        ordinal_features,
+        feature_value_mappings,
     )
 
-    md = Metadata(df, one_hot_features, categorical_features, ordinal_features)
-
-    subset = df.sample(n=n_instances)
+    subset = df.copy()
     subset_copy = df.copy()
 
     iqr = inner_quartile_range(predict(df))
@@ -81,24 +76,31 @@ def partial_dependence(
             "data": subset,
             "data_copy": subset_copy,
             "feature": feature,
-            "resolution": resolution,
             "md": md,
             "iqr": iqr,
             "feature_to_pd": None,
         }
-        for feature in one_way_features
+        for feature in features
     ]
 
+    num_one_way = len(features)
+    print(f"Calculating {num_one_way} one-way PDPs")
+
     if n_jobs == 1:
-        one_way_pds = [_calc_pd(**args) for args in one_way_work]
+        one_way_results = [_calc_pd(**args) for args in tqdm(one_way_work)]
     else:
-        one_way_pds = Parallel(n_jobs=n_jobs)(
-            delayed(_calc_pd)(**args) for args in one_way_work
-        )
+        with tqdm_joblib(tqdm(total=num_one_way, unit="PDP")) as _:
+            one_way_results = Parallel(n_jobs=n_jobs)(
+                delayed(_calc_pd)(**args) for args in one_way_work
+            )
+
+    one_way_pds = [x[0] for x in one_way_results]
+    feature_pairs = {pair for x in one_way_results for pair in x[1]}
 
     feature_to_pd = _get_feature_to_pd(one_way_pds) if one_way_pds else None
 
-    one_way_quantitative_clusters, one_way_categorical_clusters = one_way_clustering(
+    print("Clustering one-way PDPs")
+    one_way_quantitative_clusters, one_way_categorical_clusters = _one_way_clustering(
         one_way_pds=one_way_pds, feature_to_pd=feature_to_pd, md=md, n_jobs=n_jobs
     )
 
@@ -110,20 +112,22 @@ def partial_dependence(
             "data": subset,
             "data_copy": subset_copy,
             "feature": pair,
-            "resolution": resolution,
             "md": md,
             "iqr": iqr,
             "feature_to_pd": feature_to_pd,
         }
-        for pair in two_way_feature_pairs
+        for pair in feature_pairs
     ]
+    num_two_way = len(feature_pairs)
+    print(f"Calculating {num_two_way} two-way PDPs")
 
     if n_jobs == 1:
-        two_way_pds = [_calc_pd(**args) for args in two_way_work]
+        two_way_pds = [_calc_pd(**args) for args in tqdm(two_way_work)]
     else:
-        two_way_pds = Parallel(n_jobs=n_jobs)(
-            delayed(_calc_pd)(**args) for args in two_way_work
-        )
+        with tqdm_joblib(tqdm(total=num_two_way, unit="PDP")) as _:
+            two_way_pds = Parallel(n_jobs=n_jobs)(
+                delayed(_calc_pd)(**args) for args in two_way_work
+            )
 
     # min and max predictions
 
@@ -157,12 +161,6 @@ def partial_dependence(
             max(two_way_pds, key=itemgetter("pdp_max"))["pdp_max"],
         )
 
-    # marginal distributions
-
-    marginal_distributions = get_marginal_distributions(
-        df=subset, features=one_way_features, md=md
-    )
-
     # output
 
     results = {
@@ -174,9 +172,9 @@ def partial_dependence(
         "ice_mean_extent": [cluster_min, cluster_max],
         "ice_band_extent": [p10_min, p90_max],
         "ice_line_extent": [ice_min, ice_max],
-        "marginal_distributions": marginal_distributions,
-        "n_instances": n_instances,
-        "resolution": resolution,
+        "num_instances": md.size,
+        "dataset": subset.to_dict(orient="list"),
+        "feature_info": md.feature_info,
     }
 
     if output_path:
@@ -185,41 +183,11 @@ def partial_dependence(
         return results
 
 
-def widget_partial_dependence(
-    *, predict, subset, features, resolution, md, n_jobs, one_way_pds=None, iqr=None
-):
-    subset_copy = subset.copy()
-
-    feature_to_pd = _get_feature_to_pd(one_way_pds) if one_way_pds else None
-
-    work = [
-        {
-            "predict": predict,
-            "data": subset,
-            "data_copy": subset_copy,
-            "feature": feature,
-            "resolution": resolution,
-            "md": md,
-            "iqr": iqr,
-            "feature_to_pd": feature_to_pd,
-        }
-        for feature in features
-    ]
-
-    if n_jobs == 1:
-        results = [_calc_pd(**args) for args in work]
-    else:
-        results = Parallel(n_jobs=n_jobs)(delayed(_calc_pd)(**args) for args in work)
-
-    return results
-
-
 def _calc_pd(
     predict,
     data,
     data_copy,
     feature,
-    resolution,
     md,
     iqr,
     feature_to_pd,
@@ -230,7 +198,6 @@ def _calc_pd(
             data,
             data_copy,
             feature,
-            resolution,
             md,
             feature_to_pd,
         )
@@ -240,7 +207,6 @@ def _calc_pd(
             data,
             data_copy,
             feature,
-            resolution,
             md,
             iqr,
         )
@@ -251,29 +217,19 @@ def _calc_one_way_pd(
     data,
     data_copy,
     feature,
-    resolution,
     md,
     iqr,
 ):
     feat_info = md.feature_info[feature]
 
-    x_values = _get_feature_values(feature, feat_info, resolution)
-
     ice_lines = []
 
-    for value in x_values:
+    for value in feat_info["values"]:
         _set_feature(feature, value, data, feat_info)
-
         predictions = predict(data)
         ice_lines.append(predictions.tolist())
 
     _reset_feature(feature, data, data_copy, feat_info)
-
-    x_is_quant = (
-        feat_info["kind"] == "integer"
-        or feat_info["kind"] == "continuous"
-        or feat_info["kind"] == "ordinal"
-    )
 
     ice_lines = np.array(ice_lines).T
     mean_predictions = np.mean(ice_lines, axis=0)
@@ -285,14 +241,14 @@ def _calc_one_way_pd(
 
     mean_predictions = mean_predictions.tolist()
 
-    ice = calculate_ice(ice_lines=ice_lines)
+    ice, pairs = _calculate_ice(ice_lines=ice_lines, data=data, feature=feature, md=md)
 
     par_dep = {
         "num_features": 1,
-        "kind": "quantitative" if x_is_quant else "categorical",
         "id": feature,
+        "ordered": feat_info["ordered"],
         "x_feature": feature,
-        "x_values": x_values,
+        "x_values": feat_info["values"],
         "mean_predictions": mean_predictions,
         "mean_predictions_centered": mean_predictions_centered,
         "pdp_min": pdp_min,
@@ -300,7 +256,7 @@ def _calc_one_way_pd(
         "ice": ice,
     }
 
-    if x_is_quant:
+    if feat_info["ordered"]:
         # This code is adapted from
         # https://scikit-learn.org/stable/auto_examples/linear_model/plot_polynomial_interpolation.html
         # Author: Mathieu Blondel
@@ -311,7 +267,7 @@ def _calc_one_way_pd(
 
         # good-fit
 
-        X = np.array(x_values).reshape((-1, 1))
+        X = np.array(feat_info["values"]).reshape((-1, 1))
         y = np.array(mean_predictions)
 
         for i in range(2, 10):
@@ -331,13 +287,10 @@ def _calc_one_way_pd(
                 par_dep["nrmse_good_fit"] = nrmse.item()
                 par_dep["knots_good_fit"] = i
                 break
-    else:
-        par_dep["nrmse_good_fit"] = -1
-        par_dep["knots_good_fit"] = -1
 
     par_dep["deviation"] = np.std(mean_predictions)
 
-    return par_dep
+    return par_dep, pairs
 
 
 def _calc_two_way_pd(
@@ -345,7 +298,6 @@ def _calc_two_way_pd(
     data,
     data_copy,
     pair,
-    resolution,
     md,
     feature_to_pd,
 ):
@@ -357,24 +309,12 @@ def _calc_two_way_pd(
     # when one feature is quantitative and the other is categorical,
     # make the y feature be categorical
 
-    x_is_quant = (
-        x_feat_info["kind"] == "integer"
-        or x_feat_info["kind"] == "continuous"
-        or x_feat_info["kind"] == "ordinal"
-    )
-    y_is_quant = (
-        y_feat_info["kind"] == "integer"
-        or y_feat_info["kind"] == "continuous"
-        or y_feat_info["kind"] == "ordinal"
-    )
-
-    if y_is_quant and not x_is_quant:
+    if y_feat_info["kind"] == "quantitative" and x_feat_info["kind"] != "quantitative":
         x_feature, y_feature = y_feature, x_feature
-        x_is_quant, y_is_quant = y_is_quant, x_is_quant
         x_feat_info, y_feat_info = y_feat_info, x_feat_info
 
-    x_axis = _get_feature_values(x_feature, x_feat_info, resolution)
-    y_axis = _get_feature_values(y_feature, y_feat_info, resolution)
+    x_axis = x_feat_info["values"]
+    y_axis = y_feat_info["values"]
 
     x_values = []
     y_values = []
@@ -426,16 +366,8 @@ def _calc_two_way_pd(
 
     h_statistic = np.sqrt(np.square(interactions).sum()).item()
 
-    if x_is_quant and y_is_quant:
-        kind = "quantitative"
-    elif x_is_quant or y_is_quant:
-        kind = "mixed"
-    else:
-        kind = "categorical"
-
     par_dep = {
         "num_features": 2,
-        "kind": kind,
         "id": x_feature + "_" + y_feature,
         "x_feature": x_feature,
         "x_values": x_values,
@@ -455,8 +387,8 @@ def _calc_two_way_pd(
 
 
 def _set_feature(feature, value, data, feature_info):
-    if feature_info["kind"] == "one_hot":
-        col = feature_info["value_to_column"][value]
+    if feature_info["subkind"] == "one_hot":
+        col = feature_info["value_to_column"][feature_info["value_map"][value]]
         all_features = [feat for feat, _ in feature_info["columns_and_values"]]
         data[all_features] = 0
         data[col] = 1
@@ -470,112 +402,37 @@ def _reset_feature(
     data_copy,
     feature_info,
 ):
-    if feature_info["kind"] == "one_hot":
+    if feature_info["subkind"] == "one_hot":
         all_features = [col for col, _ in feature_info["columns_and_values"]]
         data[all_features] = data_copy[all_features]
     else:
         data[feature] = data_copy[feature]
 
 
-def _get_feature_values(feature, feature_info, resolution):
-    n_unique = len(feature_info["unique_values"])
-
-    if feature_info["kind"] == "continuous" and resolution < n_unique:
-        min_val = feature_info["unique_values"][0]
-        max_val = feature_info["unique_values"][-1]
-        return (np.linspace(min_val, max_val, resolution)).tolist()
-    elif feature_info["kind"] == "integer" and resolution < n_unique:
-        return (
-            [feature_info["unique_values"][0]]
-            + feature_info["unique_values"][1 : -1 : n_unique // resolution]
-            + [feature_info["unique_values"][-1]]
-        )
-    else:
-        return feature_info["unique_values"]
-
-
 def _get_feature_to_pd(one_way_pds):
     return {par_dep["x_feature"]: par_dep for par_dep in one_way_pds}
 
 
-def get_marginal_distributions(*, df, features, md):
-    marginal_distributions = {}
-
-    for feature in features:
-        feature_info = md.feature_info[feature]
-        if feature_info["kind"] == "one_hot":
-            bins = []
-            counts = []
-
-            for col, value in feature_info["columns_and_values"]:
-                bins.append(value)
-                counts.append(df[col].sum().item())
-
-            marginal_distributions[feature] = {
-                "kind": "categorical",
-                "bins": bins,
-                "counts": counts,
-            }
-        elif feature_info["kind"] == "integer" or feature_info["kind"] == "continuous":
-            counts, bins = np.histogram(
-                df[feature],
-                "auto",
-                (
-                    feature_info["unique_values"][0],
-                    feature_info["unique_values"][-1],
-                ),
-            )
-            marginal_distributions[feature] = {
-                "kind": "quantitative",
-                "bins": bins.tolist(),
-                "counts": counts.tolist(),
-            }
-        elif feature_info["kind"] == "ordinal":
-            counts, bins = np.histogram(
-                df[feature],
-                len(feature_info["unique_values"]),
-                (
-                    feature_info["unique_values"][0],
-                    feature_info["unique_values"][-1],
-                ),
-            )
-            marginal_distributions[feature] = {
-                "kind": "quantitative",
-                "bins": bins.tolist(),
-                "counts": counts.tolist(),
-            }
-        else:
-            bins, counts = np.unique(df[feature], return_counts=True)
-            marginal_distributions[feature] = {
-                "kind": "categorical",
-                "bins": bins.tolist(),
-                "counts": counts.tolist(),
-            }
-
-    return marginal_distributions
-
-
-def one_way_clustering(*, one_way_pds, feature_to_pd, md, n_jobs):
+def _one_way_clustering(*, one_way_pds, feature_to_pd, md, n_jobs):
     quant_one_way = []
     cat_one_way = []
 
     for p in one_way_pds:
         if (
-            md.feature_info[p["x_feature"]]["kind"] == "integer"
-            or md.feature_info[p["x_feature"]]["kind"] == "continuous"
-            or md.feature_info[p["x_feature"]]["kind"] == "ordinal"
+            md.feature_info[p["x_feature"]]["kind"] == "quantitative"
+            or md.feature_info[p["x_feature"]]["subkind"] == "ordinal"
         ):
             quant_one_way.append(p)
         else:
             cat_one_way.append(p)
 
-    one_way_quantitative_clusters = quantitative_feature_clustering(
+    one_way_quantitative_clusters = _quantitative_feature_clustering(
         one_way_pds=quant_one_way, feature_to_pd=feature_to_pd, n_jobs=n_jobs
     )
 
     n_quant_clusters = len(one_way_quantitative_clusters)
 
-    one_way_categorical_clusters = categorical_feature_clustering(
+    one_way_categorical_clusters = _categorical_feature_clustering(
         one_way_pds=cat_one_way,
         feature_to_pd=feature_to_pd,
         first_id=n_quant_clusters,
@@ -584,7 +441,7 @@ def one_way_clustering(*, one_way_pds, feature_to_pd, md, n_jobs):
     return one_way_quantitative_clusters, one_way_categorical_clusters
 
 
-def quantitative_feature_clustering(*, one_way_pds, feature_to_pd, n_jobs):
+def _quantitative_feature_clustering(*, one_way_pds, feature_to_pd, n_jobs):
     if not one_way_pds:
         return []
 
@@ -651,7 +508,7 @@ def quantitative_feature_clustering(*, one_way_pds, feature_to_pd, n_jobs):
     return clusters
 
 
-def categorical_feature_clustering(*, one_way_pds, feature_to_pd, first_id):
+def _categorical_feature_clustering(*, one_way_pds, feature_to_pd, first_id):
     if not one_way_pds:
         return []
 
@@ -720,7 +577,7 @@ def categorical_feature_clustering(*, one_way_pds, feature_to_pd, first_id):
     return clusters
 
 
-def calculate_ice(ice_lines):
+def _calculate_ice(ice_lines, data, feature, md):
     centered_ice_lines = []
 
     # todo - vectorize
@@ -760,9 +617,14 @@ def calculate_ice(ice_lines):
     centered_mean_min = math.inf
     centered_mean_max = -math.inf
 
+    interacting_features = set()
+
     for n in range(best_n_clusters):
         lines = ice_lines[best_labels == n]
         centered_lines = centered_ice_lines[best_labels == n]
+
+        y = (best_labels == n).astype(int)
+        interacting_features.update(_get_interacting_features(data, y, md))
 
         mean = lines.mean(axis=0)
         centered_mean = centered_lines.mean(axis=0)
@@ -797,6 +659,12 @@ def calculate_ice(ice_lines):
         centered_mean_min = min(centered_mean_min, centered_mean.min())
         centered_mean_max = max(centered_mean_max, centered_mean.max())
 
+    pairs = {
+        (min(feature, other), max(feature, other))
+        for other in interacting_features
+        if feature != other
+    }
+
     centered_pdp = centered_ice_lines.mean(axis=0)
 
     cluster_distance = 0
@@ -819,8 +687,19 @@ def calculate_ice(ice_lines):
         "p90_max": p90_max.item(),
         "clusters": clusters,
         "centered_pdp": centered_pdp.tolist(),
-        "compare_pdp": (ice_lines.mean(axis=0) - ice_lines.mean(axis=0)[0]).tolist(),
         "cluster_distance": cluster_distance.item(),
+        "interacting_features": list(interacting_features),
+        "cluster_labels": best_labels.tolist(),
     }
 
-    return ice
+    return ice, pairs
+
+
+def _get_interacting_features(X, y, md):
+    clf = DecisionTreeClassifier(max_depth=3, ccp_alpha=0.01)
+    clf.fit(X, y)
+
+    return {
+        md.one_hot_encoded_col_name_to_feature.get(X.columns[i], X.columns[i])
+        for i in clf.tree_.feature
+    }

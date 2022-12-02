@@ -1,12 +1,12 @@
 <script lang="ts">
-  import type { DoublePDPData, SinglePDPData, PDSortingOption } from '../types';
+  import type { TwoWayPD, OneWayPD, PDSortingOption } from '../types';
   import PDP from './PDP.svelte';
-  import QuantitativeColorLegend from './vis/two_way/QuantitativeColorLegend.svelte';
+  import QuantitativeColorLegend from './vis/two-way/QuantitativeColorLegend.svelte';
   import { onMount, createEventDispatcher } from 'svelte';
   import { globalColorPdpExtent } from '../stores';
 
   export let title: string;
-  export let data: SinglePDPData[] | DoublePDPData[];
+  export let data: OneWayPD[] | TwoWayPD[];
   export let showColorLegend: boolean = false;
   export let showShowTrendLine: boolean = false;
   export let showShowIceClusters: boolean = false;
@@ -149,14 +149,14 @@
   // selecting pdp
 
   const dispatchZoom = createEventDispatcher<{
-    zoom: SinglePDPData | DoublePDPData;
+    zoom: OneWayPD | TwoWayPD;
   }>();
 
-  function onClickPdp(pd: SinglePDPData | DoublePDPData) {
+  function onClickPdp(pd: OneWayPD | TwoWayPD) {
     dispatchZoom('zoom', pd);
   }
 
-  function onKeyDownPdp(ev: KeyboardEvent, pd: SinglePDPData | DoublePDPData) {
+  function onKeyDownPdp(ev: KeyboardEvent, pd: OneWayPD | TwoWayPD) {
     if (ev.key === 'Enter' || ev.key === ' ') {
       onClickPdp(pd);
     }
@@ -316,18 +316,18 @@
         style:grid-template-columns="repeat({numCols}, minmax(0,{pdpWidth}px))"
         style:grid-template-rows="repeat({numRows}, minmax(0,{pdpHeight}px))"
       >
-        {#each pageCharts as pdp (pdp.id)}
+        {#each pageCharts as pd (pd.id)}
           <div
-            on:click={() => onClickPdp(pdp)}
+            on:click={() => onClickPdp(pd)}
             tabindex="0"
-            on:keydown={(e) => onKeyDownPdp(e, pdp)}
+            on:keydown={(e) => onKeyDownPdp(e, pd)}
             class="pdp-grid-element"
             style:cursor="pointer"
             style:max-width="{pdpWidth}px"
             style:max-height="{pdpHeight}px"
           >
             <PDP
-              {pdp}
+              {pd}
               globalColor={$globalColorPdpExtent}
               width={pdpWidth}
               height={pdpHeight}

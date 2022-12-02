@@ -2,11 +2,11 @@ import { scaleLinear } from 'd3-scale';
 import { format } from 'd3-format';
 import type {
   ICELevel,
-  QuantitativeSinglePDPData,
-  CategoricalSinglePDPData,
+  OrderedOneWayPD,
+  UnorderedOneWayPD,
 } from './types';
 import type { ScaleLinear } from 'd3-scale';
-export { scaleCanvas, defaultFormat, getYScale };
+export { scaleCanvas, defaultFormat, getYScale, categoricalColors };
 
 // Adapted from https://www.html5rocks.com/en/tutorials/canvas/hidpi/
 function scaleCanvas(
@@ -42,9 +42,9 @@ function defaultFormat(x: number): string {
 }
 
 function getYScale(
-  pdp: QuantitativeSinglePDPData | CategoricalSinglePDPData,
+  pdp: OrderedOneWayPD | UnorderedOneWayPD,
   height: number,
-  bandHeight: number,
+  facetHeight: number,
   iceLevel: ICELevel,
   scaleLocally: boolean,
   nicePdpExtent: [number, number],
@@ -63,11 +63,11 @@ function getYScale(
 
   const globalIceBand = scaleLinear()
     .domain(niceIceBandExtent)
-    .range([bandHeight, margin.top]);
+    .range([facetHeight - margin.bottom, margin.top]);
 
   const globalIceLines = scaleLinear()
     .domain(niceIceLineExtent)
-    .range([bandHeight, margin.top]);
+    .range([facetHeight - margin.bottom, margin.top]);
 
   const localPdp = scaleLinear()
     .domain([pdp.pdp_min, pdp.pdp_max])
@@ -81,12 +81,12 @@ function getYScale(
   const localIceBand = scaleLinear()
     .domain([pdp.ice.p10_min, pdp.ice.p90_max])
     .nice()
-    .range([bandHeight, 0]);
+    .range([facetHeight - margin.bottom, margin.top]);
 
   const localIceLines = scaleLinear()
     .domain([pdp.ice.centered_ice_min, pdp.ice.centered_ice_max])
     .nice()
-    .range([bandHeight, 0]);
+    .range([facetHeight - margin.bottom, margin.top]);
 
   if (scaleLocally) {
     if (iceLevel === 'none') {
@@ -110,3 +110,42 @@ function getYScale(
     }
   }
 }
+
+const categoricalColors = {
+  dark: [
+    '#1f77b4',
+    '#ff7f0e',
+    '#2ca02c',
+    '#d62728',
+    '#9467bd',
+    '#8c564b',
+    '#e377c2',
+    '#7f7f7f',
+    '#bcbd22',
+    '#17becf',
+  ],
+  medium: [
+    '#5da6e6',
+    '#ffb048',
+    '#65d25c',
+    '#ff6151',
+    '#c696f0',
+    '#be8377',
+    '#ffa8f5',
+    '#aeaeae',
+    '#f1ef5a',
+    '#66f1ff',
+  ],
+  light: [
+    '#92d7ff',
+    '#ffe479',
+    '#9aff8c',
+    '#ff967e',
+    '#fac7ff',
+    '#f2b3a6',
+    '#ffdcff',
+    '#e0e0e0',
+    '#ffff8d',
+    '#9fffff',
+  ],
+};

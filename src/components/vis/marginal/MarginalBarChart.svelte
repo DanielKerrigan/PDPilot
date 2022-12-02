@@ -1,12 +1,11 @@
 <script lang="ts">
-  import type { CategoricalMarginalDistribution } from '../../../types';
   import { scaleLinear } from 'd3-scale';
   import { range } from 'd3-array';
 
-  export let data: CategoricalMarginalDistribution;
+  export let data: { bins: number[]; counts: number[] };
   export let height: number;
   export let direction: 'vertical' | 'horizontal';
-  export let x: d3.ScalePoint<string | number> | d3.ScaleBand<string | number>;
+  export let x: d3.ScalePoint<number> | d3.ScaleBand<number>;
   export let translate: [number, number] = [0, 0];
 
   $: indices = range(data.counts.length);

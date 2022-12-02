@@ -3,17 +3,18 @@ import type { Readable, Writable } from 'svelte/store';
 import type { DOMWidgetModel } from '@jupyter-widgets/base';
 
 import type {
-  CategoricalSinglePDPData,
-  DoublePDPData,
-  MarginalDistribution,
+  UnorderedOneWayPD,
+  Dataset,
+  TwoWayPD,
   Mode,
   OneWayCategoricalCluster,
   OneWayQuantitativeCluster,
-  QuantitativeSinglePDPData,
-  SinglePDPData,
+  OrderedOneWayPD,
+  OneWayPD,
+  FeatureInfo,
 } from './types';
 
-import { isCategoricalOneWayPd, isQuantitativeOneWayPd } from './types';
+import { isUnorderedOneWayPd, isOrderedOneWayPd } from './types';
 
 import { scaleLinear, scaleSequential } from 'd3-scale';
 import { interpolateYlGnBu } from 'd3-scale-chromatic';
@@ -63,56 +64,39 @@ export function WidgetWritable<T>(name_: string, value_: T): WidgetWritable<T> {
 }
 
 // Declare stores with their associated Traitlets here.
+export const feature_names = WidgetWritable<string[]>('feature_names', []);
+export const feature_info = WidgetWritable<Record<string, FeatureInfo>>(
+  'feature_info',
+  {}
+);
 
-export const features = WidgetWritable<string[]>('features', []);
-export const selected_features = WidgetWritable<string[]>(
-  'selected_features',
-  []
-);
-export const single_pdps = WidgetWritable<SinglePDPData[]>('single_pdps', []);
-export const double_pdps = WidgetWritable<DoublePDPData[]>('double_pdps', []);
-export const resolution = WidgetWritable<number>('resolution', 20);
-export const num_instances_used = WidgetWritable<number>(
-  'num_instances_used',
-  100
-);
-export const plot_button_clicked = WidgetWritable<number>(
-  'plot_button_clicked',
-  0
-);
-export const total_num_instances = WidgetWritable<number>(
-  'total_num_instances',
-  0
-);
+export const dataset = WidgetWritable<Dataset>('dataset', {});
+
+export const num_instances = WidgetWritable<number>('num_instances', 0);
+
+export const one_way_pds = WidgetWritable<OneWayPD[]>('one_way_pds', []);
+export const two_way_pds = WidgetWritable<TwoWayPD[]>('two_way_pds', []);
 
 export const pdp_extent = WidgetWritable<[number, number]>(
   'pdp_extent',
   [0, 0]
 );
-
 export const ice_mean_extent = WidgetWritable<[number, number]>(
   'ice_mean_extent',
   [0, 0]
 );
-
 export const ice_band_extent = WidgetWritable<[number, number]>(
   'ice_band_extent',
   [0, 0]
 );
-
 export const ice_line_extent = WidgetWritable<[number, number]>(
   'ice_line_extent',
   [0, 0]
 );
 
-export const marginal_distributions = WidgetWritable<
-  Record<string, MarginalDistribution>
->('marginal_distributions', {});
-
 export const one_way_quantitative_clusters = WidgetWritable<
   OneWayQuantitativeCluster[]
 >('one_way_quantitative_clusters', []);
-
 export const one_way_categorical_clusters = WidgetWritable<
   OneWayCategoricalCluster[]
 >('one_way_categorical_clusters', []);
@@ -121,21 +105,24 @@ export const height = WidgetWritable<number>('height', 600);
 
 // Set the model for each store you create.
 export function setStoreModels(model: DOMWidgetModel): void {
-  features.setModel(model);
-  selected_features.setModel(model);
-  single_pdps.setModel(model);
-  double_pdps.setModel(model);
-  resolution.setModel(model);
-  num_instances_used.setModel(model);
-  plot_button_clicked.setModel(model);
-  total_num_instances.setModel(model);
+  feature_names.setModel(model);
+  feature_info.setModel(model);
+
+  dataset.setModel(model);
+
+  num_instances.setModel(model);
+
+  one_way_pds.setModel(model);
+  two_way_pds.setModel(model);
+
   pdp_extent.setModel(model);
   ice_mean_extent.setModel(model);
   ice_band_extent.setModel(model);
   ice_line_extent.setModel(model);
-  marginal_distributions.setModel(model);
+
   one_way_quantitative_clusters.setModel(model);
   one_way_categorical_clusters.setModel(model);
+
   height.setModel(model);
 }
 
@@ -144,6 +131,8 @@ export function setStoreModels(model: DOMWidgetModel): void {
 export const mode: Writable<Mode> = writable('grid');
 
 // Derived stores
+
+// Nice scales extents
 
 export const nice_pdp_extent: Readable<[number, number]> = derived(
   pdp_extent,
@@ -178,11 +167,13 @@ export const globalColorPdpExtent: Readable<
     .unknown('black')
 );
 
+// Maps of clutered PDs
+
 export const clusteredQuantitativeOneWayPds: Readable<
-  Map<number, QuantitativeSinglePDPData[]>
-> = derived(single_pdps, ($single_pdps) => {
+  Map<number, OrderedOneWayPD[]>
+> = derived(one_way_pds, ($single_pdps) => {
   const quantPds = $single_pdps
-    .filter(isQuantitativeOneWayPd)
+    .filter(isOrderedOneWayPd)
     .sort((a, b) =>
       ascending(a.distance_to_cluster_center, b.distance_to_cluster_center)
     );
@@ -190,10 +181,10 @@ export const clusteredQuantitativeOneWayPds: Readable<
 });
 
 export const clusteredCategoricalOneWayPds: Readable<
-  Map<number, CategoricalSinglePDPData[]>
-> = derived(single_pdps, ($single_pdps) => {
+  Map<number, UnorderedOneWayPD[]>
+> = derived(one_way_pds, ($single_pdps) => {
   const catPds = $single_pdps
-    .filter(isCategoricalOneWayPd)
+    .filter(isUnorderedOneWayPd)
     .sort((a, b) =>
       ascending(a.distance_to_cluster_center, b.distance_to_cluster_center)
     );

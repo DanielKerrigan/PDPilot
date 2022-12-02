@@ -1,25 +1,26 @@
 <script lang="ts">
   import type {
     OneWayQuantitativeCluster,
-    QuantitativeSinglePDPData,
+    OrderedOneWayPD,
   } from '../../../types';
   import { scaleLinear } from 'd3-scale';
   import { line as d3line } from 'd3-shape';
   import { range } from 'd3-array';
   import YAxis from '../axis/YAxis.svelte';
   import { nice_pdp_extent } from '../../../stores';
+  import { createEventDispatcher } from 'svelte';
 
   export let cluster: OneWayQuantitativeCluster;
-  export let pds: QuantitativeSinglePDPData[];
+  export let pds: OrderedOneWayPD[];
   export let width: number;
   export let height: number;
-  export let highlightPd: QuantitativeSinglePDPData | null;
+  export let highlightPd: OrderedOneWayPD | null;
 
   $: maxLength = Math.max(...pds.map((d) => d.mean_predictions.length));
   $: indices = range(maxLength);
 
   const margin = {
-    top: 20,
+    top: 10,
     right: 10,
     bottom: 40,
     left: 50,
@@ -39,25 +40,35 @@
   $: pdpLine = d3line<number>()
     .x((d, i) => x(i))
     .y((d, i) => y(d));
+
+  const dispatchHover = createEventDispatcher<{
+    hover: OrderedOneWayPD | null;
+  }>();
+
+  function hover(pd: OrderedOneWayPD | null) {
+    dispatchHover('hover', pd);
+  }
+
+  const dispatchClick = createEventDispatcher<{ click: string }>();
+
+  function click(feature: string) {
+    dispatchClick('click', feature);
+  }
 </script>
 
 <svg class="multi-line-chart">
-  <text
-    dominant-baseline="hanging"
-    x={margin.left}
-    y={2}
-    font-size={12}
-    font-weight="bold"
-  >
-    Cluster {cluster.id + 1}
-  </text>
-
   {#each pds as pd}
     <path
+      tabindex="0"
+      on:mouseenter={() => hover(pd)}
+      on:mouseleave={() => hover(null)}
+      on:focusin={() => hover(pd)}
+      on:focusout={() => hover(null)}
+      on:click={() => click(pd.x_feature)}
       class="line"
       d={pdpLine(pd.mean_predictions)}
       stroke="var(--black)"
-      stroke-width="1"
+      stroke-width="1.5"
       stroke-opacity="0.5"
       fill="none"
     />
@@ -68,9 +79,10 @@
       class="line"
       d={pdpLine(highlightPd.mean_predictions)}
       stroke="var(--red)"
-      stroke-width="2"
+      stroke-width="3"
       stroke-opacity="1"
       fill="none"
+      pointer-events="none"
     />
   {/if}
 
@@ -81,5 +93,14 @@
   .multi-line-chart {
     width: 100%;
     height: 100%;
+  }
+
+  .line {
+    cursor: pointer;
+  }
+
+  .line:focus {
+    /* the lines are effectively highlighted red when focused */
+    outline: none;
   }
 </style>

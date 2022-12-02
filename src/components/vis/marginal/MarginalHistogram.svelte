@@ -1,9 +1,8 @@
 <script lang="ts">
-  import type { QuantitativeMarginalDistribution } from '../../../types';
   import { scaleLinear } from 'd3-scale';
   import { range } from 'd3-array';
 
-  export let data: QuantitativeMarginalDistribution;
+  export let data: { bins: number[]; counts: number[] };
   export let height: number;
   export let direction: 'vertical' | 'horizontal';
   export let x: d3.ScaleLinear<number, number>;
