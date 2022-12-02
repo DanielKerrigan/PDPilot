@@ -4,40 +4,26 @@ pdpexplorer
 
 Version: |release|
 
-{{cookiecutter.project_short_description}}
+A Jupyter widget for exploring partial dependence plots.
 
 
 Quickstart
 ----------
 
-To get started with {{ cookiecutter.python_package_name }}, install with pip::
+To get started, install with pip::
 
-    pip install {{ cookiecutter.python_package_name }}
-
-or with conda::
-
-    conda install {{ cookiecutter.python_package_name }}
+    pip install pdpexplorer
 
 
 Contents
 --------
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Installation and usage
-
-   installing
-   introduction
+   :caption: User Guide
+   usage
+   api
 
 .. toctree::
-   :maxdepth: 1
-
-   examples/index
-
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Development
-
-   develop-install
-
+   :caption: Developer Guide
+   developer-installation
+   release
