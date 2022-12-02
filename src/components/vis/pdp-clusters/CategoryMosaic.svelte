@@ -1,14 +1,14 @@
 <script lang="ts">
   import type {
     OneWayCategoricalCluster,
-    CategoricalSinglePDPData,
+    UnorderedOneWayPD,
   } from '../../../types';
   import { scaleLinear, scaleBand, scalePoint } from 'd3-scale';
   import { range } from 'd3-array';
   import { nice_pdp_extent } from '../../../stores';
 
   export let cluster: OneWayCategoricalCluster;
-  export let pds: CategoricalSinglePDPData[];
+  export let pds: UnorderedOneWayPD[];
   export let width: number;
   export let height: number;
 

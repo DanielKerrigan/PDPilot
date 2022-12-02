@@ -1,15 +1,15 @@
 <script lang="ts">
   import PDPGrid from './PDPGrid.svelte';
-  import { single_pdps, double_pdps } from '../stores';
+  import { one_way_pds, two_way_pds } from '../stores';
   import { doublePDPSortingOptions, singlePDPSortingOptions } from '../sorting';
 
   export let selectedFeatures: string[];
 
-  $: filteredOneWayPds = $single_pdps.filter((p) =>
+  $: filteredOneWayPds = $one_way_pds.filter((p) =>
     selectedFeatures.includes(p.x_feature)
   );
 
-  $: filteredTwoWayPds = $double_pdps.filter(
+  $: filteredTwoWayPds = $two_way_pds.filter(
     (p) =>
       selectedFeatures.includes(p.x_feature) &&
       selectedFeatures.includes(p.y_feature)

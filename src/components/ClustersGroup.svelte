@@ -1,15 +1,15 @@
 <script lang="ts">
   import type {
     Clusters,
-    DoublePDPData,
+    TwoWayPD,
     OneWayCategoricalCluster,
     OneWayQuantitativeCluster,
-    QuantitativeSinglePDPData,
-    SinglePDPData,
+    OrderedOneWayPD,
+    OneWayPD,
   } from '../types';
   import { createEventDispatcher, onMount } from 'svelte';
-  import MultiLineChart from './vis/clusters/MultiLineChart.svelte';
-  import CategoryMosaic from './vis/clusters/CategoryMosaic.svelte';
+  import MultiLineChart from './vis/pdp-clusters/MultiLineChart.svelte';
+  import CategoryMosaic from './vis/pdp-clusters/CategoryMosaic.svelte';
 
   export let title: string;
   export let clusters: Clusters;
@@ -85,12 +85,12 @@
 
   // highlighting
 
-  let highlightPd: SinglePDPData | DoublePDPData | null = null;
+  let highlightPd: OneWayPD | TwoWayPD | null = null;
 
   function setHighlight(cluster: number, feature: string) {
     const pds = (clusters.quantitativePds.get(cluster) ??
       clusters.categoricalPds.get(cluster) ??
-      []) as SinglePDPData[];
+      []) as OneWayPD[];
 
     highlightPd = pds.find((pd) => pd.x_feature === feature) ?? null;
   }
@@ -99,7 +99,7 @@
     highlightPd = null;
   }
 
-  function onLineHover(event: CustomEvent<QuantitativeSinglePDPData | null>) {
+  function onLineHover(event: CustomEvent<OrderedOneWayPD | null>) {
     highlightPd = event.detail;
   }
 
@@ -120,7 +120,7 @@
   }
 
   const zoomDispatch = createEventDispatcher<{
-    zoom: SinglePDPData | DoublePDPData;
+    zoom: OneWayPD | TwoWayPD;
   }>();
 
   function onClickFeature(feature: string) {

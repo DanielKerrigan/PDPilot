@@ -1,17 +1,63 @@
+// dataset
+export type Dataset = Record<string, number[]>;
+
+// Features
+
+export type OneHotFeatureInfo = {
+  kind: 'categorical';
+  subkind: 'one_hot';
+  ordered: false;
+  values: number[];
+  distribution: { bins: number[]; counts: number[] };
+  columns_and_values: any;
+  value_to_column: any;
+  value_map: Record<number, string>;
+};
+
+export type NominalFeatureInfo = {
+  kind: 'categorical';
+  subkind: 'nominal';
+  ordered: false;
+  values: number[];
+  distribution: { bins: number[]; counts: number[] };
+  value_map: Record<number, string>;
+};
+
+export type OrdinalFeatureInfo = {
+  kind: 'categorical';
+  subkind: 'ordinal';
+  ordered: true;
+  values: number[];
+  distribution: { bins: number[]; counts: number[] };
+  value_map: Record<number, string>;
+};
+
+export type ContinuousFeatureInfo = {
+  kind: 'quantitative';
+  subkind: 'continuous';
+  ordered: true;
+  values: number[];
+  distribution: { bins: number[]; counts: number[] };
+};
+
+export type DiscreteFeatureInfo = {
+  kind: 'quantitative';
+  subkind: 'discrete';
+  ordered: true;
+  values: number[];
+  distribution: { bins: number[]; counts: number[] };
+};
+
+export type QuantitativeFeatureInfo =
+  | ContinuousFeatureInfo
+  | DiscreteFeatureInfo;
+export type CategoricalFeatureInfo =
+  | OneHotFeatureInfo
+  | NominalFeatureInfo
+  | OrdinalFeatureInfo;
+export type FeatureInfo = QuantitativeFeatureInfo | CategoricalFeatureInfo;
+
 // ICE
-
-export type Condition = {
-  feature: string;
-  sign: 'lte' | 'gt';
-  threshold: number;
-};
-
-export type Rule = {
-  conditions: Condition[];
-  num_instances: number;
-  num_correct: number;
-  accuracy: number;
-};
 
 export type ICE = {
   ice_min: number;
@@ -24,6 +70,7 @@ export type ICE = {
   centered_mean_max: number;
   p10_min: number;
   p90_max: number;
+  // TODO: not needed?
   centered_ice_lines: number[][];
   clusters: {
     id: number;
@@ -34,19 +81,20 @@ export type ICE = {
     p90: number[];
     mean: number[];
     centered_mean: number[];
-    interacting_features: string[];
   }[];
   centered_pdp: number[];
   cluster_distance: number;
+  interacting_features: string[];
+  cluster_labels: number[];
 };
 
-export type ICELevel = 'none' | 'mean' | 'band' | 'line' | 'filt';
+export type ICELevel = 'none' | 'mean' | 'band' | 'line';
 
 // partial dependence
 
-export type QuantitativeSinglePDPData = {
+export type OrderedOneWayPD = {
   num_features: 1;
-  kind: 'quantitative';
+  ordered: true;
   id: string;
   x_feature: string;
   x_values: number[];
@@ -62,30 +110,25 @@ export type QuantitativeSinglePDPData = {
   ice: ICE;
 };
 
-export type CategoricalSinglePDPData = {
+export type UnorderedOneWayPD = {
   num_features: 1;
-  kind: 'categorical';
+  ordered: false;
   id: string;
   x_feature: string;
-  x_values: (number | string)[];
+  x_values: number[];
   mean_predictions: number[];
   pdp_min: number;
   pdp_max: number;
-  nrmse_good_fit: number;
-  knots_good_fit: number;
   deviation: number;
   distance_to_cluster_center: number;
   cluster: number;
   ice: ICE;
 };
 
-export type SinglePDPData =
-  | CategoricalSinglePDPData
-  | QuantitativeSinglePDPData;
+export type OneWayPD = UnorderedOneWayPD | OrderedOneWayPD;
 
-export type QuantitativeDoublePDPData = {
+export type TwoWayPD = {
   num_features: 2;
-  kind: 'quantitative';
   id: string;
   x_feature: string;
   x_values: number[];
@@ -101,71 +144,10 @@ export type QuantitativeDoublePDPData = {
   H: number;
 };
 
-export type CategoricalDoublePDPData = {
-  num_features: 2;
-  kind: 'categorical';
-  id: string;
-  x_feature: string;
-  x_values: (string | number)[];
-  x_axis: (string | number)[];
-  y_feature: string;
-  y_values: (string | number)[];
-  y_axis: (string | number)[];
-  mean_predictions: number[];
-  pdp_min: number;
-  pdp_max: number;
-  interactions: number[];
-  deviation: number;
-  H: number;
-};
-
-export type MixedDoublePDPData = {
-  num_features: 2;
-  kind: 'mixed';
-  id: string;
-  x_feature: string;
-  x_values: number[];
-  x_axis: number[];
-  y_feature: string;
-  y_values: (string | number)[];
-  y_axis: (string | number)[];
-  mean_predictions: number[];
-  pdp_min: number;
-  pdp_max: number;
-  interactions: number[];
-  deviation: number;
-  H: number;
-};
-
-export type DoublePDPData =
-  | QuantitativeDoublePDPData
-  | CategoricalDoublePDPData
-  | MixedDoublePDPData;
-
 export type PDSortingOption = {
   name: string;
-  sort: (
-    data: SinglePDPData[] | DoublePDPData[]
-  ) => SinglePDPData[] | DoublePDPData[];
+  sort: (data: OneWayPD[] | TwoWayPD[]) => OneWayPD[] | TwoWayPD[];
 };
-
-// marginal distributions
-
-export type QuantitativeMarginalDistribution = {
-  kind: 'quantitative';
-  bins: number[];
-  counts: number[];
-};
-
-export type CategoricalMarginalDistribution = {
-  kind: 'categorical';
-  bins: string[];
-  counts: number[];
-};
-
-export type MarginalDistribution =
-  | QuantitativeMarginalDistribution
-  | CategoricalMarginalDistribution;
 
 // clusters
 
@@ -185,42 +167,28 @@ export type OneWayCategoricalCluster = {
 export type Clusters = {
   categoricalClusters: OneWayCategoricalCluster[];
   quantitativeClusters: OneWayQuantitativeCluster[];
-  categoricalPds: Map<number, CategoricalSinglePDPData[]>;
-  quantitativePds: Map<number, QuantitativeSinglePDPData[]>;
+  categoricalPds: Map<number, UnorderedOneWayPD[]>;
+  quantitativePds: Map<number, OrderedOneWayPD[]>;
 };
 
 // type predicates
 
-export function isQuantitativeOneWayPd(
-  data: SinglePDPData
-): data is QuantitativeSinglePDPData {
-  return data.kind === 'quantitative';
+export function isOrderedOneWayPd(data: OneWayPD): data is OrderedOneWayPD {
+  return data.ordered === true;
 }
 
-export function isCategoricalOneWayPd(
-  data: SinglePDPData
-): data is CategoricalSinglePDPData {
-  return data.kind === 'categorical';
+export function isUnorderedOneWayPd(data: OneWayPD): data is UnorderedOneWayPD {
+  return data.ordered === false;
 }
 
 export function isOneWayPdArray(
-  data: SinglePDPData[] | DoublePDPData[]
-): data is SinglePDPData[] {
+  data: OneWayPD[] | TwoWayPD[]
+): data is OneWayPD[] {
   if (data.length === 0) {
     return true;
   }
 
   return data[0].num_features === 1;
-}
-
-export function isQuantitativeOneWayPdArray(
-  data: QuantitativeSinglePDPData[] | CategoricalSinglePDPData[]
-): data is QuantitativeSinglePDPData[] {
-  if (data.length === 0) {
-    return true;
-  }
-
-  return data[0].kind === 'quantitative';
 }
 
 // tabs

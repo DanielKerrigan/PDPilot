@@ -2,8 +2,8 @@ import { scaleLinear } from 'd3-scale';
 import { format } from 'd3-format';
 import type {
   ICELevel,
-  QuantitativeSinglePDPData,
-  CategoricalSinglePDPData,
+  OrderedOneWayPD,
+  UnorderedOneWayPD,
 } from './types';
 import type { ScaleLinear } from 'd3-scale';
 export { scaleCanvas, defaultFormat, getYScale, categoricalColors };
@@ -42,7 +42,7 @@ function defaultFormat(x: number): string {
 }
 
 function getYScale(
-  pdp: QuantitativeSinglePDPData | CategoricalSinglePDPData,
+  pdp: OrderedOneWayPD | UnorderedOneWayPD,
   height: number,
   facetHeight: number,
   iceLevel: ICELevel,
@@ -69,10 +69,6 @@ function getYScale(
     .domain(niceIceLineExtent)
     .range([facetHeight - margin.bottom, margin.top]);
 
-  const globalFiltLines = scaleLinear()
-    .domain(niceIceLineExtent)
-    .range([height - margin.bottom, margin.top]);
-
   const localPdp = scaleLinear()
     .domain([pdp.pdp_min, pdp.pdp_max])
     .range([height - margin.bottom, margin.top]);
@@ -92,10 +88,6 @@ function getYScale(
     .nice()
     .range([facetHeight - margin.bottom, margin.top]);
 
-  const localFiltLines = scaleLinear()
-    .domain([pdp.ice.centered_ice_min, pdp.ice.centered_ice_max])
-    .range([height - margin.bottom, margin.top]);
-
   if (scaleLocally) {
     if (iceLevel === 'none') {
       return localPdp;
@@ -103,10 +95,8 @@ function getYScale(
       return localIceClusterMean;
     } else if (iceLevel === 'band') {
       return localIceBand;
-    } else if (iceLevel === 'line') {
-      return localIceLines;
     } else {
-      return localFiltLines;
+      return localIceLines;
     }
   } else {
     if (iceLevel === 'none') {
@@ -115,10 +105,8 @@ function getYScale(
       return globalIceClusterMean;
     } else if (iceLevel === 'band') {
       return globalIceBand;
-    } else if (iceLevel === 'line') {
-      return globalIceLines;
     } else {
-      return globalFiltLines;
+      return globalIceLines;
     }
   }
 }

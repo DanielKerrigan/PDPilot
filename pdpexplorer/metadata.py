@@ -5,14 +5,19 @@ class Metadata:
     def __init__(
         self,
         df,
+        resolution,
         one_hot_features,
-        categorical_features,
+        nominal_features,
         ordinal_features,
+        feature_value_mappings,
     ):
         self.size = df.shape[0]
 
         if one_hot_features is None:
             one_hot_features = {}
+
+        if feature_value_mappings is None:
+            feature_value_mappings = {}
 
         one_hot_encoded_col_names = {
             encoded_col_name
@@ -20,7 +25,7 @@ class Metadata:
             for encoded_col_name, _ in col_and_value
         }
 
-        self.one_hot_to_feature = {
+        self.one_hot_encoded_col_name_to_feature = {
             encoded_col_name: feature
             for feature, col_and_value in one_hot_features.items()
             for encoded_col_name, _ in col_and_value
@@ -35,24 +40,21 @@ class Metadata:
             col: sorted(df[col].unique().tolist()) for col in non_one_hot_features
         }
         for feature, one_hot_info in one_hot_features.items():
-            unique_feature_vals[feature] = sorted(
-                [value for (_, value) in one_hot_info]
-            )
+            names = sorted([value for (_, value) in one_hot_info])
+            indices = list(range(len(names)))
+            feature_value_mappings[feature] = dict(zip(indices, names))
+            unique_feature_vals[feature] = indices
 
-        if categorical_features is None:
-            categorical_features = list(
-                df[non_one_hot_features].select_dtypes(["category", "object"]).columns
-            )
-            binary_features = {
+        if nominal_features is None:
+            nominal_features = {
                 feature
                 for feature, values in unique_feature_vals.items()
                 if len(values) <= 2
             }
-            categorical_features = binary_features.union(categorical_features)
 
         if ordinal_features is None:
             ordinal_features = {
-                feature: unique_feature_vals[feature]
+                feature
                 for feature in df[non_one_hot_features]
                 .select_dtypes([np.integer])
                 .columns
@@ -64,47 +66,93 @@ class Metadata:
             df[non_one_hot_features].select_dtypes(["number"]).columns
         )
         quantitative_features = quantitative_features - (
-            categorical_features | set(ordinal_features.keys())
+            nominal_features | ordinal_features
         )
 
-        # list of feature to show in the UI.
+        # list of features to show in the UI.
         self.features = sorted(
             list(one_hot_features.keys())
-            + list(categorical_features)
-            + list(ordinal_features.keys())
+            + list(nominal_features)
+            + list(ordinal_features)
             + list(quantitative_features)
         )
 
         self.feature_info = {}
 
         for feature, one_hot_info in one_hot_features.items():
-            self.feature_info[feature] = {
-                "kind": "one_hot",
-                "columns_and_values": one_hot_info,
-                "value_to_column": {value: col for col, value in one_hot_info},
-                "unique_values": unique_feature_vals[feature],
-            }
+            bins = []
+            counts = []
+            for col, value in one_hot_info:
+                bins.append(value)
+                counts.append(df[col].sum().item())
 
-        for feature in categorical_features:
             self.feature_info[feature] = {
                 "kind": "categorical",
-                "unique_values": unique_feature_vals[feature],
+                "subkind": "one_hot",
+                "ordered": False,
+                "values": unique_feature_vals[feature],
+                "distribution": {"bins": bins, "counts": counts},
+                "columns_and_values": one_hot_info,
+                "value_to_column": {value: col for col, value in one_hot_info},
+                "value_map": feature_value_mappings.get(feature, {}),
+            }
+
+        for feature in nominal_features:
+            bins, counts = np.unique(df[feature], return_counts=True)
+            self.feature_info[feature] = {
+                "kind": "categorical",
+                "subkind": "nominal",
+                "ordered": False,
+                "values": unique_feature_vals[feature],
+                "distribution": {"bins": bins, "counts": counts},
+                "value_map": feature_value_mappings.get(feature, {}),
             }
 
         for feature in ordinal_features:
+            bins, counts = np.unique(df[feature], return_counts=True)
             self.feature_info[feature] = {
-                "kind": "ordinal",
-                "unique_values": unique_feature_vals[feature],
+                "kind": "categorical",
+                "subkind": "ordinal",
+                "ordered": True,
+                "values": unique_feature_vals[feature],
+                "distribution": {"bins": bins, "counts": counts},
+                "value_map": feature_value_mappings.get(feature, {}),
             }
 
         for feature in quantitative_features:
+            unique_vals = unique_feature_vals[feature]
+            n_unique = len(unique_vals)
+
+            counts, bins = np.histogram(
+                df[feature], "sturges", (unique_vals[0], unique_vals[-1])
+            )
+
             if np.issubdtype(df[feature].dtype, np.integer):
+                values = (
+                    [unique_vals[0]]
+                    + unique_vals[1 : -1 : n_unique // resolution]
+                    + [unique_vals[-1]]
+                    if resolution < n_unique
+                    else unique_vals
+                )
                 self.feature_info[feature] = {
-                    "kind": "integer",
-                    "unique_values": unique_feature_vals[feature],
+                    "kind": "quantitative",
+                    "subkind": "discrete",
+                    "ordered": True,
+                    "values": values,
+                    "distribution": {"bins": bins, "counts": counts},
                 }
             else:
+                values = (
+                    np.linspace(unique_vals[0], unique_vals[-1], resolution).tolist()
+                    if resolution < n_unique
+                    else unique_vals
+                )
+
                 self.feature_info[feature] = {
-                    "kind": "continuous",
-                    "unique_values": unique_feature_vals[feature],
+                    "kind": "quantitative",
+                    "subkind": "continuous",
+                    "ordered": True,
+                    "values": values,
+                    "distribution": {"bins": bins, "counts": counts},
                 }

@@ -1,7 +1,7 @@
 <script lang="ts">
   import type {
     OneWayQuantitativeCluster,
-    QuantitativeSinglePDPData,
+    OrderedOneWayPD,
   } from '../../../types';
   import { scaleLinear } from 'd3-scale';
   import { line as d3line } from 'd3-shape';
@@ -11,10 +11,10 @@
   import { createEventDispatcher } from 'svelte';
 
   export let cluster: OneWayQuantitativeCluster;
-  export let pds: QuantitativeSinglePDPData[];
+  export let pds: OrderedOneWayPD[];
   export let width: number;
   export let height: number;
-  export let highlightPd: QuantitativeSinglePDPData | null;
+  export let highlightPd: OrderedOneWayPD | null;
 
   $: maxLength = Math.max(...pds.map((d) => d.mean_predictions.length));
   $: indices = range(maxLength);
@@ -42,10 +42,10 @@
     .y((d, i) => y(d));
 
   const dispatchHover = createEventDispatcher<{
-    hover: QuantitativeSinglePDPData | null;
+    hover: OrderedOneWayPD | null;
   }>();
 
-  function hover(pd: QuantitativeSinglePDPData | null) {
+  function hover(pd: OrderedOneWayPD | null) {
     dispatchHover('hover', pd);
   }
 

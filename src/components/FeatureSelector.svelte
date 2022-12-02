@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { features } from '../stores';
+  import { feature_names } from '../stores';
 
   export let selectedFeatures: string[];
 
@@ -7,7 +7,7 @@
   let featuresCheckboxIndeterminate: boolean = false;
   let search: string = '';
 
-  $: featureCheckboxes = $features.map((feature) => ({
+  $: featureCheckboxes = $feature_names.map((feature) => ({
     feature,
     hidden: !feature.includes(search),
   }));
@@ -16,7 +16,7 @@
 
   function onAllFeaturesChange() {
     if (featuresChecked) {
-      selectedFeatures = $features;
+      selectedFeatures = $feature_names;
       featuresCheckboxIndeterminate = false;
     } else {
       selectedFeatures = [];
@@ -28,12 +28,12 @@
     if (selectedFeatures.length === 0) {
       featuresChecked = false;
       featuresCheckboxIndeterminate = false;
-    } else if (selectedFeatures.length === $features.length) {
+    } else if (selectedFeatures.length === $feature_names.length) {
       featuresChecked = true;
       featuresCheckboxIndeterminate = false;
     } else if (
       selectedFeatures.length > 0 &&
-      selectedFeatures.length < $features.length
+      selectedFeatures.length < $feature_names.length
     ) {
       featuresChecked = true;
       featuresCheckboxIndeterminate = true;

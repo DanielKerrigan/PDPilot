@@ -4,8 +4,8 @@
 
   export let scale:
     | d3.ScaleContinuousNumeric<number, number>
-    | d3.ScaleBand<string | number>
-    | d3.ScalePoint<string | number>;
+    | d3.ScaleBand<number>
+    | d3.ScalePoint<number>;
   export let label: string;
   export let x: number = 0;
   export let y: number = 0;
@@ -14,6 +14,8 @@
   export let showLabels: boolean = true;
   export let fontSize: number = 10;
   export let tickSize: number = 5;
+  export let integerOnly: boolean = false;
+  export let value_map: Record<number, string> = {};
 
   const gapBetweenTickAndTickLabel: number = 2;
   const gapBetweenTicksAndAxisLabel: number = 30;
@@ -28,6 +30,20 @@
     scale.range()[scale.range().length - 1]
   );
   $: height = maximum - minimum;
+
+  function getTicks(
+    scale: d3.ScaleContinuousNumeric<number, number>,
+    height: number,
+    integerOnly: boolean
+  ) {
+    const ticks = scale.ticks(Math.min(height / 30, 10));
+
+    if (integerOnly) {
+      return ticks.filter(Number.isInteger);
+    } else {
+      return ticks;
+    }
+  }
 </script>
 
 <g transform="translate({x},{y})">
@@ -49,7 +65,7 @@
               x={-(tickSize + fontSize + gapBetweenTickAndTickLabel)}
               y={scale.bandwidth() === 0 ? -scale.step() / 2 : 0}
               bold={false}
-              label={`${tick}`}
+              label={value_map[tick] ?? tick}
               {fontSize}
               rotate={true}
             />
@@ -57,7 +73,7 @@
         </g>
       {/each}
     {:else}
-      {#each scale.ticks(Math.min(height / 30, 10)) as tick}
+      {#each getTicks(scale, height, integerOnly) as tick}
         <g transform="translate(0,{scale(tick)})">
           <line x1={-tickSize} x2={gridWidth} stroke="black" />
           {#if showLabels}

@@ -1,20 +1,21 @@
 <script lang="ts">
-  import type { SinglePDPData, DoublePDPData, ICELevel } from '../types';
+  import type { OneWayPD, TwoWayPD, ICELevel } from '../types';
   import { createEventDispatcher, onMount } from 'svelte';
   import {
-    single_pdps,
-    double_pdps,
+    one_way_pds,
+    two_way_pds,
     globalColorPdpExtent,
-    features,
+    feature_names,
   } from '../stores';
   import PDP from './PDP.svelte';
+  import ParallelCoordinates from './vis/ice-clusters/ParallelCoordinates.svelte';
 
-  export let pdp: SinglePDPData | DoublePDPData;
+  export let pd: OneWayPD | TwoWayPD;
 
   // header
 
-  $: feature1 = pdp.x_feature;
-  $: feature2 = pdp.num_features === 2 ? pdp.y_feature : '';
+  $: feature1 = pd.x_feature;
+  $: feature2 = pd.num_features === 2 ? pd.y_feature : '';
 
   let scaleLocally: boolean = false;
   let showTrendLine: boolean = false;
@@ -26,14 +27,14 @@
     showTrendLine = false;
   }
 
-  let clusterDescriptions: 'none' | 'table' | 'tree' = 'none';
+  let clusterDescriptions: 'none' | 'beeswarm' | 'parallel' = 'none';
   $: if (iceLevel !== 'band' && iceLevel !== 'line') {
     clusterDescriptions = 'none';
   }
 
   // one-way PDPs
-  let xPdp: SinglePDPData | null = null;
-  let yPdp: SinglePDPData | null = null;
+  let xPdp: OneWayPD | null = null;
+  let yPdp: OneWayPD | null = null;
 
   let showMarginalDistribution: boolean = false;
   let showOneWayChecked: boolean = false;
@@ -42,14 +43,14 @@
   let showInteractions: boolean = false;
 
   $: showOneWay =
-    pdp.num_features === 2 &&
+    pd.num_features === 2 &&
     showOneWayChecked &&
     xPdp !== null &&
     yPdp !== null;
-  $: showInteractions = pdp.num_features === 2 && showInteractionsChecked;
+  $: showInteractions = pd.num_features === 2 && showInteractionsChecked;
 
   const dispatch = createEventDispatcher<{
-    zoom: SinglePDPData | DoublePDPData;
+    zoom: OneWayPD | TwoWayPD;
   }>();
 
   function onChangeFeature(
@@ -72,13 +73,13 @@
     }
 
     if (f2 === '') {
-      const pd = $single_pdps.find((d) => d.x_feature === f1);
+      const pd = $one_way_pds.find((d) => d.x_feature === f1);
 
       if (pd) {
         dispatch('zoom', pd);
       }
     } else {
-      const pd = $double_pdps.find(
+      const pd = $two_way_pds.find(
         (d) =>
           (d.x_feature === f1 && d.y_feature === f2) ||
           (d.x_feature === f2 && d.y_feature === f1)
@@ -130,19 +131,19 @@
     return () => resizeObserver.unobserve(div);
   });
 
-  $: if (pdp.num_features === 2) {
+  $: if (pd.num_features === 2) {
     let found = 0;
 
     xPdp = null;
     yPdp = null;
 
-    for (let pd of $single_pdps) {
-      if (pd.x_feature === pdp.x_feature) {
+    for (let other of $one_way_pds) {
+      if (other.x_feature === pd.x_feature) {
         found++;
-        xPdp = pd;
-      } else if (pd.x_feature === pdp.y_feature) {
+        xPdp = other;
+      } else if (other.x_feature === pd.y_feature) {
         found++;
-        yPdp = pd;
+        yPdp = other;
       }
 
       if (found === 2) {
@@ -158,13 +159,13 @@
       <label>
         <span>Feat. 1</span>
         <select value={feature1} on:change={(e) => onChangeFeature(e, 1)}>
-          {#each $features as feature}
+          {#each $feature_names as feature}
             <option value={feature}>{feature}</option>
           {/each}
         </select>
       </label>
 
-      {#if $double_pdps.length > 0}
+      {#if $two_way_pds.length > 0}
         <label>
           <span>Feat. 2</span>
           <select
@@ -173,7 +174,7 @@
             on:change={(e) => onChangeFeature(e, 2)}
           >
             <option value="" />
-            {#each $features as feature}
+            {#each $feature_names as feature}
               <option value={feature}>{feature}</option>
             {/each}
           </select>
@@ -187,12 +188,12 @@
 
     <label class="label-and-input">
       <input type="checkbox" bind:checked={showMarginalDistribution} />
-      {pdp.num_features === 1
+      {pd.num_features === 1
         ? 'Marginal distribution'
         : 'Marginal distributions'}
     </label>
 
-    {#if pdp.num_features === 2}
+    {#if pd.num_features === 2}
       <label class="label-and-input">
         <input type="checkbox" bind:checked={showOneWayChecked} />One-way PDPs
       </label>
@@ -218,80 +219,112 @@
           <span>Descriptions:</span>
           <select bind:value={clusterDescriptions}>
             <option value="none">None</option>
-            <option value="tree">Tree</option>
-            <option value="table">Table</option>
+            <option value="beeswarm">Bee Swarm</option>
+            <option value="parallel">Parallel Coordinates</option>
           </select>
         </label>
       {/if}
 
-      {#if pdp.kind === 'quantitative' && iceLevel === 'none'}
+      {#if pd.ordered && iceLevel === 'none'}
         <label class="label-and-input">
           <input type="checkbox" bind:checked={showTrendLine} />Trend line
         </label>
       {/if}
     {/if}
   </div>
-  <div
-    class="zoomed-pdp-content showOneWay-{showOneWay}-showInteraction-{showInteractions}"
-    bind:this={div}
-  >
-    {#if xPdp !== null && yPdp !== null && showOneWay}
-      <div style:grid-area="one-way-left">
-        <PDP
-          pdp={xPdp}
-          globalColor={$globalColorPdpExtent}
-          width={halfWidth}
-          height={halfHeight}
-          {scaleLocally}
-          showTrendLine={false}
-          {showMarginalDistribution}
-          iceLevel="none"
-        />
+  <div class="zoomed-pdp-content" bind:this={div}>
+    {#if pd.num_features === 1}
+      <div class="one-way-pdp-grid">
+        <div style:flex="1">
+          <PDP
+            {pd}
+            globalColor={$globalColorPdpExtent}
+            width={clusterDescriptions === 'beeswarm' ||
+            clusterDescriptions === 'parallel'
+              ? halfWidth
+              : gridWidth}
+            height={gridHeight}
+            {scaleLocally}
+            {showTrendLine}
+            {showMarginalDistribution}
+            {iceLevel}
+            showColorLegend={false}
+          />
+        </div>
+
+        {#if clusterDescriptions === 'parallel'}
+          <div style:flex="1">
+            <ParallelCoordinates
+              {pd}
+              width={halfWidth}
+              height={gridHeight}
+              features={pd.ice.interacting_features}
+            />
+          </div>
+        {/if}
       </div>
+    {:else}
+      <div
+        class="two-way-pdp-grid showOneWay-{showOneWay}-showInteraction-{showInteractions}"
+      >
+        {#if xPdp !== null && yPdp !== null && showOneWay}
+          <div style:grid-area="one-way-left">
+            <PDP
+              pd={xPdp}
+              globalColor={$globalColorPdpExtent}
+              width={halfWidth}
+              height={halfHeight}
+              {scaleLocally}
+              showTrendLine={false}
+              {showMarginalDistribution}
+              iceLevel="none"
+            />
+          </div>
 
-      <div style:grid-area="one-way-right">
-        <PDP
-          pdp={yPdp}
-          globalColor={$globalColorPdpExtent}
-          width={halfWidth}
-          height={halfHeight}
-          {scaleLocally}
-          showTrendLine={false}
-          {showMarginalDistribution}
-          iceLevel="none"
-        />
-      </div>
-    {/if}
+          <div style:grid-area="one-way-right">
+            <PDP
+              pd={yPdp}
+              globalColor={$globalColorPdpExtent}
+              width={halfWidth}
+              height={halfHeight}
+              {scaleLocally}
+              showTrendLine={false}
+              {showMarginalDistribution}
+              iceLevel="none"
+            />
+          </div>
+        {/if}
 
-    <div style:grid-area="main">
-      <PDP
-        {pdp}
-        globalColor={$globalColorPdpExtent}
-        width={showOneWay && showInteractions ? halfWidth : gridWidth}
-        height={showOneWay || showInteractions ? halfHeight : gridHeight}
-        {scaleLocally}
-        {showTrendLine}
-        {showMarginalDistribution}
-        {iceLevel}
-        {clusterDescriptions}
-        showColorLegend={true}
-      />
-    </div>
+        <div style:grid-area="main">
+          <PDP
+            {pd}
+            globalColor={$globalColorPdpExtent}
+            width={showOneWay && showInteractions ? halfWidth : gridWidth}
+            height={showOneWay || showInteractions ? halfHeight : gridHeight}
+            {scaleLocally}
+            {showTrendLine}
+            {showMarginalDistribution}
+            {iceLevel}
+            showColorLegend={true}
+          />
+        </div>
 
-    {#if showInteractions && pdp.num_features === 2}
-      <div style:grid-area="interaction">
-        <PDP
-          {pdp}
-          globalColor={$globalColorPdpExtent}
-          width={showOneWay ? halfWidth : gridWidth}
-          height={halfHeight}
-          {scaleLocally}
-          {showTrendLine}
-          {showMarginalDistribution}
-          iceLevel="none"
-          showInteractions={true}
-          showColorLegend={true}
-        />
+        {#if showInteractions && pd.num_features === 2}
+          <div style:grid-area="interaction">
+            <PDP
+              {pd}
+              globalColor={$globalColorPdpExtent}
+              width={showOneWay ? halfWidth : gridWidth}
+              height={halfHeight}
+              {scaleLocally}
+              {showTrendLine}
+              {showMarginalDistribution}
+              iceLevel="none"
+              showInteractions={true}
+              showColorLegend={true}
+            />
+          </div>
+        {/if}
       </div>
     {/if}
   </div>
@@ -355,8 +388,19 @@
 
   .zoomed-pdp-content {
     flex: 1;
-    display: grid;
     padding: 0.5em;
+  }
+
+  .one-way-pdp-grid {
+    display: flex;
+    width: 100%;
+    height: 100%;
+  }
+
+  .two-way-pdp-grid {
+    display: grid;
+    width: 100%;
+    height: 100%;
   }
 
   .label-and-input {

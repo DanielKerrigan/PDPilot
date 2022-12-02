@@ -1,12 +1,8 @@
 <script lang="ts">
-  import type {
-    ICELevel,
-    QuantitativeMarginalDistribution,
-    QuantitativeSinglePDPData,
-  } from '../../../types';
-  import { scaleLinear, scaleOrdinal } from 'd3-scale';
+  import type { ICELevel, OneWayPD } from '../../../types';
+  import { scaleLinear, scaleOrdinal, scalePoint } from 'd3-scale';
   import { line as d3line, area as d3area } from 'd3-shape';
-  import { zip } from 'd3-array';
+  import { zip, range } from 'd3-array';
   import XAxis from '../axis/XAxis.svelte';
   import YAxis from '../axis/YAxis.svelte';
   import {
@@ -14,44 +10,48 @@
     nice_ice_mean_extent,
     nice_ice_band_extent,
     nice_ice_line_extent,
+    feature_info,
   } from '../../../stores';
   import MarginalHistogram from '../marginal/MarginalHistogram.svelte';
   import { categoricalColors, getYScale } from '../../../vis-utils';
-  import RuleTree from '../rule/RuleTree.svelte';
-  import RuleTable from '../rule/RuleTable.svelte';
+  import MarginalBarChart from '../marginal/MarginalBarChart.svelte';
 
-  export let pdp: QuantitativeSinglePDPData;
+  export let pd: OneWayPD;
   export let width: number;
   export let height: number;
   export let scaleLocally: boolean;
   export let showTrendLine: boolean;
   export let iceLevel: ICELevel;
-  export let marginalDistributionX: QuantitativeMarginalDistribution | null;
-  export let clusterDescriptions: 'none' | 'tree' | 'table';
-  export let iceLines: number[] = [];
+  export let showMarginalDistribution: boolean;
 
-  $: console.log(iceLines);
+  $: feature = $feature_info[pd.x_feature];
 
   // this approach for generating a unique id to use for the
   // clip path comes from https://observablehq.com/@d3/difference-chart
 
   const clipPathId: string = Math.random().toString(16).slice(2);
 
-  $: marginalChartHeight = marginalDistributionX !== null ? 100 : 0;
+  $: marginalChartHeight = showMarginalDistribution ? 100 : 0;
 
   const margin = { top: 10, right: 10, bottom: 35, left: 50 };
 
   $: chartHeight = height - marginalChartHeight;
-  $: facetHeight = chartHeight / pdp.ice.clusters.length;
+  $: facetHeight = chartHeight / pd.ice.clusters.length;
 
-  $: chartAndFacetWidth = clusterDescriptions !== 'none' ? width / 2 : width;
+  $: x =
+    feature.kind === 'quantitative'
+      ? scaleLinear()
+          .domain([pd.x_values[0], pd.x_values[pd.x_values.length - 1]])
+          .range([margin.left, width - margin.right])
+      : scalePoint<number>()
+          .domain(pd.x_values)
+          .range([margin.left, width - margin.right])
+          .padding(0.5);
 
-  $: x = scaleLinear()
-    .domain([pdp.x_values[0], pdp.x_values[pdp.x_values.length - 1]])
-    .range([margin.left, chartAndFacetWidth - margin.right]);
+  $: radius = 'step' in x ? Math.min(3, x.step() / 2 - 1) : 0;
 
   $: y = getYScale(
-    pdp,
+    pd,
     chartHeight,
     facetHeight,
     iceLevel,
@@ -63,7 +63,7 @@
     margin
   );
 
-  $: clusterIds = pdp.ice.clusters.map((d) => d.id);
+  $: clusterIds = pd.ice.clusters.map((d) => d.id);
 
   $: dark = scaleOrdinal<number, string>()
     .domain(clusterIds)
@@ -80,32 +80,35 @@
   // this approach with the indices is like what is done here
   // https://observablehq.com/@d3/line-chart
 
+  $: I = range(pd.x_values.length);
+
   $: line = d3line<number>()
-    .x((_, i) => x(pdp.x_values[i]))
+    .x((_, i) => x(pd.x_values[i]) ?? 0)
     .y((d) => y(d));
 
   $: area = d3area<number[]>()
-    .x((_, i) => x(pdp.x_values[i]))
+    .x((_, i) => x(pd.x_values[i]) ?? 0)
     .y1((d) => y(d[1]))
     .y0((d) => y(d[0]));
-
-  $: interactingFeatures = [
-    ...new Set(
-      pdp.ice.clusters
-        .map((c) => c.rule_list.map((r: any) => Object.keys(r.conditions)))
-        .flat(2)
-    ),
-  ];
 </script>
 
-{#if marginalDistributionX !== null}
-  <svg width={chartAndFacetWidth} height={marginalChartHeight}>
-    <MarginalHistogram
-      data={marginalDistributionX}
-      {x}
-      height={marginalChartHeight}
-      direction="horizontal"
-    />
+{#if showMarginalDistribution}
+  <svg {width} height={marginalChartHeight}>
+    {#if 'bandwidth' in x}
+      <MarginalBarChart
+        data={$feature_info[pd.x_feature].distribution}
+        {x}
+        height={marginalChartHeight}
+        direction="horizontal"
+      />
+    {:else}
+      <MarginalHistogram
+        data={$feature_info[pd.x_feature].distribution}
+        {x}
+        height={marginalChartHeight}
+        direction="horizontal"
+      />
+    {/if}
   </svg>
 {/if}
 
@@ -123,13 +126,13 @@
   -->
   <svg class="pdp-line-chart">
     <!-- trend line -->
-    {#if showTrendLine}
+    {#if showTrendLine && pd.ordered}
       <g>
         <clipPath id={clipPathId}>
           <rect
             x={margin.left}
             y={margin.top}
-            width={chartAndFacetWidth - margin.left - margin.right}
+            width={width - margin.left - margin.right}
             height={chartHeight - margin.top - margin.bottom}
             fill="white"
           />
@@ -137,7 +140,7 @@
       </g>
 
       <path
-        d={line(pdp.trend_good_fit)}
+        d={line(pd.trend_good_fit)}
         stroke="var(--gray-5)"
         fill="none"
         stroke-width="2"
@@ -146,14 +149,35 @@
     {/if}
 
     <!-- PDP -->
-    <path
-      d={line(pdp.mean_predictions)}
-      stroke="var(--black)"
-      stroke-width="2"
-      fill="none"
-    />
+    {#if pd.ordered}
+      <path
+        d={line(pd.mean_predictions)}
+        stroke="var(--black)"
+        stroke-width="2"
+        fill="none"
+      />
+    {/if}
 
-    <XAxis scale={x} y={chartHeight - margin.bottom} label={pdp.x_feature} />
+    {#if feature.kind === 'categorical'}
+      <g>
+        {#each I as i}
+          <circle
+            cx={x(pd.x_values[i])}
+            cy={y(pd.mean_predictions[i])}
+            r={radius}
+            fill="var(--black)"
+          />
+        {/each}
+      </g>
+    {/if}
+
+    <XAxis
+      scale={x}
+      y={chartHeight - margin.bottom}
+      label={pd.x_feature}
+      integerOnly={feature.subkind === 'discrete'}
+      value_map={'value_map' in feature ? feature.value_map : {}}
+    />
 
     <YAxis scale={y} x={margin.left} label={'average prediction'} />
   </svg>
@@ -161,56 +185,63 @@
   <svg class="pdp-line-chart">
     <!-- cluster means -->
     <g>
-      {#each pdp.ice.clusters as cluster}
+      {#each pd.ice.clusters as cluster}
         <path
           d={line(cluster.centered_mean)}
           stroke={dark(cluster.id)}
           stroke-width="2"
           fill="none"
         />
+
+        {#if feature.kind === 'categorical'}
+          <g>
+            {#each I as i}
+              <circle
+                cx={x(pd.x_values[i])}
+                cy={y(cluster.centered_mean[i])}
+                r={radius}
+                fill={dark(cluster.id)}
+              />
+            {/each}
+          </g>
+        {/if}
       {/each}
     </g>
 
     <!-- PDP -->
     <path
-      d={line(pdp.ice.centered_pdp)}
+      d={line(pd.ice.centered_pdp)}
       stroke="var(--black)"
       stroke-width="2"
       fill="none"
     />
 
-    <XAxis scale={x} y={chartHeight - margin.bottom} label={pdp.x_feature} />
-
-    <YAxis scale={y} x={margin.left} label={'centered average prediction'} />
-  </svg>
-{:else if iceLevel === 'filt'}
-  <svg class="pdp-line-chart">
-    <!-- ice lines -->
-    <g>
-      {#each iceLines as i}
-        <path
-          d={line(pdp.ice.centered_ice_lines[i])}
-          stroke={'black'}
-          stroke-width="2"
-          stroke-opacity={0.5}
-          fill="none"
+    {#if feature.kind === 'categorical'}
+      {#each I as i}
+        <circle
+          cx={x(pd.x_values[i])}
+          cy={y(pd.ice.centered_pdp[i])}
+          r={radius}
+          fill="var(--black)"
         />
       {/each}
-    </g>
+    {/if}
 
-    <XAxis scale={x} y={chartHeight - margin.bottom} label={pdp.x_feature} />
+    <XAxis
+      scale={x}
+      y={chartHeight - margin.bottom}
+      label={pd.x_feature}
+      integerOnly={feature.subkind === 'discrete'}
+      value_map={'value_map' in feature ? feature.value_map : {}}
+    />
 
     <YAxis scale={y} x={margin.left} label={'centered average prediction'} />
   </svg>
 {:else if iceLevel === 'band' || iceLevel === 'line'}
   <div class="ice-cluster-container">
-    {#each pdp.ice.clusters as cluster}
+    {#each pd.ice.clusters as cluster}
       <div class="ice-cluster">
-        <svg
-          class="ice-cluster-chart"
-          style:height={facetHeight}
-          style:width={chartAndFacetWidth}
-        >
+        <svg class="ice-cluster-chart" style:height={facetHeight} style:width>
           {#if iceLevel === 'band'}
             <path
               d={area(zip(cluster.p10, cluster.p90))}
@@ -231,7 +262,7 @@
             />
 
             <path
-              d={line(pdp.ice.centered_pdp)}
+              d={line(pd.ice.centered_pdp)}
               stroke="var(--black)"
               stroke-opacity="1"
               fill="none"
@@ -247,9 +278,11 @@
             <XAxis
               scale={x}
               y={facetHeight - margin.bottom}
-              showTickLabels={cluster.id === pdp.ice.clusters.length - 1}
-              showAxisLabel={cluster.id === pdp.ice.clusters.length - 1}
-              label={pdp.x_feature}
+              showTickLabels={cluster.id === pd.ice.clusters.length - 1}
+              showAxisLabel={cluster.id === pd.ice.clusters.length - 1}
+              label={pd.x_feature}
+              integerOnly={feature.subkind === 'discrete'}
+              value_map={'value_map' in feature ? feature.value_map : {}}
             />
           {:else if iceLevel === 'line'}
             <g>
@@ -274,7 +307,7 @@
               />
 
               <path
-                d={line(pdp.ice.centered_pdp)}
+                d={line(pd.ice.centered_pdp)}
                 stroke="var(--black)"
                 stroke-opacity="1"
                 fill="none"
@@ -289,33 +322,15 @@
               <XAxis
                 scale={x}
                 y={facetHeight}
-                showTickLabels={cluster.id === pdp.ice.clusters.length - 1}
-                showAxisLabel={cluster.id === pdp.ice.clusters.length - 1}
-                label={pdp.x_feature}
+                showTickLabels={cluster.id === pd.ice.clusters.length - 1}
+                showAxisLabel={cluster.id === pd.ice.clusters.length - 1}
+                label={pd.x_feature}
+                integerOnly={feature.subkind === 'discrete'}
+                value_map={'value_map' in feature ? feature.value_map : {}}
               />
             </g>
           {/if}
         </svg>
-        {#if clusterDescriptions !== 'none'}
-          <div
-            class="ice-cluster-description-container"
-            style:max-height="{facetHeight}px"
-            style:max-width="{chartAndFacetWidth}px"
-            style:padding="{margin.top}px 0 {margin.bottom}px 0"
-          >
-            <div class="ice-cluster-description-content">
-              {#if clusterDescriptions === 'tree'}
-                <RuleTree node={cluster.rule_tree} pd={pdp} />
-              {:else if clusterDescriptions === 'table'}
-                <RuleTable
-                  rules={cluster.rule_list}
-                  features={interactingFeatures}
-                  showFeatureNames={true}
-                />
-              {/if}
-            </div>
-          </div>
-        {/if}
       </div>
     {/each}
   </div>
@@ -334,11 +349,5 @@
 
   .ice-cluster {
     display: flex;
-  }
-
-  .ice-cluster-description-content {
-    overflow: auto;
-    width: 100%;
-    height: 100%;
   }
 </style>

@@ -3,17 +3,17 @@
   import PDPGridsMain from './PDPGridsMain.svelte';
   import ClustersMain from './ClustersMain.svelte';
   import Tabs from './Tabs.svelte';
-  import { height, mode, single_pdps, features } from '../stores';
+  import { height, mode, one_way_pds, feature_names } from '../stores';
   import ZoomedPdp from './ZoomedPDP.svelte';
-  import type { DoublePDPData, SinglePDPData } from '../types';
+  import type { TwoWayPD, OneWayPD } from '../types';
 
-  let zoomedPd: SinglePDPData | DoublePDPData = $single_pdps[0];
+  let zoomedPd: OneWayPD | TwoWayPD = $one_way_pds[0];
   // changing this to
   // $: selectedFeatures = $features;
   // breaks the checkbox binding. why is features being updated?
-  let selectedFeatures: string[] = $features;
+  let selectedFeatures: string[] = $feature_names;
 
-  function onZoom(event: CustomEvent<SinglePDPData | DoublePDPData>) {
+  function onZoom(event: CustomEvent<OneWayPD | TwoWayPD>) {
     zoomedPd = event.detail;
     $mode = 'individual';
   }
@@ -37,7 +37,7 @@
   </div>
 
   <div class="individual-content" class:noshow={$mode !== 'individual'}>
-    <ZoomedPdp pdp={zoomedPd} on:zoom={onZoom} />
+    <ZoomedPdp pd={zoomedPd} on:zoom={onZoom} />
   </div>
 </div>
 
