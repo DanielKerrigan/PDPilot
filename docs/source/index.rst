@@ -20,10 +20,12 @@ Contents
 
 .. toctree::
    :caption: User Guide
+
    usage
    api
 
 .. toctree::
    :caption: Developer Guide
+
    developer-installation
    release
