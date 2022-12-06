@@ -43,7 +43,47 @@ def partial_dependence(
     n_jobs: int = 1,
     output_path: str | None = None,
 ) -> dict | None:
-    """calculates the partial dependences for the given features and feature pairs"""
+    """Calculates the data needed for the widget. This includes computing the
+    data for the partial dependence plots and ICE plots, calculating the metrics
+    to rank the plots by, clustering the PDPs, and clustering the lines within
+    each ICE plot.
+
+    :param predict: A function whose input is a DataFrame of instances and
+        returns the model's predictions on those instances.
+    :type predict: Callable[[pd.DataFrame], list[float]]
+    :param df: Instances to use to compute the PDPs and ICE plots.
+    :type df: pd.DataFrame
+    :param features: List of feature names to compute the plots for.
+    :type features: list[str]
+    :param resolution: For quantitative features, the number of evenly
+        spaced to use to compute the plots, defaults to 20.
+    :type resolution: int, optional
+    :param one_hot_features: A dictionary that maps from the name of a feature
+        to a list tuples containg the corresponding one-hot encoded column
+        names and feature values, defaults to None.
+    :type one_hot_features: dict[str, list[tuple[str, str]]] | None, optional
+    :param nominal_features: List of nominal and binary features in the
+        dataset that are not one-hot encoded. If None, defaults to binary
+        features in the dataset.
+    :type nominal_features: list[str] | None, optional
+    :param ordinal_features: List of ordinal features in the dataset.
+        If None, defaults to integer features with 3-12 unique values.
+    :type ordinal_features: list[str] | None, optional
+    :param feature_value_mappings: Nested dictionary that maps from the name
+        of a nominal or ordinal feature, to a value for that feature in
+        the dataset, to the desired label for that value in the UI,
+        defaults to None.
+    :type feature_value_mappings: dict[str, dict[str, str]] | None, optional
+    :param n_jobs: Number of jobs to use to parallelize computation,
+        defaults to 1.
+    :type n_jobs: int, optional
+    :param output_path: A file path to write the results to.
+        If None, then the results are instead returned.
+    :type output_path: str | None, optional
+    :raises OSError: Raised when the ``output_path``, if provided, cannot be written to.
+    :return: Wigdet data, or None if an ``output_path`` is provided.
+    :rtype: dict | None
+    """
 
     # first check that the output path exists if provided so that the function
     # can fail quickly, rather than waiting until all the work is done

@@ -69,6 +69,7 @@ instance/
 docs/_build/
 docs/source/_static/embed-bundle.js
 docs/source/_static/embed-bundle.js.map
+docs/source/generated
 
 # PyBuilder
 target/

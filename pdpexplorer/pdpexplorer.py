@@ -2,7 +2,7 @@
 # coding: utf-8
 
 """
-TODO: Add module docstring
+TODO: Add module docstring for pdpexplorer
 """
 
 import json
@@ -15,7 +15,15 @@ from ._frontend import module_name, module_version
 
 
 class PDPExplorerWidget(DOMWidget):
-    """TODO: Add docstring here"""
+    """This class creates the interactive widget.
+
+    :param pd_data: The dictionary returned by :func:`pdpexplorer.pdp.partial_dependence`
+        or a path to the file containing that data.
+    :type pd_data: dict | str | Path
+    :param height: The height of the widget in pixels, defaults to 600.
+    :type height: int, optional
+    :raises OSError: Raised if ``pd_data`` is a str or Path and the file cannot be read.
+    """
 
     _model_name = Unicode("PDPExplorerModel").tag(sync=True)
     _model_module = Unicode(module_name).tag(sync=True)
@@ -48,7 +56,7 @@ class PDPExplorerWidget(DOMWidget):
 
     def __init__(
         self,
-        pd_data,
+        pd_data: str | Path | dict,
         height: int = 600,
         **kwargs,
     ):
