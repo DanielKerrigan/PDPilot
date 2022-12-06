@@ -1,10 +1,21 @@
 # Configuration file for the Sphinx documentation builder.
 
-import os
-import sys
+# import os
+# import sys
 
-sys.path.insert(0, os.path.abspath(os.path.join("..", "..", "pdpexplorer")))
-print(sys.path)
+# sys.path.insert(0, os.path.abspath(os.path.join("..", "..", "pdpexplorer")))
+# print(sys.path)
+
+# Ensure our extension is available:
+import sys
+from os.path import dirname, join as pjoin
+
+docs = dirname(dirname(__file__))
+root = dirname(docs)
+sys.path.insert(0, root)
+# # sys.path.insert(0, pjoin(docs, 'sphinxext'))
+# print(sys.path)
+
 
 # -- Project information
 
