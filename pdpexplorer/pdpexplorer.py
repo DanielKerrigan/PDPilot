@@ -5,10 +5,11 @@
 TODO: Add module docstring
 """
 
-from pathlib import Path
 import json
+from pathlib import Path
+
 from ipywidgets import DOMWidget
-from traitlets import Unicode, List, Int, Dict
+from traitlets import Dict, Int, List, Unicode
 
 from ._frontend import module_name, module_version
 
@@ -23,7 +24,7 @@ class PDPExplorerWidget(DOMWidget):
     _view_module = Unicode(module_name).tag(sync=True)
     _view_module_version = Unicode(module_version).tag(sync=True)
 
-    """widget state that is synced between backend and frontend"""
+    # widget state that is synced between backend and frontend
 
     feature_names = List([]).tag(sync=True)
     feature_info = Dict({}).tag(sync=True)
@@ -48,7 +49,7 @@ class PDPExplorerWidget(DOMWidget):
     def __init__(
         self,
         pd_data,
-        height=600,
+        height: int = 600,
         **kwargs,
     ):
         super().__init__(**kwargs)

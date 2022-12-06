@@ -5,27 +5,26 @@
 Compute partial dependence plots
 """
 
-from operator import itemgetter
 import json
 import math
+from operator import itemgetter
 from pathlib import Path
+from typing import Callable
 
 import numpy as np
+import pandas as pd
 from joblib import Parallel, delayed
-
 from scipy.stats import iqr as inner_quartile_range
-
-from tslearn.utils import to_time_series_dataset
-from tslearn.clustering import TimeSeriesKMeans, silhouette_score as ts_silhouette_score
-
-from tqdm import tqdm
-
-from sklearn.linear_model import Ridge
-from sklearn.preprocessing import SplineTransformer, StandardScaler
-from sklearn.pipeline import make_pipeline
-from sklearn.metrics import mean_squared_error, silhouette_score
 from sklearn.cluster import KMeans
+from sklearn.linear_model import Ridge
+from sklearn.metrics import mean_squared_error, silhouette_score
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import SplineTransformer, StandardScaler
 from sklearn.tree import DecisionTreeClassifier
+from tqdm import tqdm
+from tslearn.clustering import TimeSeriesKMeans
+from tslearn.clustering import silhouette_score as ts_silhouette_score
+from tslearn.utils import to_time_series_dataset
 
 from pdpexplorer.metadata import Metadata
 from pdpexplorer.tqdm_joblib import tqdm_joblib
@@ -33,17 +32,17 @@ from pdpexplorer.tqdm_joblib import tqdm_joblib
 
 def partial_dependence(
     *,
-    predict,
-    df,
-    features,
-    resolution=20,
-    one_hot_features=None,
-    nominal_features=None,
-    ordinal_features=None,
-    feature_value_mappings=None,
-    n_jobs=1,
-    output_path=None,
-):
+    predict: Callable[[pd.DataFrame], list[float]],
+    df: pd.DataFrame,
+    features: list[str],
+    resolution: int = 20,
+    one_hot_features: dict[str, list[tuple[str, str]]] | None = None,
+    nominal_features: list[str] | None = None,
+    ordinal_features: list[str] | None = None,
+    feature_value_mappings: dict[str, dict[str, str]] | None = None,
+    n_jobs: int = 1,
+    output_path: str | None = None,
+) -> dict | None:
     """calculates the partial dependences for the given features and feature pairs"""
 
     # first check that the output path exists if provided so that the function

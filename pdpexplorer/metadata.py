@@ -1,15 +1,16 @@
 import numpy as np
+import pandas as pd
 
 
 class Metadata:
     def __init__(
         self,
-        df,
-        resolution,
-        one_hot_features,
-        nominal_features,
-        ordinal_features,
-        feature_value_mappings,
+        df: pd.DataFrame,
+        resolution: int,
+        one_hot_features: dict[str, list[tuple[str, str]]] | None,
+        nominal_features: list[str] | None,
+        ordinal_features: list[str] | None,
+        feature_value_mappings: dict[str, dict[str, str]] | None,
     ):
         self.size = df.shape[0]
 
