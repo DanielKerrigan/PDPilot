@@ -1,6 +1,8 @@
 API
 ===
 
-.. autofunction:: pdpexplorer.partial_dependence
+.. automodule:: pdpexplorer.widget
+   :members:
 
-.. autoclass:: pdpexplorer.PDPExplorerWidget
+.. automodule:: pdpexplorer.pdp
+   :members:
