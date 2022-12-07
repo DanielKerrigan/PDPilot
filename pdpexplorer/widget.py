@@ -11,7 +11,7 @@ from pathlib import Path
 from ipywidgets import DOMWidget
 from traitlets import Dict, Int, List, Unicode
 
-from ._frontend import module_name, module_version
+from pdpexplorer._frontend import module_name, module_version
 
 
 class PDPExplorerWidget(DOMWidget):

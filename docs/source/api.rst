@@ -1,11 +1,8 @@
 API
 ===
 
-.. automodule:: pdpexplorer.widget
+.. automodule:: widget
    :members:
 
-.. automodule:: pdpexplorer.ticks
-   :members:
-
-.. automodule:: pdpexplorer.pdp
+.. automodule:: pdp
    :members:
