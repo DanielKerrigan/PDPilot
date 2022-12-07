@@ -1,8 +1,5 @@
 API
 ===
 
-.. automodule:: widget
-   :members:
+.. autoclass:: widget.PDPExplorerWidget
 
-.. automodule:: pdp
-   :members:
