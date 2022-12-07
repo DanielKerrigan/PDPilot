@@ -1,8 +1,6 @@
 API
 ===
 
-.. currentmodule:: pdpexplorer.pdp
-.. autofunction:: partial_dependence
+.. autofunction:: pdpexplorer.pdp.partial_dependence
 
-.. currentmodule:: pdpexplorer
-.. autoclass:: PDPExplorerWidget
+.. autoclass:: pdpexplorer.widget.PDPExplorerWidget

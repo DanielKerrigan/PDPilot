@@ -2,7 +2,7 @@
 # coding: utf-8
 
 """
-TODO: Add module docstring for pdpexplorer
+Add module docstring for pdpexplorer
 """
 
 import json

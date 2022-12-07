@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from .pdpexplorer import PDPExplorerWidget
+from .widget import PDPExplorerWidget
+from .pdp import partial_dependence
 from ._version import __version__, version_info
 
 
