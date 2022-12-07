@@ -2,8 +2,6 @@
 pdpexplorer
 =====================================
 
-Version: |release|
-
 A Jupyter widget for exploring partial dependence plots.
 
 
@@ -14,9 +12,6 @@ To get started, install with pip::
 
     pip install pdpexplorer
 
-
-Contents
---------
 
 .. toctree::
    :caption: User Guide
