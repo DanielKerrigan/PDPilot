@@ -1,5 +1,5 @@
 API
 ===
 
-.. autoclass:: pdpexplorer.widget.PDPExplorerWidget
+.. autoclass:: pdpexplorer.PDPExplorerWidget
 
