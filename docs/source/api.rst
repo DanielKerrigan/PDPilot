@@ -1,5 +1,7 @@
 API
 ===
 
-.. autoclass:: pdpexplorer.PDPExplorerWidget
+.. autofunction:: pdpexplorer.pdp.partial_dependence
+
+.. autoclass:: pdpexplorer.widget.PDPExplorerWidget
 
