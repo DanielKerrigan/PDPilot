@@ -1,3 +1,4 @@
+from typing import Union
 import numpy as np
 import pandas as pd
 
@@ -7,10 +8,10 @@ class Metadata:
         self,
         df: pd.DataFrame,
         resolution: int,
-        one_hot_features: dict[str, list[tuple[str, str]]] | None,
-        nominal_features: list[str] | None,
-        ordinal_features: list[str] | None,
-        feature_value_mappings: dict[str, dict[str, str]] | None,
+        one_hot_features: Union[dict[str, list[tuple[str, str]]], None],
+        nominal_features: Union[list[str], None],
+        ordinal_features: Union[list[str], None],
+        feature_value_mappings: Union[dict[str, dict[str, str]], None],
     ):
         self.size = df.shape[0]
 

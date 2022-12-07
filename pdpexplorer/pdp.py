@@ -9,7 +9,7 @@ import json
 import math
 from operator import itemgetter
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Union
 
 import numpy as np
 import pandas as pd
@@ -36,10 +36,10 @@ def partial_dependence(
     df: pd.DataFrame,
     features: list[str],
     resolution: int = 20,
-    one_hot_features: dict[str, list[tuple[str, str]]] | None = None,
-    nominal_features: list[str] | None = None,
-    ordinal_features: list[str] | None = None,
-    feature_value_mappings: dict[str, dict[str, str]] | None = None,
+    one_hot_features: Union[dict[str, list[tuple[str, str]]], None] = None,
+    nominal_features: Union[list[str], None] = None,
+    ordinal_features: Union[list[str], None] = None,
+    feature_value_mappings: Union[dict[str, dict[str, str]], None] = None,
     n_jobs: int = 1,
     output_path: str | None = None,
 ) -> dict | None:

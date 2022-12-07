@@ -7,6 +7,7 @@ Add module docstring for pdpexplorer
 
 import json
 from pathlib import Path
+from typing import Union
 
 from ipywidgets import DOMWidget
 from traitlets import Dict, Int, List, Unicode
@@ -56,7 +57,7 @@ class PDPExplorerWidget(DOMWidget):
 
     def __init__(
         self,
-        pd_data: str | Path | dict,
+        pd_data: Union[str, Path, dict],
         height: int = 600,
         **kwargs,
     ):
