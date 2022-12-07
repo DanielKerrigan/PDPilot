@@ -106,7 +106,7 @@ class Metadata:
                 "subkind": "nominal",
                 "ordered": False,
                 "values": unique_feature_vals[feature],
-                "distribution": {"bins": bins, "counts": counts},
+                "distribution": {"bins": bins.tolist(), "counts": counts.tolist()},
                 "value_map": feature_value_mappings.get(feature, {}),
             }
 
@@ -117,7 +117,7 @@ class Metadata:
                 "subkind": "ordinal",
                 "ordered": True,
                 "values": unique_feature_vals[feature],
-                "distribution": {"bins": bins, "counts": counts},
+                "distribution": {"bins": bins.tolist(), "counts": counts.tolist()},
                 "value_map": feature_value_mappings.get(feature, {}),
             }
 
@@ -140,7 +140,7 @@ class Metadata:
                     "subkind": "discrete",
                     "ordered": True,
                     "values": values,
-                    "distribution": {"bins": bins, "counts": counts},
+                    "distribution": {"bins": bins.tolist(), "counts": counts.tolist()},
                 }
             else:
                 values = (
@@ -154,5 +154,5 @@ class Metadata:
                     "subkind": "continuous",
                     "ordered": True,
                     "values": values,
-                    "distribution": {"bins": bins, "counts": counts},
+                    "distribution": {"bins": bins.tolist(), "counts": counts.tolist()},
                 }

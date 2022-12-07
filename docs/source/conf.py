@@ -12,7 +12,7 @@ copyright = "2022, Daniel Kerrigan"
 author = "Daniel Kerrigan"
 
 release = "0.2"
-version = "0.2.3"
+version = "0.2.4"
 
 # -- General configuration
 
