@@ -70,6 +70,9 @@ docs/_build/
 docs/source/_static/embed-bundle.js
 docs/source/_static/embed-bundle.js.map
 docs/source/generated
+docs/build/doctrees
+docs/build/html/.buildinfo
+docs/build/html/_sources/
 
 # PyBuilder
 target/
