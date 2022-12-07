@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Release Process &mdash; pdpexplorer 0.1 documentation</title>
+  <title>Release Process &mdash; pdpexplorer 0.2 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -31,7 +31,7 @@
             <a href="index.html" class="icon icon-home"> pdpexplorer
           </a>
               <div class="version">
-                0.1.0
+                0.2.0
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -79,7 +79,8 @@
   <section id="release-process">
 <h1>Release Process<a class="headerlink" href="#release-process" title="Permalink to this heading"></a></h1>
 <ol class="arabic simple">
-<li><p>Update the versions in <code class="docutils literal notranslate"><span class="pre">package.json</span></code>, <code class="docutils literal notranslate"><span class="pre">pdpexplorer/_version.py</span></code>, and <code class="docutils literal notranslate"><span class="pre">docs/conf.py</span></code>.</p></li>
+<li><p>Update the versions in <code class="docutils literal notranslate"><span class="pre">package.json</span></code>, <code class="docutils literal notranslate"><span class="pre">pdpexplorer/_version.py</span></code>, <code class="docutils literal notranslate"><span class="pre">pdpexplorer/_frontend.py</span></code>, and <code class="docutils literal notranslate"><span class="pre">docs/source/conf.py</span></code>.</p></li>
+<li><p>Update documentation.</p></li>
 <li><p>Make a release commmit: <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">commit</span> <span class="pre">-m</span> <span class="pre">&quot;release</span> <span class="pre">vX.Y.Z&quot;</span></code></p></li>
 <li><p>Tag the commit: <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">tag</span> <span class="pre">vX.Y.Z</span></code></p></li>
 <li><p>Push the commit and tag: <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">push</span> <span class="pre">&amp;&amp;</span> <span class="pre">git</span> <span class="pre">push</span> <span class="pre">--tags</span></code></p></li>

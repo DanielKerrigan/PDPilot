@@ -2,7 +2,8 @@
 Release Process
 ===============
 
-#. Update the versions in ``package.json``, ``pdpexplorer/_version.py``, and ``docs/conf.py``.
+#. Update the versions in ``package.json``, ``pdpexplorer/_version.py``, ``pdpexplorer/_frontend.py``, and ``docs/source/conf.py``.
+#. Update documentation.
 #. Make a release commmit: ``git commit -m "release vX.Y.Z"``
 #. Tag the commit: ``git tag vX.Y.Z``
 #. Push the commit and tag: ``git push && git push --tags``

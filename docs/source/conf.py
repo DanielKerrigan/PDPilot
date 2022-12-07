@@ -5,26 +5,14 @@ import sys
 
 sys.path.insert(0, os.path.abspath("../.."))
 
-print(sys.version)
-
-# autodoc_mock_imports = [
-#     "numpy",
-#     "pandas",
-#     "joblib",
-#     "scipy",
-#     "sklearn",
-#     "tqdm",
-#     "tslearn",
-# ]
-
 # -- Project information
 
 project = "pdpexplorer"
 copyright = "2022, Daniel Kerrigan"
 author = "Daniel Kerrigan"
 
-release = "0.1"
-version = "0.1.0"
+release = "0.2"
+version = "0.2.0"
 
 # -- General configuration
 
