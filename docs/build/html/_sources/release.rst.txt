@@ -9,4 +9,4 @@ Release Process
 #. Push the commit and tag: ``git push && git push --tags``
 #. Bundle the Python package: ``python setup.py sdist bdist_wheel``
 #. Install twine: ``pip install twine``
-#. Publish the package to PyPI: ``twine upload dist/pdpexplorer*``
+#. Publish the package to PyPI: ``twine upload dist/pdpexplorer-X.Y.Z*``

@@ -9,7 +9,7 @@ import json
 import math
 from operator import itemgetter
 from pathlib import Path
-from typing import Callable, Union
+from typing import Callable, Union, Dict, Tuple, List
 
 import numpy as np
 import pandas as pd
@@ -32,17 +32,17 @@ from pdpexplorer.tqdm_joblib import tqdm_joblib
 
 def partial_dependence(
     *,
-    predict: Callable[[pd.DataFrame], list[float]],
+    predict: Callable[[pd.DataFrame], List[float]],
     df: pd.DataFrame,
-    features: list[str],
+    features: List[str],
     resolution: int = 20,
-    one_hot_features: Union[dict[str, list[tuple[str, str]]], None] = None,
-    nominal_features: Union[list[str], None] = None,
-    ordinal_features: Union[list[str], None] = None,
-    feature_value_mappings: Union[dict[str, dict[str, str]], None] = None,
+    one_hot_features: Union[Dict[str, List[Tuple[str, str]]], None] = None,
+    nominal_features: Union[List[str], None] = None,
+    ordinal_features: Union[List[str], None] = None,
+    feature_value_mappings: Union[Dict[str, Dict[str, str]], None] = None,
     n_jobs: int = 1,
-    output_path: str | None = None,
-) -> dict | None:
+    output_path: Union[str, None] = None,
+) -> Union[dict, None]:
     """Calculates the data needed for the widget. This includes computing the
     data for the partial dependence plots and ICE plots, calculating the metrics
     to rank the plots by, clustering the PDPs, and clustering the lines within
