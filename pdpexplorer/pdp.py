@@ -126,9 +126,9 @@ def partial_dependence(
     print(f"Calculating {num_one_way} one-way PDPs")
 
     if n_jobs == 1:
-        one_way_results = [_calc_pd(**args) for args in tqdm(one_way_work)]
+        one_way_results = [_calc_pd(**args) for args in tqdm(one_way_work, ncols=80)]
     else:
-        with tqdm_joblib(tqdm(total=num_one_way, unit="PDP")) as _:
+        with tqdm_joblib(tqdm(total=num_one_way, unit="PDP", ncols=80)) as _:
             one_way_results = Parallel(n_jobs=n_jobs)(
                 delayed(_calc_pd)(**args) for args in one_way_work
             )
@@ -161,9 +161,9 @@ def partial_dependence(
     print(f"Calculating {num_two_way} two-way PDPs")
 
     if n_jobs == 1:
-        two_way_pds = [_calc_pd(**args) for args in tqdm(two_way_work)]
+        two_way_pds = [_calc_pd(**args) for args in tqdm(two_way_work, ncols=80)]
     else:
-        with tqdm_joblib(tqdm(total=num_two_way, unit="PDP")) as _:
+        with tqdm_joblib(tqdm(total=num_two_way, unit="PDP", ncols=80)) as _:
             two_way_pds = Parallel(n_jobs=n_jobs)(
                 delayed(_calc_pd)(**args) for args in two_way_work
             )

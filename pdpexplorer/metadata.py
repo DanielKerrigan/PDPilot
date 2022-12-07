@@ -130,9 +130,7 @@ class Metadata:
 
             if np.issubdtype(df[feature].dtype, np.integer):
                 values = (
-                    [unique_vals[0]]
-                    + unique_vals[1 : -1 : n_unique // resolution]
-                    + [unique_vals[-1]]
+                    unique_vals[:: n_unique // resolution]
                     if resolution < n_unique
                     else unique_vals
                 )
