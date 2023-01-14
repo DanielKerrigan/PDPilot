@@ -45,7 +45,8 @@
   },
   "dependencies": {
     "@jupyter-widgets/base": "^1.1.10 || ^2.0.0 || ^3.0.0 || ^4.0.0",
-    "d3": "^7.4.4"
+    "d3": "^7.4.4",
+    "simple-statistics": "^7.8.0"
   },
   "devDependencies": {
     "@babel/core": "^7.5.0",

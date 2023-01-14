@@ -9,8 +9,8 @@ export type OneHotFeatureInfo = {
   ordered: false;
   values: number[];
   distribution: { bins: number[]; counts: number[] };
-  columns_and_values: any;
-  value_to_column: any;
+  columns_and_values: [string, string][];
+  value_to_column: Record<string, string>;
   value_map: Record<number, string>;
 };
 
@@ -193,4 +193,4 @@ export function isOneWayPdArray(
 
 // tabs
 
-export type Mode = 'grid' | 'clusters' | 'individual';
+export type Mode = 'grid' | 'clusters' | 'individual' | 'mental';

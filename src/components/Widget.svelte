@@ -6,6 +6,7 @@
   import { height, mode, one_way_pds, feature_names } from '../stores';
   import ZoomedPdp from './ZoomedPDP.svelte';
   import type { TwoWayPD, OneWayPD } from '../types';
+  import MentalModel from './MentalModel.svelte';
 
   let zoomedPd: OneWayPD | TwoWayPD = $one_way_pds[0];
   // changing this to
@@ -38,6 +39,10 @@
 
   <div class="individual-content" class:noshow={$mode !== 'individual'}>
     <ZoomedPdp pd={zoomedPd} on:zoom={onZoom} />
+  </div>
+
+  <div class="mental-model" class:noshow={$mode !== 'mental'}>
+    <MentalModel />
   </div>
 </div>
 
@@ -130,6 +135,11 @@
 
   .pdp-explorer-widget-container :global(h1) {
     font-size: 1.125em;
+    font-weight: 500;
+  }
+
+  .pdp-explorer-widget-container :global(h2) {
+    font-size: 1.0625em;
     font-weight: 500;
   }
 

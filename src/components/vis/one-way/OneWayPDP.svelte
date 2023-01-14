@@ -291,7 +291,7 @@
                   <path
                     d={line(ice)}
                     stroke={medium(cluster.id)}
-                    stroke-opacity="1"
+                    stroke-opacity="0.5"
                     fill="none"
                     stroke-width="1"
                   />
@@ -321,7 +321,7 @@
               />
               <XAxis
                 scale={x}
-                y={facetHeight}
+                y={facetHeight - margin.bottom}
                 showTickLabels={cluster.id === pd.ice.clusters.length - 1}
                 showAxisLabel={cluster.id === pd.ice.clusters.length - 1}
                 label={pd.x_feature}

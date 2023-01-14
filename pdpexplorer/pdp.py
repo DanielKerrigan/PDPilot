@@ -8,6 +8,7 @@ Compute partial dependence plots
 import json
 import math
 from operator import itemgetter
+from collections import defaultdict
 from pathlib import Path
 from typing import Callable, Union, Dict, Tuple, List
 
@@ -133,7 +134,9 @@ def partial_dependence(
                 delayed(_calc_pd)(**args) for args in one_way_work
             )
 
-    one_way_pds = [x[0] for x in one_way_results]
+    one_way_pds = sorted(
+        [x[0] for x in one_way_results], key=itemgetter("deviation"), reverse=True
+    )
     feature_pairs = {pair for x in one_way_results for pair in x[1]}
 
     feature_to_pd = _get_feature_to_pd(one_way_pds) if one_way_pds else None
@@ -167,6 +170,8 @@ def partial_dependence(
             two_way_pds = Parallel(n_jobs=n_jobs)(
                 delayed(_calc_pd)(**args) for args in two_way_work
             )
+
+    two_way_pds.sort(key=itemgetter("H"), reverse=True)
 
     # min and max predictions
 
@@ -656,14 +661,17 @@ def _calculate_ice(ice_lines, data, feature, md):
     centered_mean_min = math.inf
     centered_mean_max = -math.inf
 
-    interacting_features = set()
+    interacting_features = defaultdict(int)
 
     for n in range(best_n_clusters):
         lines = ice_lines[best_labels == n]
         centered_lines = centered_ice_lines[best_labels == n]
 
         y = (best_labels == n).astype(int)
-        interacting_features.update(_get_interacting_features(data, y, md))
+
+        importances = _get_interacting_features(data, y, md)
+        for feat, imp in importances.items():
+            interacting_features[feat] += imp
 
         mean = lines.mean(axis=0)
         centered_mean = centered_lines.mean(axis=0)
@@ -700,9 +708,16 @@ def _calculate_ice(ice_lines, data, feature, md):
 
     pairs = {
         (min(feature, other), max(feature, other))
-        for other in interacting_features
+        for other in interacting_features.keys()
         if feature != other
     }
+
+    sorted_interacting_features = [
+        f
+        for f, _ in sorted(
+            interacting_features.items(), key=itemgetter(1), reverse=True
+        )
+    ]
 
     centered_pdp = centered_ice_lines.mean(axis=0)
 
@@ -727,7 +742,7 @@ def _calculate_ice(ice_lines, data, feature, md):
         "clusters": clusters,
         "centered_pdp": centered_pdp.tolist(),
         "cluster_distance": cluster_distance.item(),
-        "interacting_features": list(interacting_features),
+        "interacting_features": sorted_interacting_features,
         "cluster_labels": best_labels.tolist(),
     }
 
@@ -738,7 +753,10 @@ def _get_interacting_features(X, y, md):
     clf = DecisionTreeClassifier(max_depth=3, ccp_alpha=0.01)
     clf.fit(X, y)
 
-    return {
-        md.one_hot_encoded_col_name_to_feature.get(X.columns[i], X.columns[i])
-        for i in clf.tree_.feature
-    }
+    importances = defaultdict(int)
+
+    for i in clf.tree_.feature:
+        feat = md.one_hot_encoded_col_name_to_feature.get(X.columns[i], X.columns[i])
+        importances[feat] += clf.feature_importances_[i]
+
+    return importances

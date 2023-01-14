@@ -234,7 +234,7 @@
                 height={chartHeight}
                 highlightPd={highlightPd &&
                 highlightPd.num_features === 1 &&
-                highlightPd.kind === 'quantitative' &&
+                highlightPd.ordered &&
                 highlightPd.cluster === c.id
                   ? highlightPd
                   : null}

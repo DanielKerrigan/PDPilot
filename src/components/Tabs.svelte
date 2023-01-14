@@ -36,6 +36,15 @@
         Individual Plot
       </button>
     </li>
+    <li>
+      <button
+        id="button-tab-mental"
+        class:tab-selected={$mode === 'mental'}
+        on:click={() => changeMode('mental')}
+      >
+        Mental Model
+      </button>
+    </li>
   </ul>
 </div>
 
@@ -48,7 +57,8 @@
 
   #button-tab-grid,
   #button-tab-clusters,
-  #button-tab-individual {
+  #button-tab-individual,
+  #button-tab-mental {
     border: none;
     border-radius: 0;
     background-color: transparent;
@@ -56,7 +66,8 @@
 
   #button-tab-grid.tab-selected,
   #button-tab-clusters.tab-selected,
-  #button-tab-individual.tab-selected {
+  #button-tab-individual.tab-selected,
+  #button-tab-mental.tab-selected {
     border-bottom: 1px solid black;
   }
 

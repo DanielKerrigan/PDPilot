@@ -9,6 +9,10 @@
   } from '../stores';
   import PDP from './PDP.svelte';
   import ParallelCoordinates from './vis/ice-clusters/ParallelCoordinates.svelte';
+  import StackedBars from './vis/ice-clusters/StackedBars.svelte';
+  import StripPlot from './vis/ice-clusters/StripPlot.svelte';
+  import BoxPlot from './vis/ice-clusters/BoxPlot.svelte';
+  import ViolinPlot from './vis/ice-clusters/ViolinPlot.svelte';
 
   export let pd: OneWayPD | TwoWayPD;
 
@@ -27,7 +31,13 @@
     showTrendLine = false;
   }
 
-  let clusterDescriptions: 'none' | 'beeswarm' | 'parallel' = 'none';
+  let clusterDescriptions:
+    | 'none'
+    | 'parallel'
+    | 'bars'
+    | 'strip'
+    | 'box'
+    | 'violin' = 'none';
   $: if (iceLevel !== 'band' && iceLevel !== 'line') {
     clusterDescriptions = 'none';
   }
@@ -219,8 +229,11 @@
           <span>Descriptions:</span>
           <select bind:value={clusterDescriptions}>
             <option value="none">None</option>
-            <option value="beeswarm">Bee Swarm</option>
+            <option value="bars">Histograms</option>
+            <option value="box">Box Plot</option>
+            <option value="violin">Violin Plot</option>
             <option value="parallel">Parallel Coordinates</option>
+            <option value="strip">Strip Plot</option>
           </select>
         </label>
       {/if}
@@ -239,10 +252,7 @@
           <PDP
             {pd}
             globalColor={$globalColorPdpExtent}
-            width={clusterDescriptions === 'beeswarm' ||
-            clusterDescriptions === 'parallel'
-              ? halfWidth
-              : gridWidth}
+            width={clusterDescriptions !== 'none' ? halfWidth : gridWidth}
             height={gridHeight}
             {scaleLocally}
             {showTrendLine}
@@ -255,6 +265,42 @@
         {#if clusterDescriptions === 'parallel'}
           <div style:flex="1">
             <ParallelCoordinates
+              {pd}
+              width={halfWidth}
+              height={gridHeight}
+              features={pd.ice.interacting_features}
+            />
+          </div>
+        {:else if clusterDescriptions === 'bars'}
+          <div style:flex="1">
+            <StackedBars
+              {pd}
+              width={halfWidth}
+              height={gridHeight}
+              features={pd.ice.interacting_features}
+            />
+          </div>
+        {:else if clusterDescriptions === 'strip'}
+          <div style:flex="1">
+            <StripPlot
+              {pd}
+              width={halfWidth}
+              height={gridHeight}
+              features={pd.ice.interacting_features}
+            />
+          </div>
+        {:else if clusterDescriptions === 'box'}
+          <div style:flex="1">
+            <BoxPlot
+              {pd}
+              width={halfWidth}
+              height={gridHeight}
+              features={pd.ice.interacting_features}
+            />
+          </div>
+        {:else if clusterDescriptions === 'violin'}
+          <div style:flex="1">
+            <ViolinPlot
               {pd}
               width={halfWidth}
               height={gridHeight}

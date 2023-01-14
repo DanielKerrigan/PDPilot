@@ -7,6 +7,7 @@
   export let rotate: boolean = false;
   export let label: string = '';
   export let fontSize: number = 14;
+  export let outlineColor: string = 'transparent';
 </script>
 
 <!-- using a foreignObject because SVG text does
@@ -18,11 +19,15 @@ not support anything like `text-overflow: ellipsis` -->
   width={rotate ? height : width}
   height={rotate ? width : height}
 >
-  <div class="container">
+  <div class="label-container">
     <div
-      class="content"
+      class="label-content"
       class:rotate
       style="width: {width}px; height: {height}px;"
+      style:width="{width}px"
+      style:height="{height}px"
+      style:--outlineColor={outlineColor}
+      class:outlineText={outlineColor !== 'transparent'}
     >
       <div
         class:bold
@@ -37,7 +42,7 @@ not support anything like `text-overflow: ellipsis` -->
 </foreignObject>
 
 <style>
-  .container {
+  .label-container {
     width: 100%;
     height: 100%;
 
@@ -49,7 +54,7 @@ not support anything like `text-overflow: ellipsis` -->
     align-items: center;
   }
 
-  .content {
+  .label-content {
     /* center the label in the div */
     display: flex;
     justify-content: center;
@@ -58,6 +63,20 @@ not support anything like `text-overflow: ellipsis` -->
     /* removing this messes up the rotation on safari,
     but adding it causes the div to appear above tooltips */
     position: fixed;
+  }
+
+  .outlineText {
+    --outline-size-pos: 1px;
+    --outline-size-neg: -1px;
+    text-shadow: var(--outline-size-neg) var(--outline-size-neg) 0
+        var(--outlineColor),
+      0 var(--outline-size-neg) 0 var(--outlineColor),
+      var(--outline-size-pos) var(--outline-size-neg) 0 var(--outlineColor),
+      var(--outline-size-pos) 0 0 var(--outlineColor),
+      var(--outline-size-pos) var(--outline-size-pos) 0 var(--outlineColor),
+      0 var(--outline-size-pos) 0 var(--outlineColor),
+      var(--outline-size-neg) var(--outline-size-pos) 0 var(--outlineColor),
+      var(--outline-size-neg) 0 0 var(--outlineColor);
   }
 
   .rotate {
