@@ -1,9 +1,6 @@
-import {
-  DOMWidgetModel,
-  DOMWidgetView,
-  ISerializers,
-} from '@jupyter-widgets/base';
-import { setStoreModels } from './stores';
+import { DOMWidgetModel, DOMWidgetView } from '@jupyter-widgets/base';
+import type { ISerializers } from '@jupyter-widgets/base';
+import { setStores } from './stores';
 
 import { MODULE_NAME, MODULE_VERSION } from './version';
 
@@ -25,13 +22,15 @@ export class PDPExplorerModel extends DOMWidgetModel {
       num_instances: 0,
       one_way_pds: [],
       two_way_pds: [],
-      pdp_extent: [0, 0],
-      nice_ice_mean_extent: [0, 0],
-      nice_ice_band_extent: [0, 0],
-      nice_ice_line_extent: [0, 0],
-      one_way_quantitative_clusters: [],
-      one_way_categorical_clusters: [],
+      two_way_pdp_extent: [0, 0],
+      two_way_interaction_extent: [0, 0],
+      ice_line_extent: [0, 0],
+      ice_cluster_center_extent: [0, 0],
+      ice_cluster_band_extent: [0, 0],
+      ice_cluster_line_extent: [0, 0],
       height: 600,
+      highlighted_indices: [],
+      two_way_to_calculate: [],
     };
   }
 
@@ -50,7 +49,7 @@ export class PDPExplorerModel extends DOMWidgetModel {
 
 export class PDPExplorerView extends DOMWidgetView {
   render() {
-    setStoreModels(this.model);
+    setStores(this.model);
     new Widget({ target: this.el });
   }
 }

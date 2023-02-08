@@ -2,35 +2,40 @@ import { derived, writable } from 'svelte/store';
 import type { Readable, Writable } from 'svelte/store';
 import type { DOMWidgetModel } from '@jupyter-widgets/base';
 
-import type {
-  UnorderedOneWayPD,
-  Dataset,
-  TwoWayPD,
-  Mode,
-  OneWayCategoricalCluster,
-  OneWayQuantitativeCluster,
-  OrderedOneWayPD,
-  OneWayPD,
-  FeatureInfo,
-} from './types';
+import type { Dataset, TwoWayPD, OneWayPD, FeatureInfo, Tab } from './types';
 
-import { isUnorderedOneWayPd, isOrderedOneWayPd } from './types';
+import { scaleSequential, scaleDiverging } from 'd3-scale';
+import type { ScaleSequential, ScaleDiverging } from 'd3-scale';
+import { interpolateYlGnBu, interpolateBrBG } from 'd3-scale-chromatic';
 
-import { scaleLinear, scaleSequential } from 'd3-scale';
-import { interpolateYlGnBu } from 'd3-scale-chromatic';
-import { group, ascending } from 'd3-array';
-
-interface WidgetWritable<T> extends Writable<T> {
-  setModel: (m: DOMWidgetModel) => void;
-}
-
-export function WidgetWritable<T>(name_: string, value_: T): WidgetWritable<T> {
+/**
+ *
+ * @param name_ Name of the variable in the model. This is the same as the
+ *              name of the corresponding Python variable in widget.py
+ * @param value_ Default value
+ * @param model backbone model containing state synced between Python and JS
+ * @returns Svelte store that is synced with the model.
+ */
+function createSyncedWidget<T>(
+  name_: string,
+  value_: T,
+  model: DOMWidgetModel
+): Writable<T> {
   const name: string = name_;
-  const internalWritable: Writable<any> = writable(value_);
-  let model: DOMWidgetModel;
+  const internalWritable: Writable<T> = writable(value_);
+
+  // TODO: type this
+  const modelValue = model.get(name);
+  if (modelValue !== undefined) {
+    internalWritable.set(modelValue);
+  }
+
+  // when the model changes, update the store
+  model.on('change:' + name, () => internalWritable.set(model.get(name)), null);
 
   return {
-    set: (v: any) => {
+    // when the store changes, update the model
+    set: (v: T) => {
       internalWritable.set(v);
       if (model) {
         model.set(name, v);
@@ -38,8 +43,8 @@ export function WidgetWritable<T>(name_: string, value_: T): WidgetWritable<T> {
       }
     },
     subscribe: internalWritable.subscribe,
-    update: (func: any) => {
-      internalWritable.update((v: any) => {
+    update: (func: (v: T) => T) => {
+      internalWritable.update((v: T) => {
         const output = func(v);
         if (model) {
           model.set(name, output);
@@ -48,145 +53,142 @@ export function WidgetWritable<T>(name_: string, value_: T): WidgetWritable<T> {
         return output;
       });
     },
-    setModel: (m: DOMWidgetModel) => {
-      model = m;
-      const modelValue = model.get(name);
-      if (modelValue) {
-        internalWritable.set(modelValue);
-      }
-      model.on(
-        'change:' + name,
-        () => internalWritable.set(model.get(name)),
-        null
-      );
-    },
   };
 }
 
 // Declare stores with their associated Traitlets here.
-export const feature_names = WidgetWritable<string[]>('feature_names', []);
-export const feature_info = WidgetWritable<Record<string, FeatureInfo>>(
-  'feature_info',
-  {}
-);
 
-export const dataset = WidgetWritable<Dataset>('dataset', {});
+export let feature_names: Writable<string[]>;
+export let feature_info: Writable<Record<string, FeatureInfo>>;
 
-export const num_instances = WidgetWritable<number>('num_instances', 0);
+export let dataset: Writable<Dataset>;
 
-export const one_way_pds = WidgetWritable<OneWayPD[]>('one_way_pds', []);
-export const two_way_pds = WidgetWritable<TwoWayPD[]>('two_way_pds', []);
+export let num_instances: Writable<number>;
 
-export const pdp_extent = WidgetWritable<[number, number]>(
-  'pdp_extent',
-  [0, 0]
-);
-export const ice_mean_extent = WidgetWritable<[number, number]>(
-  'ice_mean_extent',
-  [0, 0]
-);
-export const ice_band_extent = WidgetWritable<[number, number]>(
-  'ice_band_extent',
-  [0, 0]
-);
-export const ice_line_extent = WidgetWritable<[number, number]>(
-  'ice_line_extent',
-  [0, 0]
-);
+export let one_way_pds: Writable<OneWayPD[]>;
+export let two_way_pds: Writable<TwoWayPD[]>;
 
-export const one_way_quantitative_clusters = WidgetWritable<
-  OneWayQuantitativeCluster[]
->('one_way_quantitative_clusters', []);
-export const one_way_categorical_clusters = WidgetWritable<
-  OneWayCategoricalCluster[]
->('one_way_categorical_clusters', []);
+export let two_way_pdp_extent: Writable<[number, number]>;
+export let two_way_interaction_extent: Writable<[number, number]>;
 
-export const height = WidgetWritable<number>('height', 600);
+export let ice_line_extent: Writable<[number, number]>;
+export let ice_cluster_center_extent: Writable<[number, number]>;
+export let ice_cluster_band_extent: Writable<[number, number]>;
+export let ice_cluster_line_extent: Writable<[number, number]>;
 
-// Set the model for each store you create.
-export function setStoreModels(model: DOMWidgetModel): void {
-  feature_names.setModel(model);
-  feature_info.setModel(model);
+export let height: Writable<number>;
 
-  dataset.setModel(model);
+export let highlighted_indices: Writable<number[]>;
 
-  num_instances.setModel(model);
+export let two_way_to_calculate: Writable<string[]>;
 
-  one_way_pds.setModel(model);
-  two_way_pds.setModel(model);
+export let selectedTab: Writable<Tab>;
+export let detailedFeature1: Writable<string>;
+export let detailedFeature2: Writable<string>;
 
-  pdp_extent.setModel(model);
-  ice_mean_extent.setModel(model);
-  ice_band_extent.setModel(model);
-  ice_line_extent.setModel(model);
+export let globalColorTwoWayPdp: Readable<ScaleSequential<string, string>>;
 
-  one_way_quantitative_clusters.setModel(model);
-  one_way_categorical_clusters.setModel(model);
+export let globalColorTwoWayInteraction: Readable<
+  ScaleDiverging<string, string>
+>;
 
-  height.setModel(model);
+/**
+ * Note that when the cell containing the widget is re-run, a new model is
+ * created. We don't want the former model to hang around. We don't want state
+ * to carry over when the widget is re-run. That's why all of the stores are
+ * initialized in this function, which is called when the widget's cell is run.
+ * @param model backbone model that contains state synced between Python and JS
+ */
+export function setStores(model: DOMWidgetModel): void {
+  // stores synced with Python
+
+  feature_names = createSyncedWidget<string[]>('feature_names', [], model);
+  feature_info = createSyncedWidget<Record<string, FeatureInfo>>(
+    'feature_info',
+    {},
+    model
+  );
+
+  dataset = createSyncedWidget<Dataset>('dataset', {}, model);
+
+  num_instances = createSyncedWidget<number>('num_instances', 0, model);
+
+  one_way_pds = createSyncedWidget<OneWayPD[]>('one_way_pds', [], model);
+  two_way_pds = createSyncedWidget<TwoWayPD[]>('two_way_pds', [], model);
+
+  two_way_pdp_extent = createSyncedWidget<[number, number]>(
+    'two_way_pdp_extent',
+    [0, 0],
+    model
+  );
+  two_way_interaction_extent = createSyncedWidget<[number, number]>(
+    'two_way_interaction_extent',
+    [0, 0],
+    model
+  );
+
+  ice_line_extent = createSyncedWidget<[number, number]>(
+    'ice_line_extent',
+    [0, 0],
+    model
+  );
+  ice_cluster_center_extent = createSyncedWidget<[number, number]>(
+    'ice_cluster_center_extent',
+    [0, 0],
+    model
+  );
+  ice_cluster_band_extent = createSyncedWidget<[number, number]>(
+    'ice_cluster_band_extent',
+    [0, 0],
+    model
+  );
+  ice_cluster_line_extent = createSyncedWidget<[number, number]>(
+    'ice_cluster_line_extent',
+    [0, 0],
+    model
+  );
+
+  height = createSyncedWidget<number>('height', 600, model);
+
+  highlighted_indices = createSyncedWidget<number[]>(
+    'highlighted_indices',
+    [],
+    model
+  );
+
+  two_way_to_calculate = createSyncedWidget<string[]>(
+    'two_way_to_calculate',
+    [],
+    model
+  );
+
+  // stores not synced with Python
+
+  selectedTab = writable('one-way-plots');
+
+  const one_ways = model.get('one_way_pds') as OneWayPD[] | undefined;
+  const detailedFeature1Default =
+    one_ways && one_ways.length > 0 ? one_ways[0].x_feature : '';
+  detailedFeature1 = writable(detailedFeature1Default);
+  detailedFeature2 = writable('');
+
+  globalColorTwoWayPdp = derived(two_way_pdp_extent, ($two_way_pdp_extent) =>
+    scaleSequential()
+      .domain($two_way_pdp_extent)
+      .interpolator(interpolateYlGnBu)
+      .unknown('black')
+  );
+
+  globalColorTwoWayInteraction = derived(
+    two_way_interaction_extent,
+    ($two_way_interaction_extent) =>
+      scaleDiverging<string, string>()
+        .domain([
+          $two_way_interaction_extent[0],
+          0,
+          $two_way_interaction_extent[1],
+        ])
+        .interpolator(interpolateBrBG)
+        .unknown('black')
+  );
 }
-
-// Stores that are not synced with the backend
-
-export const mode: Writable<Mode> = writable('grid');
-
-// Derived stores
-
-// Nice scales extents
-
-export const nice_pdp_extent: Readable<[number, number]> = derived(
-  pdp_extent,
-  ($pdp_extent) =>
-    scaleLinear().domain($pdp_extent).nice().domain() as [number, number]
-);
-
-export const nice_ice_mean_extent: Readable<[number, number]> = derived(
-  ice_mean_extent,
-  ($ice_mean_extent) =>
-    scaleLinear().domain($ice_mean_extent).nice().domain() as [number, number]
-);
-
-export const nice_ice_band_extent: Readable<[number, number]> = derived(
-  ice_band_extent,
-  ($ice_band_extent) =>
-    scaleLinear().domain($ice_band_extent).nice().domain() as [number, number]
-);
-
-export const nice_ice_line_extent: Readable<[number, number]> = derived(
-  ice_line_extent,
-  ($ice_line_extent) =>
-    scaleLinear().domain($ice_line_extent).nice().domain() as [number, number]
-);
-
-export const globalColorPdpExtent: Readable<
-  d3.ScaleSequential<string, string>
-> = derived(nice_pdp_extent, ($nice_pdp_extent) =>
-  scaleSequential()
-    .domain($nice_pdp_extent)
-    .interpolator(interpolateYlGnBu)
-    .unknown('black')
-);
-
-// Maps of clutered PDs
-
-export const clusteredQuantitativeOneWayPds: Readable<
-  Map<number, OrderedOneWayPD[]>
-> = derived(one_way_pds, ($single_pdps) => {
-  const quantPds = $single_pdps
-    .filter(isOrderedOneWayPd)
-    .sort((a, b) =>
-      ascending(a.distance_to_cluster_center, b.distance_to_cluster_center)
-    );
-  return group(quantPds, (d) => d.cluster);
-});
-
-export const clusteredCategoricalOneWayPds: Readable<
-  Map<number, UnorderedOneWayPD[]>
-> = derived(one_way_pds, ($single_pdps) => {
-  const catPds = $single_pdps
-    .filter(isUnorderedOneWayPd)
-    .sort((a, b) =>
-      ascending(a.distance_to_cluster_center, b.distance_to_cluster_center)
-    );
-  return group(catPds, (d) => d.cluster);
-});

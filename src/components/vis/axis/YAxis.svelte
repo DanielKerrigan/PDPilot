@@ -1,40 +1,41 @@
 <script lang="ts">
   import { defaultFormat } from '../../../vis-utils';
+  import type { ScaleContinuousNumeric, ScaleBand, ScalePoint } from 'd3-scale';
   import Label from './Label.svelte';
 
   export let scale:
-    | d3.ScaleContinuousNumeric<any, number>
-    | d3.ScaleBand<any>
-    | d3.ScalePoint<any>;
+    | ScaleContinuousNumeric<any, number>
+    | ScaleBand<any>
+    | ScalePoint<any>;
 
-  export let label: string = '';
+  export let label = '';
 
-  export let x: number = 0;
-  export let y: number = 0;
+  export let x = 0;
+  export let y = 0;
 
   export let format = defaultFormat;
 
-  export let gridWidth: number = 0;
+  export let gridWidth = 0;
 
-  export let showAxisLabel: boolean = true;
-  export let showTickLabels: boolean = true;
-  export let showBaseline: boolean = false;
+  export let showAxisLabel = true;
+  export let showTickLabels = true;
+  export let showBaseline = false;
 
-  export let tickLabelOutlineColor: string = 'transparent';
-  export let tickColor: string = 'black';
-  export let baselineColor: string = 'black';
+  export let tickLabelOutlineColor = 'transparent';
+  export let tickColor = 'black';
+  export let baselineColor = 'black';
 
-  export let fontSize: number = 10;
-  export let tickSize: number = 5;
+  export let fontSize = 10;
+  export let tickSize = 5;
 
-  export let gapBetweenTickAndTickLabel: number = 2;
+  export let gapBetweenTickAndTickLabel = 2;
 
-  export let integerOnly: boolean = false;
+  export let integerOnly = false;
 
   export let value_map: Record<any, string> = {};
 
-  const gapBetweenTicksAndAxisLabel: number = 30;
-  const lineHeight: number = 1.2;
+  const gapBetweenTicksAndAxisLabel = 30;
+  const lineHeight = 1.2;
 
   $: minimum = Math.min(
     scale.range()[0],
@@ -47,7 +48,7 @@
   $: height = maximum - minimum;
 
   function getTicks(
-    scale: d3.ScaleContinuousNumeric<number, number>,
+    scale: ScaleContinuousNumeric<number, number>,
     height: number,
     integerOnly: boolean
   ) {
@@ -108,6 +109,10 @@
               text-anchor="end"
               dominant-baseline="middle"
               font-size={fontSize}
+              stroke={tickLabelOutlineColor}
+              fill="black"
+              stroke-width={2}
+              paint-order="stroke"
             >
               {format(tick)}
             </text>

@@ -12,10 +12,10 @@
 
 <style>
   .controls-container {
+    height: 100%;
     flex: 0 0 200px;
     min-width: 200px;
     padding: 0.25em;
-    border-top: 1px solid var(--gray-1);
     border-right: 1px solid var(--gray-1);
 
     display: flex;

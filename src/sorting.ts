@@ -28,8 +28,6 @@ const singlePDPSortingOptions: PDSortingOption[] = [
         }
       });
 
-      console.log('sorted', JSON.stringify(data.map((d) => d.x_feature)));
-
       return data;
     },
   },

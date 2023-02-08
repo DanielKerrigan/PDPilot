@@ -1,18 +1,25 @@
 <script lang="ts">
-  import type { TwoWayPD, OneWayPD, PDSortingOption } from '../types';
+  import type { OneWayPD, TwoWayPD, PDSortingOption } from '../types';
+  import { isOneWayPdArray } from '../types';
   import PDP from './PDP.svelte';
   import QuantitativeColorLegend from './vis/two-way/QuantitativeColorLegend.svelte';
-  import { onMount, createEventDispatcher } from 'svelte';
-  import { globalColorPdpExtent } from '../stores';
+  import { onMount } from 'svelte';
+  import {
+    globalColorTwoWayPdp,
+    globalColorTwoWayInteraction,
+    detailedFeature1,
+    detailedFeature2,
+    selectedTab,
+  } from '../stores';
+  import InfoTooltip from './InfoTooltip.svelte';
 
-  export let title: string;
   export let data: OneWayPD[] | TwoWayPD[];
-  export let showColorLegend: boolean = false;
-  export let showShowTrendLine: boolean = false;
-  export let showShowIceClusters: boolean = false;
   export let sortingOptions: PDSortingOption[];
 
-  let showIceClusters: boolean = false;
+  $: ways = isOneWayPdArray(data) ? 1 : 2;
+
+  let showIceClusters = false;
+  let colorShows: 'predictions' | 'interactions' = 'interactions';
 
   let div: HTMLDivElement;
   let legendDiv: HTMLDivElement;
@@ -22,14 +29,6 @@
 
   let pdpWidth: number;
   let pdpHeight: number;
-
-  let expanded = true;
-
-  let showTrendLine: boolean = false;
-
-  $: if (showIceClusters) {
-    showTrendLine = false;
-  }
 
   onMount(() => {
     // Adapted from https://blog.sethcorker.com/question/how-do-you-use-the-resize-observer-api-in-svelte/
@@ -86,17 +85,10 @@
     };
   });
 
-  // expand and collapse
-
-  function toggle() {
-    expanded = !expanded;
-  }
-
   // number of rows and columns
 
-  $: perPage = Math.min(data.length, 6);
-  // TODO: https://stackoverflow.com/questions/60104268/default-panel-layout-of-ggplot2facet-wrap
-  $: numRows = Math.floor(Math.sqrt(perPage));
+  $: perPage = Math.min(data.length, 12);
+  $: numRows = Math.ceil(Math.sqrt(perPage));
   $: numCols = Math.ceil(perPage / numRows);
 
   $: pdpWidth = Math.floor(gridWidth / numCols);
@@ -134,42 +126,54 @@
 
   $: data, setPage(1);
 
-  function onKeyDownPageChange(ev: KeyboardEvent) {
-    if (ev.key === 'ArrowLeft') {
-      setPage(currentPage - 1);
-    } else if (ev.key === 'ArrowRight') {
-      setPage(currentPage + 1);
-    }
-  }
-
   // scaling
 
   let scaleLocally = false;
 
   // selecting pdp
 
-  const dispatchZoom = createEventDispatcher<{
-    zoom: OneWayPD | TwoWayPD;
-  }>();
-
   function onClickPdp(pd: OneWayPD | TwoWayPD) {
-    dispatchZoom('zoom', pd);
-  }
-
-  function onKeyDownPdp(ev: KeyboardEvent, pd: OneWayPD | TwoWayPD) {
-    if (ev.key === 'Enter' || ev.key === ' ') {
-      onClickPdp(pd);
-    }
+    $detailedFeature1 = pd.x_feature;
+    $detailedFeature2 = pd.num_features === 2 ? pd.y_feature : '';
+    $selectedTab = 'detailed-plot';
   }
 </script>
 
-<div class="group-container" class:hide-plots={!expanded}>
+<div class="group-container">
   <div class="group-header">
-    <div class="toggle-and-title dont-shrink">
-      <button class="toggle-button" on:click={toggle}>
+    <div class="page-change dont-shrink">
+      <button
+        disabled={currentPage <= 1}
+        on:click={() => setPage(currentPage - 1)}
+      >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          class="icon icon-tabler icon-tabler-chevron-down"
+          class="icon icon-tabler icon-tabler-arrow-left"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          stroke-width="2"
+          stroke="currentColor"
+          fill="none"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path stroke="none" d=" M0 0h24v24H0z" fill="none" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+          <line x1="5" y1="12" x2="11" y2="18" />
+          <line x1="5" y1="12" x2="11" y2="6" />
+        </svg>
+      </button>
+
+      <div class="current-page-number">{currentPage}</div>
+
+      <button
+        disabled={currentPage >= numPages}
+        on:click={() => setPage(currentPage + 1)}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="icon icon-tabler icon-tabler-arrow-right"
           width="24"
           height="24"
           viewBox="0 0 24 24"
@@ -180,126 +184,109 @@
           stroke-linejoin="round"
         >
           <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-          <polyline points={'6 9 12 15 18 9'} class:rotate={!expanded} />
+          <line x1="5" y1="12" x2="19" y2="12" />
+          <line x1="13" y1="18" x2="19" y2="12" />
+          <line x1="13" y1="6" x2="19" y2="12" />
         </svg>
       </button>
-
-      <div class="group-title">{title}</div>
     </div>
 
-    {#if expanded && data.length > 0}
-      <div
-        class="page-change dont-shrink"
-        on:keydown={onKeyDownPageChange}
-        tabindex="0"
+    <label class="label-and-input dont-shrink">
+      Sort by
+      <select bind:value={sortingOption}>
+        {#each sortingOptions as option}
+          <option value={option}>{option.name}</option>
+        {/each}
+      </select>
+    </label>
+
+    <label class="label-and-input dont-shrink">
+      <input type="checkbox" bind:checked={scaleLocally} /><span
+        >Scale locally</span
       >
-        <button
-          disabled={currentPage <= 1}
-          on:click={() => setPage(currentPage - 1)}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="icon icon-tabler icon-tabler-arrow-left"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            stroke-width="2"
-            stroke="currentColor"
-            fill="none"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-            <line x1="5" y1="12" x2="11" y2="18" />
-            <line x1="5" y1="12" x2="11" y2="6" />
-          </svg>
-        </button>
+    </label>
 
-        <div class="current-page-number">{currentPage}</div>
-
-        <button
-          disabled={currentPage >= numPages}
-          on:click={() => setPage(currentPage + 1)}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="icon icon-tabler icon-tabler-arrow-right"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            stroke-width="2"
-            stroke="currentColor"
-            fill="none"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-            <line x1="13" y1="18" x2="19" y2="12" />
-            <line x1="13" y1="6" x2="19" y2="12" />
-          </svg>
-        </button>
-      </div>
-
-      <label class="dont-shrink">
-        Sort by
-        <select bind:value={sortingOption}>
-          {#each sortingOptions as option}
-            <option value={option}>{option.name}</option>
-          {/each}
-        </select>
-      </label>
-
-      <label class="label-and-input dont-shrink">
-        <input type="checkbox" bind:checked={scaleLocally} /><span
-          >Scale locally</span
+    {#if ways === 1}
+      <label class="label-and-input">
+        <input type="checkbox" bind:checked={showIceClusters} /><span
+          >Cluster ICE lines</span
         >
       </label>
-
-      {#if showShowTrendLine && !showIceClusters}
-        <label class="label-and-input dont-shrink">
-          <input type="checkbox" bind:checked={showTrendLine} /><span
-            >Show trend line</span
-          >
-        </label>
-      {/if}
-
-      {#if showShowIceClusters}
-        <label class="label-and-input">
-          <input type="checkbox" bind:checked={showIceClusters} /><span
-            >Centered ICE Clusters</span
-          >
-        </label>
-      {/if}
     {/if}
-    <!--
-      The legend is outside the above if statement because we want this div
-      to persist so that the ResizeObserver works correctly.
-    -->
-    <div
-      class="legend-container"
-      class:dont-show={!expanded ||
-        data.length == 0 ||
-        !showColorLegend ||
-        scaleLocally}
-    >
-      <div class="legend-title">Prediction</div>
-      <div class="legend" bind:this={legendDiv}>
+
+    <div class="two-way-color-container">
+      {#if ways === 2}
+        <label class="label-and-input dont-shrink">
+          Color
+          <select bind:value={colorShows}>
+            <option value="interactions">interactions</option>
+            <option value="predictions">predictions</option>
+          </select>
+        </label>
+      {/if}
+      <!--
+      We want this div to persist so that the ResizeObserver works correctly.
+      -->
+      <div
+        class="two-way-color-legend"
+        class:dont-show={ways === 1 || scaleLocally}
+        bind:this={legendDiv}
+      >
         <QuantitativeColorLegend
           width={legendWidth}
           height={legendHeight}
-          color={$globalColorPdpExtent}
+          color={colorShows === 'interactions'
+            ? $globalColorTwoWayInteraction
+            : $globalColorTwoWayPdp}
           marginLeft={15}
           marginRight={15}
         />
       </div>
+      {#if ways === 2}
+        <InfoTooltip
+          kind="help"
+          right="0"
+          top="0"
+          marginRight="1em"
+          marginTop="1.5em"
+          width="30em"
+        >
+          <div>
+            {#if colorShows === 'interactions'}
+              This color scale shows the difference between the value in a
+              two-way PDP and the expected value if there was no interaction
+              between the pair of features. It indicates whether the interaction
+              between the two features makes the model's average prediction for
+              the given values <span
+                style:background={$globalColorTwoWayInteraction.interpolator()(
+                  0.1
+                )}
+                style:border-radius="4px"
+                style:padding="0.125em 0.25em"
+                style:color="white">lower</span
+              >
+              or
+              <span
+                style:background={$globalColorTwoWayInteraction.interpolator()(
+                  0.9
+                )}
+                style:border-radius="4px"
+                style:padding="0.125em 0.25em"
+                style:color="white">higher</span
+              >. The units are the same as your target variable.
+            {:else}
+              This color scale is for a standard two-way PDP. The color of a
+              cell represents the model's average prediction when setting the
+              instances to have the given values for pair of features.
+            {/if}
+          </div>
+        </InfoTooltip>
+      {/if}
     </div>
   </div>
 
   <div class="pdp-grid-container" bind:this={div}>
-    {#if expanded}
-      <!--
+    <!--
         Using repeat({numCols}, minmax(0,{pdpWidth}px)) was causing the charts to infinitely
         expand when selecting "Scale locally" in Jupyter Lab.
         This would happen even when replacing the PDP component with a div.
@@ -311,67 +298,63 @@
         https://stackoverflow.com/questions/43311943/prevent-content-from-expanding-grid-items
         https://stackoverflow.com/questions/52861086/why-does-minmax0-1fr-work-for-long-elements-while-1fr-doesnt
        -->
-      <div
-        class="pdp-grid"
-        style:grid-template-columns="repeat({numCols}, minmax(0,{pdpWidth}px))"
-        style:grid-template-rows="repeat({numRows}, minmax(0,{pdpHeight}px))"
-      >
-        {#each pageCharts as pd (pd.id)}
-          <div
-            on:click={() => onClickPdp(pd)}
-            tabindex="0"
-            on:keydown={(e) => onKeyDownPdp(e, pd)}
-            class="pdp-grid-element"
-            style:cursor="pointer"
-            style:max-width="{pdpWidth}px"
-            style:max-height="{pdpHeight}px"
-          >
-            <PDP
-              {pd}
-              globalColor={$globalColorPdpExtent}
-              width={pdpWidth}
-              height={pdpHeight}
-              {scaleLocally}
-              {showTrendLine}
-              showMarginalDistribution={false}
-              showColorLegend={scaleLocally}
-              iceLevel={showIceClusters ? 'mean' : 'none'}
-            />
-          </div>
-        {/each}
-      </div>
-    {/if}
+    <div
+      class="pdp-grid"
+      style:grid-template-columns="repeat({numCols}, minmax(0,{pdpWidth}px))"
+      style:grid-template-rows="repeat({numRows}, minmax(0,{pdpHeight}px))"
+    >
+      {#each pageCharts as pd (pd.id)}
+        <div
+          class="pdp-grid-element"
+          style:max-width="{pdpWidth}px"
+          style:max-height="{pdpHeight}px"
+        >
+          <PDP
+            {pd}
+            width={pdpWidth}
+            height={pdpHeight}
+            {scaleLocally}
+            {colorShows}
+            marginalDistributionKind={'none'}
+            marginTop={10}
+            marginRight={10}
+            showColorLegend={scaleLocally}
+            iceLevel={showIceClusters ? 'cluster-centers' : 'lines'}
+          />
+          <button class="expand-pdp-button" on:click={() => onClickPdp(pd)}>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="icon icon-tabler icon-tabler-arrows-maximize"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              stroke="currentColor"
+              fill="none"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path
+                d="M16 4l4 0l0 4m-6 2l6 -6m-12 16l-4 0l0 -4m0 4l6 -6m6 6l4 0l0 -4m-6 -2l6 6m-12 -16l-4 0l0 4m0 -4l6 6"
+              />
+            </svg>
+          </button>
+        </div>
+      {/each}
+    </div>
   </div>
 </div>
 
 <style>
-  /* https://stackoverflow.com/a/69029387/5016634 */
-  .icon-tabler-chevron-down {
-    -webkit-transform: translate(0px, 0px);
-    transform: translate(0px, 0px);
-  }
-
   .group-container {
-    flex: 1;
+    height: 100%;
+    width: 100%;
 
     display: flex;
     flex-direction: column;
 
     min-height: 2em;
-  }
-
-  .group-title {
-    width: 8ch;
-  }
-
-  .toggle-and-title {
-    display: flex;
-    align-items: center;
-    gap: 0.5em;
-  }
-
-  .hide-plots {
-    flex: 0;
   }
 
   .pdp-grid-container {
@@ -389,13 +372,12 @@
     display: flex;
     align-items: center;
     gap: 1em;
-    border-top: 1px solid var(--gray-1);
     border-bottom: 1px solid var(--gray-1);
     padding-left: 0.5em;
     padding-right: 0.5em;
   }
 
-  .legend-container {
+  .two-way-color-container {
     flex: 1;
     margin-left: auto;
 
@@ -403,18 +385,13 @@
     align-items: center;
   }
 
-  .legend {
+  .two-way-color-legend {
     flex: 1;
   }
 
   .page-change {
     display: flex;
     align-items: center;
-  }
-
-  /* this outlines the page change area when the user clicks there */
-  .page-change:focus {
-    outline: var(--blue) auto 1px;
   }
 
   .current-page-number {
@@ -428,21 +405,20 @@
     gap: 0.25em;
   }
 
-  .icon-tabler-chevron-down polyline {
-    transition: transform 200ms;
-    transform-origin: 50% 50%;
-  }
-
   .pdp-grid-element {
-    cursor: pointer;
+    position: relative;
   }
 
-  .pdp-grid-element:hover {
-    outline: var(--blue) auto 1px;
+  /* https://stackoverflow.com/a/40891870 */
+  .pdp-grid-element:hover .expand-pdp-button {
+    display: block;
   }
 
-  .rotate {
-    transform: rotate(-90deg);
+  .expand-pdp-button {
+    position: absolute;
+    display: none;
+    bottom: 2px;
+    left: 2px;
   }
 
   .dont-shrink {

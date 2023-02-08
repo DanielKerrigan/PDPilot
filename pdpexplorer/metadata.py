@@ -42,7 +42,7 @@ class Metadata:
             col: sorted(df[col].unique().tolist()) for col in non_one_hot_features
         }
         for feature, one_hot_info in one_hot_features.items():
-            names = sorted([value for (_, value) in one_hot_info])
+            names = [value for (_, value) in one_hot_info]
             indices = list(range(len(names)))
             feature_value_mappings[feature] = dict(zip(indices, names))
             unique_feature_vals[feature] = indices
@@ -72,8 +72,10 @@ class Metadata:
         )
 
         # list of features to show in the UI.
+        self.one_hot_feature_names = list(one_hot_features.keys())
+
         self.features = sorted(
-            list(one_hot_features.keys())
+            self.one_hot_feature_names
             + list(nominal_features)
             + list(ordinal_features)
             + list(quantitative_features)
@@ -84,8 +86,8 @@ class Metadata:
         for feature, one_hot_info in one_hot_features.items():
             bins = []
             counts = []
-            for col, value in one_hot_info:
-                bins.append(value)
+            for i, (col, _) in enumerate(one_hot_info):
+                bins.append(i)
                 counts.append(df[col].sum().item())
 
             self.feature_info[feature] = {
@@ -135,6 +137,15 @@ class Metadata:
                     if resolution < n_unique
                     else unique_vals
                 )
+                if resolution < n_unique:
+                    min_val, max_val = unique_vals[0], unique_vals[-1]
+                    n_points = (max_val - min_val) + 1
+                    values = np.arange(min_val, max_val + 1, n_points // resolution)
+                    # TODO: can this be done in a smarter way? something similar to
+                    # how d3 does the ticks?
+                    values[-1] = max_val
+                else:
+                    values = unique_vals
                 self.feature_info[feature] = {
                     "kind": "quantitative",
                     "subkind": "discrete",

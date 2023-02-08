@@ -1,4 +1,5 @@
-// dataset
+// Dataset
+
 export type Dataset = Record<string, number[]>;
 
 // Features
@@ -70,10 +71,10 @@ export type ICE = {
   centered_mean_max: number;
   p10_min: number;
   p90_max: number;
-  // TODO: not needed?
-  centered_ice_lines: number[][];
+  ice_lines: number[][];
   clusters: {
     id: number;
+    indices: number[];
     centered_ice_lines: number[][];
     p10: number[];
     p25: number[];
@@ -88,9 +89,13 @@ export type ICE = {
   cluster_labels: number[];
 };
 
-export type ICELevel = 'none' | 'mean' | 'band' | 'line';
+export type ICELevel =
+  | 'lines'
+  | 'cluster-centers'
+  | 'cluster-bands'
+  | 'cluster-lines';
 
-// partial dependence
+// Partial dependence
 
 export type OrderedOneWayPD = {
   num_features: 1;
@@ -140,6 +145,8 @@ export type TwoWayPD = {
   pdp_min: number;
   pdp_max: number;
   interactions: number[];
+  interaction_min: number;
+  interaction_max: number;
   deviation: number;
   H: number;
 };
@@ -149,29 +156,7 @@ export type PDSortingOption = {
   sort: (data: OneWayPD[] | TwoWayPD[]) => OneWayPD[] | TwoWayPD[];
 };
 
-// clusters
-
-export type OneWayQuantitativeCluster = {
-  kind: 'quantitative';
-  id: number;
-  mean_distance: number;
-  features: string[];
-};
-
-export type OneWayCategoricalCluster = {
-  kind: 'categorical';
-  id: number;
-  features: string[];
-};
-
-export type Clusters = {
-  categoricalClusters: OneWayCategoricalCluster[];
-  quantitativeClusters: OneWayQuantitativeCluster[];
-  categoricalPds: Map<number, UnorderedOneWayPD[]>;
-  quantitativePds: Map<number, OrderedOneWayPD[]>;
-};
-
-// type predicates
+// Type predicates
 
 export function isOrderedOneWayPd(data: OneWayPD): data is OrderedOneWayPD {
   return data.ordered === true;
@@ -191,6 +176,9 @@ export function isOneWayPdArray(
   return data[0].num_features === 1;
 }
 
-// tabs
+// Tabs
 
-export type Mode = 'grid' | 'clusters' | 'individual' | 'mental';
+export type Tab = 'one-way-plots' | 'two-way-plots' | 'detailed-plot';
+
+// Marginal plots
+export type MarginalDistributionKind = 'none' | 'bars' | 'strip';

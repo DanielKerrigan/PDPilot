@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { scaleLinear, scaleBand, scaleDiverging } from 'd3-scale';
-  import { interpolateBrBG } from 'd3-scale-chromatic';
+  import { scaleLinear, scaleBand } from 'd3-scale';
   import XAxis from '../axis/XAxis.svelte';
   import YAxis from '../axis/YAxis.svelte';
   import { onMount } from 'svelte';
@@ -10,45 +9,49 @@
   import QuantitativeColorLegend from './QuantitativeColorLegend.svelte';
   import { pairs } from 'd3-array';
   import type { TwoWayPD } from '../../../types';
-  import { feature_info } from '../../../stores';
+  import {
+    feature_info,
+    globalColorTwoWayInteraction,
+    globalColorTwoWayPdp,
+  } from '../../../stores';
   import MarginalBarChart from '../marginal/MarginalBarChart.svelte';
 
   export let pd: TwoWayPD;
   export let width: number;
   export let height: number;
-  export let globalColor: d3.ScaleSequential<string, string>;
   export let scaleLocally: boolean;
   export let showMarginalDistribution: boolean;
-  export let showInteractions: boolean;
+  export let colorShows: 'predictions' | 'interactions';
   export let showColorLegend: boolean;
+  export let marginTop = 0;
+  export let marginRight = 0;
 
   $: xFeature = $feature_info[pd.x_feature];
   $: yFeature = $feature_info[pd.y_feature];
 
-  $: localColor = globalColor.copy().domain([pd.pdp_min, pd.pdp_max]);
+  $: localColorPdp = $globalColorTwoWayPdp
+    .copy()
+    .domain([pd.pdp_min, pd.pdp_max]);
 
-  $: interactionMaxAbs = Math.max(
-    Math.abs(Math.min(...pd.interactions)),
-    Math.abs(Math.max(...pd.interactions))
-  );
+  $: localColorInteraction = $globalColorTwoWayInteraction
+    .copy()
+    .domain([pd.interaction_min, 0, pd.interaction_max]);
 
-  $: interactionsColor = scaleDiverging<string, string>()
-    .domain([-interactionMaxAbs, 0, interactionMaxAbs])
-    .interpolator(interpolateBrBG)
-    .unknown('black');
-
-  $: color = showInteractions
-    ? interactionsColor
-    : scaleLocally
-    ? localColor
-    : globalColor;
+  $: color =
+    colorShows === 'interactions'
+      ? scaleLocally
+        ? localColorInteraction
+        : $globalColorTwoWayInteraction
+      : scaleLocally
+      ? localColorPdp
+      : $globalColorTwoWayPdp;
 
   $: legendHeight = showColorLegend ? 24 : 0;
   $: pdpHeight = height - legendHeight;
 
   $: margin = {
-    top: showMarginalDistribution ? 100 : 5,
-    right: showMarginalDistribution ? 100 : 15,
+    top: marginTop,
+    right: marginRight,
     bottom: 35,
     left: 50,
   };
@@ -97,10 +100,11 @@
   If scaleCanvas is called after drawHeatmap, then it will clear the canvas.
   This was happening when changing the sorting order of the PDPs.
   We need the draw function so that the reactive statement for scaleCanvas is
-  not dependent on pdp, x, y, color, or showInteractions.
+  not dependent on pd, x, y, color, or showInteractions.
   */
   function draw() {
-    if (ctx && x != null && y != null) {
+    // TODO: are these checks needed?
+    if (ctx && x !== null && x !== undefined && y !== null && y !== undefined) {
       drawHeatmap(
         pd,
         ctx,
@@ -109,7 +113,7 @@
         x,
         y,
         color,
-        showInteractions,
+        colorShows,
         rectWidth,
         rectHeight
       );
@@ -120,7 +124,13 @@
     draw();
   }
 
-  $: if (ctx && x != null && y != null) {
+  $: if (
+    ctx &&
+    x !== null &&
+    x !== undefined &&
+    y !== null &&
+    y !== undefined
+  ) {
     drawHeatmap(
       pd,
       ctx,
@@ -129,7 +139,7 @@
       x,
       y,
       color,
-      showInteractions,
+      colorShows,
       rectWidth,
       rectHeight
     );

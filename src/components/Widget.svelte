@@ -1,48 +1,33 @@
 <script lang="ts">
-  import PDPGridControls from './PDPGridControls.svelte';
-  import PDPGridsMain from './PDPGridsMain.svelte';
-  import ClustersMain from './ClustersMain.svelte';
   import Tabs from './Tabs.svelte';
-  import { height, mode, one_way_pds, feature_names } from '../stores';
-  import ZoomedPdp from './ZoomedPDP.svelte';
-  import type { TwoWayPD, OneWayPD } from '../types';
-  import MentalModel from './MentalModel.svelte';
-
-  let zoomedPd: OneWayPD | TwoWayPD = $one_way_pds[0];
-  // changing this to
-  // $: selectedFeatures = $features;
-  // breaks the checkbox binding. why is features being updated?
-  let selectedFeatures: string[] = $feature_names;
-
-  function onZoom(event: CustomEvent<OneWayPD | TwoWayPD>) {
-    zoomedPd = event.detail;
-    $mode = 'individual';
-  }
-
-  function onFilterByCluster(event: CustomEvent<string[]>) {
-    selectedFeatures = event.detail;
-    $mode = 'grid';
-  }
+  import { height, selectedTab } from '../stores';
+  import DetailedPlot from './DetailedPlot.svelte';
+  import OneWayGridContainer from './OneWayGridContainer.svelte';
+  import TwoWayGridContainer from './TwoWayGridContainer.svelte';
 </script>
 
 <div class="pdp-explorer-widget-container" style:height="{$height}px">
   <Tabs />
 
-  <div class="grid-content" class:noshow={$mode !== 'grid'}>
-    <PDPGridControls bind:selectedFeatures />
-    <PDPGridsMain {selectedFeatures} on:zoom={onZoom} />
+  <div
+    class="pdp-tab-content"
+    class:pdp-hide={$selectedTab !== 'one-way-plots'}
+  >
+    <OneWayGridContainer />
   </div>
 
-  <div class="clusters-content" class:noshow={$mode !== 'clusters'}>
-    <ClustersMain on:filterByCluster={onFilterByCluster} on:zoom={onZoom} />
+  <div
+    class="pdp-tab-content"
+    class:pdp-hide={$selectedTab !== 'two-way-plots'}
+  >
+    <TwoWayGridContainer />
   </div>
 
-  <div class="individual-content" class:noshow={$mode !== 'individual'}>
-    <ZoomedPdp pd={zoomedPd} on:zoom={onZoom} />
-  </div>
-
-  <div class="mental-model" class:noshow={$mode !== 'mental'}>
-    <MentalModel />
+  <div
+    class="pdp-tab-content"
+    class:pdp-hide={$selectedTab !== 'detailed-plot'}
+  >
+    <DetailedPlot />
   </div>
 </div>
 
@@ -76,20 +61,13 @@
     --red: #d62728;
   }
 
-  .grid-content {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-  }
-
-  .clusters-content {
+  .pdp-tab-content {
     flex: 1;
     min-height: 0;
   }
 
-  .individual-content {
-    flex: 1;
-    min-height: 0;
+  .pdp-hide {
+    display: none;
   }
 
   /* global styles */
@@ -166,11 +144,9 @@
     text-overflow: ellipsis;
   }
 
-  .pdp-explorer-widget-container :global(:focus-visible) {
-    outline: var(--blue) auto 1px;
-  }
-
-  .noshow {
-    display: none;
+  /* https://stackoverflow.com/a/69029387/5016634 */
+  .pdp-explorer-widget-container :global(.icon-tabler) {
+    -webkit-transform: translate(0px, 0px);
+    transform: translate(0px, 0px);
   }
 </style>

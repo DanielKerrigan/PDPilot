@@ -3,9 +3,9 @@
 
   export let selectedFeatures: string[];
 
-  let featuresChecked: boolean = true;
-  let featuresCheckboxIndeterminate: boolean = false;
-  let search: string = '';
+  let featuresChecked = true;
+  let featuresCheckboxIndeterminate = false;
+  let search = '';
 
   $: featureCheckboxes = $feature_names.map((feature) => ({
     feature,

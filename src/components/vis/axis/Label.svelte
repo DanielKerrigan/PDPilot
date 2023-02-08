@@ -1,13 +1,13 @@
 <script lang="ts">
-  export let width: number = 0;
-  export let height: number = 0;
-  export let x: number = 0;
-  export let y: number = 0;
-  export let bold: boolean = false;
-  export let rotate: boolean = false;
-  export let label: string = '';
-  export let fontSize: number = 14;
-  export let outlineColor: string = 'transparent';
+  export let width = 0;
+  export let height = 0;
+  export let x = 0;
+  export let y = 0;
+  export let bold = false;
+  export let rotate = false;
+  export let label = '';
+  export let fontSize = 14;
+  export let outlineColor = 'transparent';
 </script>
 
 <!-- using a foreignObject because SVG text does

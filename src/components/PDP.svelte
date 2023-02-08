@@ -1,41 +1,50 @@
 <script lang="ts">
-  import type { OneWayPD, TwoWayPD, ICELevel } from '../types';
-  import OneWayPDP from './vis/one-way/OneWayPDP.svelte';
-  import TwoWayPDP from './vis/two-way/TwoWayPDP.svelte';
+  import type {
+    OneWayPD,
+    TwoWayPD,
+    ICELevel,
+    MarginalDistributionKind,
+  } from '../types';
+  import OneWayChart from './vis/one-way/OneWayChart.svelte';
+  import TwoWayChart from './vis/two-way/TwoWayChart.svelte';
 
   export let pd: OneWayPD | TwoWayPD;
-  export let globalColor: d3.ScaleSequential<string, string>;
   export let width: number;
   export let height: number;
   export let scaleLocally: boolean;
-  export let showTrendLine: boolean;
-  export let showMarginalDistribution: boolean;
-  export let showInteractions: boolean = false;
-  export let showColorLegend: boolean = false;
+  export let colorShows: 'predictions' | 'interactions' = 'predictions';
+  export let showColorLegend = false;
   export let iceLevel: ICELevel;
+  export let indices: number[] | null = null;
+  export let marginalDistributionKind: MarginalDistributionKind = 'none';
+  export let marginTop = 0;
+  export let marginRight = 0;
 </script>
 
 {#if width > 0 && height > 0}
   {#if pd.num_features === 1}
-    <OneWayPDP
+    <OneWayChart
       {width}
       {height}
       {pd}
       {scaleLocally}
-      {showTrendLine}
       {iceLevel}
-      {showMarginalDistribution}
+      {marginalDistributionKind}
+      {marginTop}
+      {marginRight}
+      {indices}
     />
   {:else if pd.num_features === 2}
-    <TwoWayPDP
+    <TwoWayChart
       {width}
       {height}
       {pd}
-      {globalColor}
       {scaleLocally}
-      {showInteractions}
+      {colorShows}
       {showColorLegend}
-      {showMarginalDistribution}
+      {marginTop}
+      {marginRight}
+      showMarginalDistribution={marginalDistributionKind === 'bars'}
     />
   {/if}
 {/if}

@@ -1,10 +1,6 @@
 import { scaleLinear } from 'd3-scale';
 import { format } from 'd3-format';
-import type {
-  ICELevel,
-  OrderedOneWayPD,
-  UnorderedOneWayPD,
-} from './types';
+import type { ICELevel, OrderedOneWayPD, UnorderedOneWayPD } from './types';
 import type { ScaleLinear } from 'd3-scale';
 export { scaleCanvas, defaultFormat, getYScale, categoricalColors };
 
@@ -47,66 +43,55 @@ function getYScale(
   facetHeight: number,
   iceLevel: ICELevel,
   scaleLocally: boolean,
-  nicePdpExtent: [number, number],
-  niceIceMeanExtent: [number, number],
-  niceIceBandExtent: [number, number],
-  niceIceLineExtent: [number, number],
+  iceLineExtent: [number, number],
+  iceClusterCenterExtent: [number, number],
+  iceClusterBandExtent: [number, number],
+  iceClusterLineExtent: [number, number],
   margin: { top: number; right: number; bottom: number; left: number }
 ): ScaleLinear<number, number> {
-  const globalPdp = scaleLinear()
-    .domain(nicePdpExtent)
-    .range([height - margin.bottom, margin.top]);
-
-  const globalIceClusterMean = scaleLinear()
-    .domain(niceIceMeanExtent)
-    .range([height - margin.bottom, margin.top]);
-
-  const globalIceBand = scaleLinear()
-    .domain(niceIceBandExtent)
-    .range([facetHeight - margin.bottom, margin.top]);
-
-  const globalIceLines = scaleLinear()
-    .domain(niceIceLineExtent)
-    .range([facetHeight - margin.bottom, margin.top]);
-
-  const localPdp = scaleLinear()
-    .domain([pdp.pdp_min, pdp.pdp_max])
-    .range([height - margin.bottom, margin.top]);
-
-  const localIceClusterMean = scaleLinear()
-    .domain([pdp.ice.centered_mean_min, pdp.ice.centered_mean_max])
-    .nice()
-    .range([height - margin.bottom, margin.top]);
-
-  const localIceBand = scaleLinear()
-    .domain([pdp.ice.p10_min, pdp.ice.p90_max])
-    .nice()
-    .range([facetHeight - margin.bottom, margin.top]);
-
-  const localIceLines = scaleLinear()
-    .domain([pdp.ice.centered_ice_min, pdp.ice.centered_ice_max])
-    .nice()
-    .range([facetHeight - margin.bottom, margin.top]);
-
   if (scaleLocally) {
-    if (iceLevel === 'none') {
-      return localPdp;
-    } else if (iceLevel === 'mean') {
-      return localIceClusterMean;
-    } else if (iceLevel === 'band') {
-      return localIceBand;
+    if (iceLevel === 'lines') {
+      return scaleLinear()
+        .domain([pdp.ice.ice_min, pdp.ice.ice_max])
+        .nice()
+        .range([height - margin.bottom, margin.top]);
+    } else if (iceLevel === 'cluster-centers') {
+      return scaleLinear()
+        .domain([pdp.ice.centered_mean_min, pdp.ice.centered_mean_max])
+        .nice()
+        .range([height - margin.bottom, margin.top]);
+    } else if (iceLevel === 'cluster-bands') {
+      return scaleLinear()
+        .domain([pdp.ice.p10_min, pdp.ice.p90_max])
+        .nice()
+        .range([facetHeight - margin.bottom, margin.top]);
     } else {
-      return localIceLines;
+      return scaleLinear()
+        .domain([pdp.ice.centered_ice_min, pdp.ice.centered_ice_max])
+        .nice()
+        .range([facetHeight - margin.bottom, margin.top]);
     }
   } else {
-    if (iceLevel === 'none') {
-      return globalPdp;
-    } else if (iceLevel === 'mean') {
-      return globalIceClusterMean;
-    } else if (iceLevel === 'band') {
-      return globalIceBand;
+    if (iceLevel === 'lines') {
+      return scaleLinear()
+        .domain(iceLineExtent)
+        .nice()
+        .range([height - margin.bottom, margin.top]);
+    } else if (iceLevel === 'cluster-centers') {
+      return scaleLinear()
+        .domain(iceClusterCenterExtent)
+        .nice()
+        .range([height - margin.bottom, margin.top]);
+    } else if (iceLevel === 'cluster-bands') {
+      return scaleLinear()
+        .domain(iceClusterBandExtent)
+        .nice()
+        .range([facetHeight - margin.bottom, margin.top]);
     } else {
-      return globalIceLines;
+      return scaleLinear()
+        .domain(iceClusterLineExtent)
+        .nice()
+        .range([facetHeight - margin.bottom, margin.top]);
     }
   }
 }

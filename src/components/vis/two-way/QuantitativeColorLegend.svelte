@@ -5,19 +5,20 @@
  -->
 <script lang="ts">
   import { scaleLinear } from 'd3-scale';
+  import type { ScaleSequential, ScaleDiverging } from 'd3-scale';
   import { onMount } from 'svelte';
   import { defaultFormat, scaleCanvas } from '../../../vis-utils';
 
   export let width: number;
   export let height: number;
   export let color:
-    | d3.ScaleSequential<string, string>
-    | d3.ScaleDiverging<string, string>;
+    | ScaleSequential<string, string>
+    | ScaleDiverging<string, string>;
 
-  export let marginTop: number = 0;
-  export let marginRight: number = 0;
-  export let marginBottom: number = 0;
-  export let marginLeft: number = 0;
+  export let marginTop = 0;
+  export let marginRight = 0;
+  export let marginBottom = 0;
+  export let marginLeft = 0;
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
@@ -80,7 +81,9 @@
     .domain([color.domain()[0], color.domain()[color.domain().length - 1]])
     .range([marginLeft, width - marginRight]);
 
-  $: ticks = x.ticks(colorWidth / 60);
+  $: minDesiredTicks = color.domain().length;
+
+  $: ticks = x.ticks(Math.max(colorWidth / 50, minDesiredTicks));
 </script>
 
 <div class="color-container" style="height: {height}px;">

@@ -103,6 +103,7 @@ def partial_dependence(
         feature_value_mappings,
     )
 
+    # TODO: reset index?
     subset = df.copy()
     subset_copy = df.copy()
 
@@ -133,18 +134,13 @@ def partial_dependence(
             one_way_results = Parallel(n_jobs=n_jobs)(
                 delayed(_calc_pd)(**args) for args in one_way_work
             )
-
+    # TODO: why are we sorting here?
     one_way_pds = sorted(
         [x[0] for x in one_way_results], key=itemgetter("deviation"), reverse=True
     )
     feature_pairs = {pair for x in one_way_results for pair in x[1]}
 
-    feature_to_pd = _get_feature_to_pd(one_way_pds) if one_way_pds else None
-
-    print("Clustering one-way PDPs")
-    one_way_quantitative_clusters, one_way_categorical_clusters = _one_way_clustering(
-        one_way_pds=one_way_pds, feature_to_pd=feature_to_pd, md=md, n_jobs=n_jobs
-    )
+    feature_to_pd = get_feature_to_pd(one_way_pds) if one_way_pds else None
 
     # two-way
 
@@ -175,49 +171,64 @@ def partial_dependence(
 
     # min and max predictions
 
-    ice_min = min(one_way_pds, key=lambda d: d["ice"]["centered_ice_min"])["ice"][
-        "centered_ice_min"
+    ice_line_min = min(one_way_pds, key=lambda d: d["ice"]["ice_min"])["ice"]["ice_min"]
+    ice_line_max = max(one_way_pds, key=lambda d: d["ice"]["ice_max"])["ice"]["ice_max"]
+
+    ice_cluster_center_min = min(
+        one_way_pds, key=lambda d: d["ice"]["centered_mean_min"]
+    )["ice"]["centered_mean_min"]
+    ice_cluster_center_max = max(
+        one_way_pds, key=lambda d: d["ice"]["centered_mean_max"]
+    )["ice"]["centered_mean_max"]
+
+    ice_cluster_band_min = min(one_way_pds, key=lambda d: d["ice"]["p10_min"])["ice"][
+        "p10_min"
     ]
-    ice_max = max(one_way_pds, key=lambda d: d["ice"]["centered_ice_max"])["ice"][
-        "centered_ice_max"
+    ice_cluster_band_max = max(one_way_pds, key=lambda d: d["ice"]["p90_max"])["ice"][
+        "p90_max"
     ]
 
-    cluster_min = min(one_way_pds, key=lambda d: d["ice"]["centered_mean_min"])["ice"][
-        "centered_mean_min"
+    ice_cluster_line_min = min(one_way_pds, key=lambda d: d["ice"]["centered_ice_min"])[
+        "ice"
+    ]["centered_ice_min"]
+    ice_cluster_line_max = max(one_way_pds, key=lambda d: d["ice"]["centered_ice_max"])[
+        "ice"
+    ]["centered_ice_max"]
+
+    two_way_pdp_min = min(two_way_pds, key=itemgetter("pdp_min"))["pdp_min"]
+    two_way_pdp_max = max(two_way_pds, key=itemgetter("pdp_max"))["pdp_max"]
+
+    # TODO: we already get the abs min/max for each pdp, don't need to do it again here
+    two_way_interaction_min = min(two_way_pds, key=itemgetter("interaction_min"))[
+        "interaction_min"
     ]
-    cluster_max = max(one_way_pds, key=lambda d: d["ice"]["centered_mean_max"])["ice"][
-        "centered_mean_max"
+    two_way_interaction_max = max(two_way_pds, key=itemgetter("interaction_max"))[
+        "interaction_max"
     ]
+    two_way_interaction_abs_max = max(
+        abs(two_way_interaction_min), abs(two_way_interaction_max)
+    )
 
-    p10_min = min(one_way_pds, key=lambda d: d["ice"]["p10_min"])["ice"]["p10_min"]
-    p90_max = max(one_way_pds, key=lambda d: d["ice"]["p90_max"])["ice"]["p90_max"]
-
-    pdp_min = min(one_way_pds, key=itemgetter("pdp_min"))["pdp_min"]
-    pdp_max = max(one_way_pds, key=itemgetter("pdp_max"))["pdp_max"]
-
-    if two_way_pds:
-        pdp_min = min(
-            pdp_min,
-            min(two_way_pds, key=itemgetter("pdp_min"))["pdp_min"],
-        )
-        pdp_max = max(
-            pdp_max,
-            max(two_way_pds, key=itemgetter("pdp_max"))["pdp_max"],
-        )
+    # to make the dataset easier to work with on the frontend,
+    # turn one-hot encoded features into integer encoded categories
+    frontend_df = _turn_one_hot_into_category(subset, md)
 
     # output
 
     results = {
         "one_way_pds": one_way_pds,
         "two_way_pds": two_way_pds,
-        "one_way_quantitative_clusters": one_way_quantitative_clusters,
-        "one_way_categorical_clusters": one_way_categorical_clusters,
-        "pdp_extent": [pdp_min, pdp_max],
-        "ice_mean_extent": [cluster_min, cluster_max],
-        "ice_band_extent": [p10_min, p90_max],
-        "ice_line_extent": [ice_min, ice_max],
+        "two_way_pdp_extent": [two_way_pdp_min, two_way_pdp_max],
+        "two_way_interaction_extent": [
+            -two_way_interaction_abs_max,
+            two_way_interaction_abs_max,
+        ],
+        "ice_line_extent": [ice_line_min, ice_line_max],
+        "ice_cluster_center_extent": [ice_cluster_center_min, ice_cluster_center_max],
+        "ice_cluster_band_extent": [ice_cluster_band_min, ice_cluster_band_max],
+        "ice_cluster_line_extent": [ice_cluster_line_min, ice_cluster_line_max],
         "num_instances": md.size,
-        "dataset": subset.to_dict(orient="list"),
+        "dataset": frontend_df.to_dict(orient="list"),
         "feature_info": md.feature_info,
     }
 
@@ -237,16 +248,16 @@ def _calc_pd(
     feature_to_pd,
 ):
     if isinstance(feature, tuple) or isinstance(feature, list):
-        return _calc_two_way_pd(
+        return calc_two_way_pd(
             predict,
             data,
             data_copy,
             feature,
-            md,
+            md.feature_info,
             feature_to_pd,
         )
     else:
-        return _calc_one_way_pd(
+        return calc_one_way_pd(
             predict,
             data,
             data_copy,
@@ -256,7 +267,7 @@ def _calc_pd(
         )
 
 
-def _calc_one_way_pd(
+def calc_one_way_pd(
     predict,
     data,
     data_copy,
@@ -276,6 +287,7 @@ def _calc_one_way_pd(
     _reset_feature(feature, data, data_copy, feat_info)
 
     ice_lines = np.array(ice_lines).T
+    ice_deviation = np.std(ice_lines, axis=1).mean().item()
     mean_predictions = np.mean(ice_lines, axis=0)
 
     mean_predictions_centered = (mean_predictions - mean_predictions.mean()).tolist()
@@ -298,6 +310,7 @@ def _calc_one_way_pd(
         "pdp_min": pdp_min,
         "pdp_max": pdp_max,
         "ice": ice,
+        "deviation": ice_deviation,
     }
 
     if feat_info["ordered"]:
@@ -332,23 +345,20 @@ def _calc_one_way_pd(
                 par_dep["knots_good_fit"] = i
                 break
 
-    par_dep["deviation"] = np.std(mean_predictions)
-
     return par_dep, pairs
 
 
-def _calc_two_way_pd(
+def calc_two_way_pd(
     predict,
     data,
     data_copy,
     pair,
-    md,
+    feature_info,
     feature_to_pd,
 ):
     x_feature, y_feature = pair
-
-    x_feat_info = md.feature_info[x_feature]
-    y_feat_info = md.feature_info[y_feature]
+    x_feat_info = feature_info[x_feature]
+    y_feat_info = feature_info[y_feature]
 
     # when one feature is quantitative and the other is categorical,
     # make the y feature be categorical
@@ -405,7 +415,13 @@ def _calc_two_way_pd(
         _reset_feature(x_feature, data, data_copy, x_feat_info)
 
     mean_predictions_centered = np.array(mean_predictions) - np.mean(mean_predictions)
-    interactions = (mean_predictions_centered - np.array(no_interactions)).tolist()
+    interactions = mean_predictions_centered - np.array(no_interactions)
+
+    interaction_min = interactions.min().item()
+    interaction_max = interactions.max().item()
+    interaction_abs_max = max(abs(interaction_min), abs(interaction_max))
+
+    interactions = interactions.tolist()
     mean_predictions_centered = mean_predictions_centered.tolist()
 
     h_statistic = np.sqrt(np.square(interactions).sum()).item()
@@ -421,6 +437,8 @@ def _calc_two_way_pd(
         "y_axis": y_axis,
         "mean_predictions": mean_predictions,
         "interactions": interactions,
+        "interaction_min": -interaction_abs_max,
+        "interaction_max": interaction_abs_max,
         "pdp_min": pdp_min,
         "pdp_max": pdp_max,
         "H": h_statistic,
@@ -453,172 +471,8 @@ def _reset_feature(
         data[feature] = data_copy[feature]
 
 
-def _get_feature_to_pd(one_way_pds):
+def get_feature_to_pd(one_way_pds):
     return {par_dep["x_feature"]: par_dep for par_dep in one_way_pds}
-
-
-def _one_way_clustering(*, one_way_pds, feature_to_pd, md, n_jobs):
-    quant_one_way = []
-    cat_one_way = []
-
-    for p in one_way_pds:
-        if (
-            md.feature_info[p["x_feature"]]["kind"] == "quantitative"
-            or md.feature_info[p["x_feature"]]["subkind"] == "ordinal"
-        ):
-            quant_one_way.append(p)
-        else:
-            cat_one_way.append(p)
-
-    one_way_quantitative_clusters = _quantitative_feature_clustering(
-        one_way_pds=quant_one_way, feature_to_pd=feature_to_pd, n_jobs=n_jobs
-    )
-
-    n_quant_clusters = len(one_way_quantitative_clusters)
-
-    one_way_categorical_clusters = _categorical_feature_clustering(
-        one_way_pds=cat_one_way,
-        feature_to_pd=feature_to_pd,
-        first_id=n_quant_clusters,
-    )
-
-    return one_way_quantitative_clusters, one_way_categorical_clusters
-
-
-def _quantitative_feature_clustering(*, one_way_pds, feature_to_pd, n_jobs):
-    if not one_way_pds:
-        return []
-
-    timeseries_dataset = to_time_series_dataset(
-        [d["mean_predictions"] for d in one_way_pds]
-    )
-    features = [d["x_feature"] for d in one_way_pds]
-
-    min_clusters = 2
-    max_clusters = (
-        int(len(features) / 2) if int(len(features) / 2) > 2 else len(features)
-    )
-    n_clusters_options = range(min_clusters, max_clusters)
-
-    best_n_clusters = -1
-    best_clusters = []
-    best_score = -math.inf
-    best_model = None
-
-    for n in n_clusters_options:
-        cluster_model = TimeSeriesKMeans(
-            n_clusters=n, metric="dtw", max_iter=50, n_init=5, n_jobs=n_jobs
-        )
-        cluster_model.fit(timeseries_dataset)
-        labels = cluster_model.predict(timeseries_dataset)
-
-        score = ts_silhouette_score(timeseries_dataset, labels, metric="dtw")
-
-        if score > best_score:
-            best_score = score
-            best_clusters = labels
-            best_n_clusters = n
-            best_model = cluster_model
-
-    distance_to_centers = best_model.transform(timeseries_dataset)
-    distances = np.min(distance_to_centers, axis=1).tolist()
-
-    clusters_dict = {
-        i: {
-            "id": i,
-            "type": "quantitative",
-            "mean_distance": 0,
-            "mean_complexity": 0,
-            "features": [],
-        }
-        for i in range(best_n_clusters)
-    }
-
-    for feature, cluster, distance in zip(features, best_clusters, distances):
-        p = feature_to_pd[feature]
-        c = clusters_dict[cluster]
-
-        p["distance_to_cluster_center"] = distance
-        p["cluster"] = cluster.item()
-
-        c["mean_distance"] += distance
-        c["features"].append(feature)
-
-    clusters = list(clusters_dict.values())
-
-    for c in clusters:
-        c["mean_distance"] = c["mean_distance"] / len(c["features"])
-
-    return clusters
-
-
-def _categorical_feature_clustering(*, one_way_pds, feature_to_pd, first_id):
-    if not one_way_pds:
-        return []
-
-    features = [d["x_feature"] for d in one_way_pds]
-
-    min_clusters = 2
-    max_clusters = (
-        int(len(features) / 2) if int(len(features) / 2) > 2 else len(features)
-    )
-    n_clusters_options = range(min_clusters, max_clusters)
-
-    deviations = np.array([d["deviation"] for d in one_way_pds]).reshape(-1, 1)
-
-    best_n_clusters = -1
-    best_clusters = []
-    best_score = -math.inf
-    best_model = None
-
-    for n in n_clusters_options:
-        cluster_model = KMeans(n_clusters=n, n_init=5, max_iter=300)
-        cluster_model.fit(deviations)
-        labels = cluster_model.labels_
-
-        score = silhouette_score(deviations, labels, metric="euclidean")
-
-        if score > best_score:
-            best_score = score
-            best_clusters = labels
-            best_n_clusters = n
-            best_model = cluster_model
-
-    distance_to_centers = best_model.transform(deviations)
-    distances = np.min(distance_to_centers, axis=1).tolist()
-
-    best_clusters += first_id
-
-    clusters_dict = {
-        (i + first_id): {
-            "id": i + first_id,
-            "type": "categorical",
-            "mean_distance": 0,
-            "mean_complexity": 0,
-            "features": [],
-        }
-        for i in range(best_n_clusters)
-    }
-
-    # sort features by distance to cluster center
-    feat_clust_dist = sorted(zip(features, best_clusters, distances), key=itemgetter(2))
-
-    for feature, cluster, distance in feat_clust_dist:
-        p = feature_to_pd[feature]
-        c = clusters_dict[cluster]
-
-        p["distance_to_cluster_center"] = distance
-        p["cluster"] = cluster.item()
-
-        c["mean_distance"] += distance
-        c["features"].append(feature)
-
-    clusters = list(clusters_dict.values())
-
-    for c in clusters:
-        c["mean_distance"] = c["mean_distance"] / len(c["features"])
-
-    return clusters
 
 
 def _calculate_ice(ice_lines, data, feature, md):
@@ -664,10 +518,13 @@ def _calculate_ice(ice_lines, data, feature, md):
     interacting_features = defaultdict(int)
 
     for n in range(best_n_clusters):
-        lines = ice_lines[best_labels == n]
-        centered_lines = centered_ice_lines[best_labels == n]
+        mask = best_labels == n
+        # get the indices of the ICE lines in this cluster
+        indices = mask.nonzero()[0]
+        lines = ice_lines[mask]
+        centered_lines = centered_ice_lines[mask]
 
-        y = (best_labels == n).astype(int)
+        y = mask.astype(int)
 
         importances = _get_interacting_features(data, y, md)
         for feat, imp in importances.items():
@@ -685,7 +542,7 @@ def _calculate_ice(ice_lines, data, feature, md):
         clusters.append(
             {
                 "id": n,
-                "ice_lines": lines.tolist(),
+                "indices": indices,
                 "centered_ice_lines": centered_lines.tolist(),
                 "mean": mean.tolist(),
                 "p10": p10.tolist(),
@@ -739,6 +596,7 @@ def _calculate_ice(ice_lines, data, feature, md):
         "centered_mean_max": centered_mean_max.item(),
         "p10_min": p10_min.item(),
         "p90_max": p90_max.item(),
+        "ice_lines": ice_lines,
         "clusters": clusters,
         "centered_pdp": centered_pdp.tolist(),
         "cluster_distance": cluster_distance.item(),
@@ -760,3 +618,25 @@ def _get_interacting_features(X, y, md):
         importances[feat] += clf.feature_importances_[i]
 
     return importances
+
+
+def _turn_one_hot_into_category(df_one_hot, md):
+    df = df_one_hot.copy()
+
+    for feature in md.one_hot_feature_names:
+        info = md.feature_info[feature]
+        # one-hot column names
+        columns = [col for (col, _) in info["columns_and_values"]]
+        # undo one-hot encoding. this results in one categorical column
+        # where the categories are the original column names
+        as_category = pd.from_dummies(df[columns])
+        as_category.columns = [feature]
+        # map from one-hot column name to index
+        column_to_index = dict(zip(columns, info["values"]))
+        # turn the categories into integers
+        int_column = as_category[feature].map(column_to_index)
+        # remove the one-hot columns from the df and add the integer column
+        df.drop(columns=columns, inplace=True)
+        df[feature] = int_column.values
+
+    return df

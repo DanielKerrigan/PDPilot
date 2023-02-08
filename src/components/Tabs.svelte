@@ -1,73 +1,47 @@
 <script lang="ts">
-  import { mode } from '../stores';
-  import type { Mode } from '../types';
+  import type { Tab } from '../types';
+  import { selectedTab } from '../stores';
 
-  function changeMode(newMode: Mode) {
-    $mode = newMode;
+  const tabs: { value: Tab; title: string }[] = [
+    { value: 'one-way-plots', title: 'One-way Plots' },
+    { value: 'two-way-plots', title: 'Two-way Plots' },
+    { value: 'detailed-plot', title: 'Detailed Plot' },
+  ];
+
+  function changeTab(tab: Tab) {
+    $selectedTab = tab;
   }
 </script>
 
-<div class="tabs-container">
+<div>
   <ul>
-    <li>
-      <button
-        id="button-tab-grid"
-        class:tab-selected={$mode === 'grid'}
-        on:click={() => changeMode('grid')}
-      >
-        Plots Grid
-      </button>
-    </li>
-    <li>
-      <button
-        id="button-tab-clusters"
-        class:tab-selected={$mode === 'clusters'}
-        on:click={() => changeMode('clusters')}
-      >
-        Clustered Plots
-      </button>
-    </li>
-    <li>
-      <button
-        id="button-tab-individual"
-        class:tab-selected={$mode === 'individual'}
-        on:click={() => changeMode('individual')}
-      >
-        Individual Plot
-      </button>
-    </li>
-    <li>
-      <button
-        id="button-tab-mental"
-        class:tab-selected={$mode === 'mental'}
-        on:click={() => changeMode('mental')}
-      >
-        Mental Model
-      </button>
-    </li>
+    {#each tabs as { value, title }}
+      <li>
+        <button
+          class:tab-selected={value === $selectedTab}
+          on:click={() => changeTab(value)}
+        >
+          {title}
+        </button>
+      </li>
+    {/each}
   </ul>
 </div>
 
 <style>
-  .tabs-container {
+  div {
     display: flex;
     padding: 0.25em;
     background-color: var(--gray-1);
   }
 
-  #button-tab-grid,
-  #button-tab-clusters,
-  #button-tab-individual,
-  #button-tab-mental {
+  button {
     border: none;
     border-radius: 0;
     background-color: transparent;
   }
 
-  #button-tab-grid.tab-selected,
-  #button-tab-clusters.tab-selected,
-  #button-tab-individual.tab-selected,
-  #button-tab-mental.tab-selected {
+  button.tab-selected {
     border-bottom: 1px solid black;
   }
 
