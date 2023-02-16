@@ -1,10 +1,14 @@
 <script lang="ts">
-  import PDPGridControls from './PDPGridControls.svelte';
+  import GridFilters from './GridFilters.svelte';
   import PDPGrid from './PDPGrid.svelte';
   import { feature_names, two_way_pds } from '../stores';
   import { doublePDPSortingOptions } from '../sorting';
 
   let selectedFeatures: string[] = $feature_names;
+
+  function onChangeFilters(event: CustomEvent<string[]>) {
+    selectedFeatures = event.detail;
+  }
 
   $: filteredTwoWayPds = $two_way_pds.filter(
     (p) =>
@@ -15,7 +19,7 @@
 
 <div class="two-way-grid-container">
   <div>
-    <PDPGridControls bind:selectedFeatures />
+    <GridFilters on:changeFilters={onChangeFilters} />
   </div>
   <div class="pdp-grid-wrapper">
     <PDPGrid
@@ -33,5 +37,6 @@
 
   .pdp-grid-wrapper {
     flex: 1;
+    min-width: 0;
   }
 </style>

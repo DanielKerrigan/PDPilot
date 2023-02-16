@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { MarginalDistributionKind, OneWayPD } from '../../../types';
+  import type { OneWayPD } from '../../../types';
   import { scaleLinear, scalePoint } from 'd3-scale';
   import type { ScaleLinear, ScalePoint } from 'd3-scale';
   import { line as d3line } from 'd3-shape';
@@ -13,7 +13,8 @@
     ice_cluster_line_extent,
     feature_info,
     highlighted_indices,
-    dataset,
+    brushingInProgress,
+    highlightedDistributions,
   } from '../../../stores';
   import { select } from 'd3-selection';
   import type { Selection } from 'd3-selection';
@@ -28,16 +29,15 @@
   export let width: number;
   export let height: number;
   export let scaleLocally: boolean;
-  export let marginalDistributionKind: MarginalDistributionKind;
+  export let showMarginalDistribution: boolean;
   export let marginTop: number;
   export let marginRight: number;
+  export let allowBrushing = false;
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
 
   $: feature = $feature_info[pd.x_feature];
-  $: values = $dataset[pd.x_feature];
-  $: highlightedValues = $highlighted_indices.map((i) => values[i]);
 
   $: margin = {
     top: marginTop,
@@ -82,6 +82,8 @@
     .y((d) => y(d))
     .context(ctx);
 
+  $: showHighlights = allowBrushing && $highlighted_indices.length > 0;
+
   // canvas
 
   onMount(() => {
@@ -89,14 +91,16 @@
   });
 
   function drawIcePdp(
-    data: OneWayPD,
+    pd: OneWayPD,
     ctx: CanvasRenderingContext2D,
     line: Line<number>,
     highlight: number[],
     x: ScaleLinear<number, number, never> | ScalePoint<number>,
     y: ScaleLinear<number, number, never>,
-    pd: OneWayPD,
-    radius: number
+    radius: number,
+    showHighlights: boolean,
+    width: number,
+    height: number
   ) {
     // TODO: is this check needed?
     if (
@@ -118,7 +122,7 @@
     ctx.strokeStyle = 'rgb(198, 198, 198)';
     ctx.globalAlpha = 0.15;
 
-    data.ice.ice_lines.forEach((d) => {
+    pd.ice.ice_lines.forEach((d) => {
       ctx.beginPath();
       line(d);
       ctx.stroke();
@@ -126,14 +130,16 @@
 
     // highlighted ice lines
 
-    ctx.strokeStyle = 'red';
-    ctx.globalAlpha = 0.15;
+    if (showHighlights) {
+      ctx.strokeStyle = 'red';
+      ctx.globalAlpha = 0.15;
 
-    highlight.forEach((i) => {
-      ctx.beginPath();
-      line(data.ice.ice_lines[i]);
-      ctx.stroke();
-    });
+      highlight.forEach((i) => {
+        ctx.beginPath();
+        line(pd.ice.ice_lines[i]);
+        ctx.stroke();
+      });
+    }
 
     // pdp line
 
@@ -142,7 +148,7 @@
     ctx.globalAlpha = 1;
 
     ctx.beginPath();
-    line(data.mean_predictions);
+    line(pd.mean_predictions);
     ctx.stroke();
 
     // pdp circles
@@ -161,44 +167,6 @@
     ctx.restore();
   }
 
-  function drawMarginalStripPlot(
-    values: number[],
-    highlightedValues: number[],
-    ctx: CanvasRenderingContext2D,
-    x: ScaleLinear<number, number, never> | ScalePoint<number>
-  ) {
-    if (ctx === null || ctx === undefined) {
-      return;
-    }
-
-    ctx.save();
-
-    ctx.clearRect(0, 0, width, margin.top);
-
-    ctx.lineWidth = 0.5;
-    // same as css var(--gray-2)
-    ctx.strokeStyle = 'rgb(198, 198, 198)';
-    ctx.globalAlpha = 0.15;
-
-    values.forEach((v) => {
-      ctx.beginPath();
-      ctx.moveTo(x(v) ?? 0, 0);
-      ctx.lineTo(x(v) ?? 0, margin.top);
-      ctx.stroke();
-    });
-
-    ctx.strokeStyle = 'red';
-
-    highlightedValues.forEach((v) => {
-      ctx.beginPath();
-      ctx.moveTo(x(v) ?? 0, 0);
-      ctx.lineTo(x(v) ?? 0, margin.top);
-      ctx.stroke();
-    });
-
-    ctx.restore();
-  }
-
   /*
   TODO: is this true in this case?
   If scaleCanvas is called after drawLines, then it will clear the canvas.
@@ -206,10 +174,18 @@
   not dependent on pd or line.
   */
   function draw() {
-    drawIcePdp(pd, ctx, line, $highlighted_indices, x, y, pd, radius);
-    if (marginalDistributionKind === 'strip') {
-      drawMarginalStripPlot(values, highlightedValues, ctx, x);
-    }
+    drawIcePdp(
+      pd,
+      ctx,
+      line,
+      $highlighted_indices,
+      x,
+      y,
+      radius,
+      showHighlights,
+      width,
+      height
+    );
   }
 
   $: if (ctx) {
@@ -217,38 +193,72 @@
     draw();
   }
 
-  $: drawIcePdp(pd, ctx, line, $highlighted_indices, x, y, pd, radius);
-  $: if (marginalDistributionKind === 'strip') {
-    drawMarginalStripPlot(values, highlightedValues, ctx, x);
-  }
+  $: drawIcePdp(
+    pd,
+    ctx,
+    line,
+    $highlighted_indices,
+    x,
+    y,
+    radius,
+    showHighlights,
+    width,
+    height
+  );
 
   // brushing
 
+  // does the brush for this feature have a selection
+  let activeBrush = false;
+  // is the brush for this feature being moved
+  let brushingThisFeatureInProgress = false;
+
+  function brushStart(this: SVGGElement, _: D3BrushEvent<undefined>) {
+    activeBrush = true;
+    $brushingInProgress = true;
+    brushingThisFeatureInProgress = true;
+  }
+
   // guided by https://observablehq.com/@d3/brushable-parallel-coordinates
+  // and https://observablehq.com/@d3/brushable-scatterplot-matrix
   function brushed(this: SVGGElement, { selection }: D3BrushEvent<undefined>) {
-    if (selection === null) {
+    if (!selection) {
       $highlighted_indices = [];
-    } else {
-      // get the left and right x pixel coordinates of the brush
-      const [[x1, y1], [x2, y2]] = selection as [
-        [number, number],
-        [number, number]
-      ];
-
-      const xs = pd.x_values.map((v) => x(v) ?? 0);
-
-      $highlighted_indices = pd.ice.ice_lines
-        .map((il, i) => ({ lines: il, index: i }))
-        .filter(({ lines }) => {
-          return lines.some((point, i) => {
-            const yy = y(point);
-            const xx = xs[i];
-
-            return xx >= x1 && xx <= x2 && yy >= y1 && yy <= y2;
-          });
-        })
-        .map(({ index }) => index);
+      return;
     }
+
+    // get the left and right x pixel coordinates of the brush
+    const [[x1, y1], [x2, y2]] = selection as [
+      [number, number],
+      [number, number]
+    ];
+
+    const xs = pd.x_values.map((v) => x(v) ?? 0);
+
+    $highlighted_indices = pd.ice.ice_lines
+      .map((il, i) => ({ lines: il, index: i }))
+      .filter(({ lines }) => {
+        return lines.some((point, i) => {
+          const yy = y(point);
+          const xx = xs[i];
+
+          return xx >= x1 && xx <= x2 && yy >= y1 && yy <= y2;
+        });
+      })
+      .map(({ index }) => index);
+  }
+
+  function brushEnd(this: SVGGElement, { selection }: D3BrushEvent<undefined>) {
+    if (selection === null) {
+      activeBrush = false;
+      $highlighted_indices = [];
+    }
+
+    $brushingInProgress = false;
+    brushingThisFeatureInProgress = false;
+    // TODO: make selection on a plot.
+    // start a selection on another plot.
+    // original plot stays highlight until moving. why?
   }
 
   $: brush = d3brush<undefined>()
@@ -256,15 +266,26 @@
       [margin.left, margin.top],
       [width - margin.right, height - margin.bottom],
     ])
-    .on('start brush end', brushed);
+    .on('start', brushStart)
+    .on('brush', brushed)
+    .on('end', brushEnd);
 
   let group: SVGGElement;
   let selection: Selection<SVGGElement, undefined, null, undefined>;
 
-  $: if (group) {
+  // TODO: this won't disable brushing after it's enabled
+  $: if (group && allowBrushing) {
     selection = select(group);
     selection.call(brush);
   }
+
+  // clear this brush if another feature is being brushed
+  $: if ($brushingInProgress && activeBrush && !brushingThisFeatureInProgress) {
+    selection.call(brush.clear);
+  }
+
+  let highlightedDistribution: { bins: number[]; counts: number[] } | undefined;
+  $: highlightedDistribution = $highlightedDistributions.get(pd.x_feature);
 </script>
 
 <div>
@@ -282,22 +303,40 @@
 
       <YAxis scale={y} x={margin.left} label={'prediction'} />
 
-      {#if marginalDistributionKind === 'bars'}
+      {#if allowBrushing && highlightedDistribution && $highlighted_indices.length > 0}
         {#if 'bandwidth' in x}
           <MarginalBarChart
-            data={$feature_info[pd.x_feature].distribution}
+            data={highlightedDistribution}
+            fill={'red'}
             {x}
             height={margin.top}
             direction="horizontal"
-            {highlightedValues}
           />
         {:else}
           <MarginalHistogram
-            data={$feature_info[pd.x_feature].distribution}
+            data={highlightedDistribution}
+            fill={'red'}
             {x}
             height={margin.top}
             direction="horizontal"
-            {highlightedValues}
+          />
+        {/if}
+      {:else if showMarginalDistribution}
+        {#if 'bandwidth' in x}
+          <MarginalBarChart
+            data={feature.distribution}
+            fill={'var(--gray-3)'}
+            {x}
+            height={margin.top}
+            direction="horizontal"
+          />
+        {:else}
+          <MarginalHistogram
+            data={feature.distribution}
+            fill={'var(--gray-3)'}
+            {x}
+            height={margin.top}
+            direction="horizontal"
           />
         {/if}
       {/if}
@@ -315,7 +354,7 @@
   svg,
   canvas {
     position: absolute;
-    top: var(--top);
+    top: 0;
     left: 0;
   }
 </style>

@@ -2,6 +2,10 @@
 
 export type Dataset = Record<string, number[]>;
 
+// Distribution
+
+export type Distribution = { bins: number[]; counts: number[] };
+
 // Features
 
 export type OneHotFeatureInfo = {
@@ -9,7 +13,7 @@ export type OneHotFeatureInfo = {
   subkind: 'one_hot';
   ordered: false;
   values: number[];
-  distribution: { bins: number[]; counts: number[] };
+  distribution: Distribution;
   columns_and_values: [string, string][];
   value_to_column: Record<string, string>;
   value_map: Record<number, string>;
@@ -20,7 +24,7 @@ export type NominalFeatureInfo = {
   subkind: 'nominal';
   ordered: false;
   values: number[];
-  distribution: { bins: number[]; counts: number[] };
+  distribution: Distribution;
   value_map: Record<number, string>;
 };
 
@@ -29,7 +33,7 @@ export type OrdinalFeatureInfo = {
   subkind: 'ordinal';
   ordered: true;
   values: number[];
-  distribution: { bins: number[]; counts: number[] };
+  distribution: Distribution;
   value_map: Record<number, string>;
 };
 
@@ -38,7 +42,7 @@ export type ContinuousFeatureInfo = {
   subkind: 'continuous';
   ordered: true;
   values: number[];
-  distribution: { bins: number[]; counts: number[] };
+  distribution: Distribution;
 };
 
 export type DiscreteFeatureInfo = {
@@ -46,7 +50,7 @@ export type DiscreteFeatureInfo = {
   subkind: 'discrete';
   ordered: true;
   values: number[];
-  distribution: { bins: number[]; counts: number[] };
+  distribution: Distribution;
 };
 
 export type QuantitativeFeatureInfo =
@@ -97,6 +101,8 @@ export type ICELevel =
 
 // Partial dependence
 
+export type Shape = 'increasing' | 'decreasing' | 'mixed';
+
 export type OrderedOneWayPD = {
   num_features: 1;
   ordered: true;
@@ -110,9 +116,9 @@ export type OrderedOneWayPD = {
   nrmse_good_fit: number;
   knots_good_fit: number;
   deviation: number;
-  distance_to_cluster_center: number;
   cluster: number;
   ice: ICE;
+  shape: Shape;
 };
 
 export type UnorderedOneWayPD = {
@@ -153,7 +159,15 @@ export type TwoWayPD = {
 
 export type PDSortingOption = {
   name: string;
-  sort: (data: OneWayPD[] | TwoWayPD[]) => OneWayPD[] | TwoWayPD[];
+  forBrushing: boolean;
+  sort: (
+    data: OneWayPD[] | TwoWayPD[],
+    extra?: {
+      highlightedIndices?: number[];
+      highlightedDistributions?: Map<string, Distribution>;
+      featureInfo?: Record<string, FeatureInfo>;
+    }
+  ) => OneWayPD[] | TwoWayPD[];
 };
 
 // Type predicates
@@ -180,5 +194,18 @@ export function isOneWayPdArray(
 
 export type Tab = 'one-way-plots' | 'two-way-plots' | 'detailed-plot';
 
-// Marginal plots
-export type MarginalDistributionKind = 'none' | 'bars' | 'strip';
+// Filtering
+
+export type ShapeSelections = {
+  quantitative: {
+    checked: boolean;
+    shapes: Shape[];
+  };
+  ordinal: {
+    checked: boolean;
+    shapes: Shape[];
+  };
+  nominal: {
+    checked: boolean;
+  };
+};

@@ -132,6 +132,8 @@ class Metadata:
             )
 
             if np.issubdtype(df[feature].dtype, np.integer):
+                # TODO: remove this?
+                # TODO: why does hr return 0-23?
                 values = (
                     unique_vals[:: n_unique // resolution]
                     if resolution < n_unique
@@ -140,7 +142,9 @@ class Metadata:
                 if resolution < n_unique:
                     min_val, max_val = unique_vals[0], unique_vals[-1]
                     n_points = (max_val - min_val) + 1
-                    values = np.arange(min_val, max_val + 1, n_points // resolution)
+                    values = np.arange(
+                        min_val, max_val + 1, n_points // resolution
+                    ).tolist()
                     # TODO: can this be done in a smarter way? something similar to
                     # how d3 does the ticks?
                     values[-1] = max_val

@@ -21,14 +21,19 @@
   export let height: number;
   export let scaleLocally: boolean;
   export let showMarginalDistribution: boolean;
+  export let marginTop: number;
+  export let marginRight: number;
 
   $: feature = $feature_info[pd.x_feature];
 
-  $: marginalChartHeight = showMarginalDistribution ? 100 : 0;
+  $: margin = {
+    top: 5,
+    right: marginRight,
+    bottom: 35,
+    left: 50,
+  };
 
-  const margin = { top: 10, right: 10, bottom: 35, left: 50 };
-
-  $: chartHeight = height - marginalChartHeight;
+  $: chartHeight = height - marginTop;
   $: facetHeight = chartHeight / pd.ice.clusters.length;
 
   $: x =
@@ -79,19 +84,19 @@
 </script>
 
 {#if showMarginalDistribution}
-  <svg {width} height={marginalChartHeight}>
+  <svg {width} height={marginTop}>
     {#if 'bandwidth' in x}
       <MarginalBarChart
         data={$feature_info[pd.x_feature].distribution}
         {x}
-        height={marginalChartHeight}
+        height={marginTop}
         direction="horizontal"
       />
     {:else}
       <MarginalHistogram
         data={$feature_info[pd.x_feature].distribution}
         {x}
-        height={marginalChartHeight}
+        height={marginTop}
         direction="horizontal"
       />
     {/if}

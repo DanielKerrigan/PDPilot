@@ -2,12 +2,12 @@
   import type { OneWayPD, ICELevel, TwoWayPD } from '../types';
   import { onMount } from 'svelte';
   import {
-    one_way_pds,
     two_way_pds,
     feature_names,
     two_way_to_calculate,
     detailedFeature1,
     detailedFeature2,
+    featureToPd,
   } from '../stores';
   import PDP from './PDP.svelte';
   import ViolinPlot from './vis/ice-clusters/ViolinPlot.svelte';
@@ -36,7 +36,7 @@
     }
 
     if ($detailedFeature2 === '') {
-      pd = $one_way_pds.find((d) => d.x_feature === $detailedFeature1) ?? null;
+      pd = $featureToPd.get($detailedFeature1) ?? null;
     } else {
       pd =
         $two_way_pds.find(
@@ -86,24 +86,8 @@
   let yPdp: OneWayPD | null = null;
 
   $: if (pd && pd.num_features === 2) {
-    let found = 0;
-
-    xPdp = null;
-    yPdp = null;
-
-    for (let other of $one_way_pds) {
-      if (other.x_feature === pd.x_feature) {
-        found++;
-        xPdp = other;
-      } else if (other.x_feature === pd.y_feature) {
-        found++;
-        yPdp = other;
-      }
-
-      if (found === 2) {
-        break;
-      }
-    }
+    xPdp = $featureToPd.get(pd.x_feature) ?? null;
+    yPdp = $featureToPd.get(pd.y_feature) ?? null;
   }
 
   let showClusterDescriptions = false;
@@ -270,9 +254,7 @@
             width={showClusterDescriptions ? halfWidth : gridWidth}
             height={gridHeight}
             {scaleLocally}
-            marginalDistributionKind={showMarginalDistribution
-              ? 'bars'
-              : 'none'}
+            {showMarginalDistribution}
             marginTop={showMarginalDistribution ? 100 : 10}
             marginRight={10}
             {iceLevel}
@@ -306,9 +288,7 @@
               width={halfWidth}
               height={halfHeight}
               {scaleLocally}
-              marginalDistributionKind={showMarginalDistribution
-                ? 'bars'
-                : 'none'}
+              {showMarginalDistribution}
               marginTop={showMarginalDistribution ? 100 : 10}
               marginRight={10}
               iceLevel="lines"
@@ -321,9 +301,7 @@
               width={halfWidth}
               height={halfHeight}
               {scaleLocally}
-              marginalDistributionKind={showMarginalDistribution
-                ? 'bars'
-                : 'none'}
+              {showMarginalDistribution}
               marginTop={showMarginalDistribution ? 100 : 10}
               marginRight={10}
               iceLevel="lines"
@@ -340,9 +318,7 @@
                 ? halfHeight
                 : gridHeight}
               {scaleLocally}
-              marginalDistributionKind={showMarginalDistribution
-                ? 'bars'
-                : 'none'}
+              {showMarginalDistribution}
               marginTop={showMarginalDistribution ? 100 : 10}
               marginRight={showMarginalDistribution ? 100 : 10}
               iceLevel="lines"
@@ -361,9 +337,7 @@
                 ? halfHeight
                 : gridHeight}
               {scaleLocally}
-              marginalDistributionKind={showMarginalDistribution
-                ? 'bars'
-                : 'none'}
+              {showMarginalDistribution}
               marginTop={showMarginalDistribution ? 100 : 10}
               marginRight={showMarginalDistribution ? 100 : 10}
               {iceLevel}

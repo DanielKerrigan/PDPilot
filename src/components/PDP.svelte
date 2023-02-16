@@ -1,10 +1,5 @@
 <script lang="ts">
-  import type {
-    OneWayPD,
-    TwoWayPD,
-    ICELevel,
-    MarginalDistributionKind,
-  } from '../types';
+  import type { OneWayPD, TwoWayPD, ICELevel } from '../types';
   import OneWayChart from './vis/one-way/OneWayChart.svelte';
   import TwoWayChart from './vis/two-way/TwoWayChart.svelte';
 
@@ -16,9 +11,10 @@
   export let showColorLegend = false;
   export let iceLevel: ICELevel;
   export let indices: number[] | null = null;
-  export let marginalDistributionKind: MarginalDistributionKind = 'none';
+  export let showMarginalDistribution = false;
   export let marginTop = 0;
   export let marginRight = 0;
+  export let allowBrushing = false;
 </script>
 
 {#if width > 0 && height > 0}
@@ -29,10 +25,11 @@
       {pd}
       {scaleLocally}
       {iceLevel}
-      {marginalDistributionKind}
+      {showMarginalDistribution}
       {marginTop}
       {marginRight}
       {indices}
+      {allowBrushing}
     />
   {:else if pd.num_features === 2}
     <TwoWayChart
@@ -44,7 +41,7 @@
       {showColorLegend}
       {marginTop}
       {marginRight}
-      showMarginalDistribution={marginalDistributionKind === 'bars'}
+      {showMarginalDistribution}
     />
   {/if}
 {/if}

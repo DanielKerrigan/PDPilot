@@ -22,6 +22,7 @@ from sklearn.metrics import mean_squared_error, silhouette_score
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import SplineTransformer, StandardScaler
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import LinearRegression
 from tqdm import tqdm
 from tslearn.clustering import TimeSeriesKMeans
 from tslearn.clustering import silhouette_score as ts_silhouette_score
@@ -322,10 +323,22 @@ def calc_one_way_pd(
         #         Malte Londschien
         # License: BSD 3 clause
 
-        # good-fit
-
         X = np.array(feat_info["values"]).reshape((-1, 1))
         y = np.array(mean_predictions)
+
+        # shape
+
+        # https://stackoverflow.com/a/30734735/5016634
+        is_increasing = np.all(y[1:] >= y[:-1])
+        is_decreasing = np.all(y[1:] <= y[:-1])
+
+        par_dep["shape"] = (
+            "increasing"
+            if is_increasing
+            else ("decreasing" if is_decreasing else "mixed")
+        )
+
+        # good-fit
 
         for i in range(2, 10):
             trend_model = make_pipeline(
@@ -542,7 +555,7 @@ def _calculate_ice(ice_lines, data, feature, md):
         clusters.append(
             {
                 "id": n,
-                "indices": indices,
+                "indices": indices.tolist(),
                 "centered_ice_lines": centered_lines.tolist(),
                 "mean": mean.tolist(),
                 "p10": p10.tolist(),
@@ -596,7 +609,7 @@ def _calculate_ice(ice_lines, data, feature, md):
         "centered_mean_max": centered_mean_max.item(),
         "p10_min": p10_min.item(),
         "p90_max": p90_max.item(),
-        "ice_lines": ice_lines,
+        "ice_lines": ice_lines.tolist(),
         "clusters": clusters,
         "centered_pdp": centered_pdp.tolist(),
         "cluster_distance": cluster_distance.item(),

@@ -66,11 +66,11 @@
     min-height: 0;
   }
 
-  .pdp-hide {
+  /* global styles */
+
+  .pdp-explorer-widget-container :global(.pdp-hide) {
     display: none;
   }
-
-  /* global styles */
 
   .pdp-explorer-widget-container :global(canvas),
   .pdp-explorer-widget-container :global(svg) {

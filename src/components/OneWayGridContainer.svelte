@@ -1,10 +1,14 @@
 <script lang="ts">
-  import PDPGridControls from './PDPGridControls.svelte';
+  import GridFilters from './GridFilters.svelte';
   import PDPGrid from './PDPGrid.svelte';
   import { feature_names, one_way_pds } from '../stores';
   import { singlePDPSortingOptions } from '../sorting';
 
   let selectedFeatures: string[] = $feature_names;
+
+  function onChangeFilters(event: CustomEvent<string[]>) {
+    selectedFeatures = event.detail;
+  }
 
   $: filteredOneWayPds = $one_way_pds.filter((p) =>
     selectedFeatures.includes(p.x_feature)
@@ -13,7 +17,7 @@
 
 <div class="one-way-grid-container">
   <div>
-    <PDPGridControls bind:selectedFeatures />
+    <GridFilters on:changeFilters={onChangeFilters} />
   </div>
   <div class="pdp-grid-wrapper">
     <PDPGrid
@@ -31,5 +35,6 @@
 
   .pdp-grid-wrapper {
     flex: 1;
+    min-width: 0;
   }
 </style>

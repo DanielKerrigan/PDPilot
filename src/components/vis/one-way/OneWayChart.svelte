@@ -1,9 +1,5 @@
 <script lang="ts">
-  import type {
-    ICELevel,
-    MarginalDistributionKind,
-    OneWayPD,
-  } from '../../../types';
+  import type { ICELevel, OneWayPD } from '../../../types';
   import ClusterBands from './ClusterBands.svelte';
   import ClusterLines from './ClusterLines.svelte';
   import ClusterCenters from './ClusterCenters.svelte';
@@ -14,10 +10,11 @@
   export let height: number;
   export let scaleLocally: boolean;
   export let iceLevel: ICELevel;
-  export let marginalDistributionKind: MarginalDistributionKind;
+  export let showMarginalDistribution: boolean;
   export let marginTop: number;
   export let marginRight: number;
   export let indices: number[] | null;
+  export let allowBrushing: boolean;
 </script>
 
 {#if iceLevel === 'lines'}
@@ -26,9 +23,10 @@
     {width}
     {height}
     {scaleLocally}
-    {marginalDistributionKind}
+    {showMarginalDistribution}
     {marginTop}
     {marginRight}
+    {allowBrushing}
   />
 {:else if iceLevel === 'cluster-centers'}
   <ClusterCenters
@@ -36,7 +34,9 @@
     {width}
     {height}
     {scaleLocally}
-    showMarginalDistribution={marginalDistributionKind === 'bars'}
+    {showMarginalDistribution}
+    {marginTop}
+    {marginRight}
   />
 {:else if iceLevel === 'cluster-bands'}
   <ClusterBands
@@ -44,7 +44,9 @@
     {width}
     {height}
     {scaleLocally}
-    showMarginalDistribution={marginalDistributionKind === 'bars'}
+    {showMarginalDistribution}
+    {marginTop}
+    {marginRight}
   />
 {:else}
   <ClusterLines
@@ -52,7 +54,9 @@
     {width}
     {height}
     {scaleLocally}
-    showMarginalDistribution={marginalDistributionKind === 'bars'}
+    {showMarginalDistribution}
+    {marginTop}
+    {marginRight}
     {indices}
   />
 {/if}

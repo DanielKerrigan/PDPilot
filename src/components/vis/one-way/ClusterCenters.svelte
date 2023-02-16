@@ -21,14 +21,19 @@
   export let height: number;
   export let scaleLocally: boolean;
   export let showMarginalDistribution: boolean;
+  export let marginTop: number;
+  export let marginRight: number;
 
   $: feature = $feature_info[pd.x_feature];
 
-  $: marginalChartHeight = showMarginalDistribution ? 100 : 0;
+  $: margin = {
+    top: marginTop,
+    right: marginRight,
+    bottom: 35,
+    left: 50,
+  };
 
-  const margin = { top: 10, right: 10, bottom: 35, left: 50 };
-
-  $: chartHeight = height - marginalChartHeight;
+  $: chartHeight = height;
   $: facetHeight = chartHeight / pd.ice.clusters.length;
 
   $: x =
@@ -66,27 +71,7 @@
     .y((d) => y(d));
 </script>
 
-{#if showMarginalDistribution}
-  <svg {width} height={marginalChartHeight}>
-    {#if 'bandwidth' in x}
-      <MarginalBarChart
-        data={$feature_info[pd.x_feature].distribution}
-        {x}
-        height={marginalChartHeight}
-        direction="horizontal"
-      />
-    {:else}
-      <MarginalHistogram
-        data={$feature_info[pd.x_feature].distribution}
-        {x}
-        height={marginalChartHeight}
-        direction="horizontal"
-      />
-    {/if}
-  </svg>
-{/if}
-
-<svg class="one-way-chart">
+<svg {width} {height}>
   <!-- cluster means -->
   <g>
     {#each pd.ice.clusters as cluster}
@@ -140,11 +125,25 @@
   />
 
   <YAxis scale={y} x={margin.left} label={'centered avg. prediction'} />
+
+  {#if showMarginalDistribution}
+    {#if 'bandwidth' in x}
+      <MarginalBarChart
+        data={$feature_info[pd.x_feature].distribution}
+        {x}
+        height={margin.top}
+        direction="horizontal"
+      />
+    {:else}
+      <MarginalHistogram
+        data={$feature_info[pd.x_feature].distribution}
+        {x}
+        height={margin.top}
+        direction="horizontal"
+      />
+    {/if}
+  {/if}
 </svg>
 
 <style>
-  .one-way-chart {
-    width: 100%;
-    height: 100%;
-  }
 </style>

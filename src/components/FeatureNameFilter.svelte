@@ -1,18 +1,40 @@
 <script lang="ts">
+  import { createEventDispatcher } from 'svelte';
   import { feature_names } from '../stores';
 
-  export let selectedFeatures: string[];
+  export let enabledFeatures: string[];
+
+  const dispatch = createEventDispatcher<{ changeNameFilters: string[] }>();
 
   let featuresChecked = true;
   let featuresCheckboxIndeterminate = false;
   let search = '';
+  let selectedFeatures = $feature_names;
+  let manuallyUnselected = new Set();
+
+  function onEnabledFeaturesChange(enabledFeatures: string[]) {
+    selectedFeatures = $feature_names.filter(
+      (f) => enabledFeatures.includes(f) && !manuallyUnselected.has(f)
+    );
+
+    updateAllFeaturesCheckbox();
+    dispatch('changeNameFilters', selectedFeatures);
+  }
+
+  $: onEnabledFeaturesChange(enabledFeatures);
+
+  $: allFeaturesEnabled = enabledFeatures.length === $feature_names.length;
 
   $: featureCheckboxes = $feature_names.map((feature) => ({
     feature,
     hidden: !feature.includes(search),
+    disabled: !enabledFeatures.includes(feature),
   }));
 
-  $: selectedFeatures, onFeatureChange();
+  $: {
+    updateAllFeaturesCheckbox();
+    dispatch('changeNameFilters', selectedFeatures);
+  }
 
   function onAllFeaturesChange() {
     if (featuresChecked) {
@@ -22,9 +44,10 @@
       selectedFeatures = [];
       featuresCheckboxIndeterminate = false;
     }
+    manuallyUnselected = new Set();
   }
 
-  function onFeatureChange() {
+  function updateAllFeaturesCheckbox() {
     if (selectedFeatures.length === 0) {
       featuresChecked = false;
       featuresCheckboxIndeterminate = false;
@@ -39,6 +62,14 @@
       featuresCheckboxIndeterminate = true;
     }
   }
+
+  function onFeatureManuallyChanged(feature: string) {
+    if (!selectedFeatures.includes(feature)) {
+      manuallyUnselected.add(feature);
+    } else {
+      manuallyUnselected.delete(feature);
+    }
+  }
 </script>
 
 <div class="controls-features">
@@ -50,9 +81,9 @@
         bind:checked={featuresChecked}
         indeterminate={featuresCheckboxIndeterminate}
         on:change={onAllFeaturesChange}
-        disabled={search !== ''}
+        disabled={search !== '' || !allFeaturesEnabled}
       />
-      <label class="bold" for="features-checkbox">Features</label>
+      <label for="features-checkbox">All features</label>
     </li>
   </ul>
 
@@ -62,7 +93,7 @@
   </label>
 
   <ul class="individual-features">
-    {#each featureCheckboxes as { feature, hidden } (feature)}
+    {#each featureCheckboxes as { feature, hidden, disabled } (feature)}
       <li class="fs-row" class:hidden>
         <input
           id="{feature}-checkbox"
@@ -70,6 +101,8 @@
           bind:group={selectedFeatures}
           name="features"
           value={feature}
+          {disabled}
+          on:change={() => onFeatureManuallyChanged(feature)}
         />
         <label class="cutoff" for="{feature}-checkbox" title={feature}
           >{feature}</label

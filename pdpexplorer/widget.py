@@ -23,6 +23,11 @@ from ._frontend import module_name, module_version
 class PDPExplorerWidget(DOMWidget):
     """This class creates the interactive widget.
 
+    :param predict: A function whose input is a DataFrame of instances and
+        returns the model's predictions on those instances.
+    :type predict: Callable[[pd.DataFrame], list[float]]
+    :param df: Instances to use to compute the PDPs and ICE plots.
+    :type df: pd.DataFrame
     :param pd_data: The dictionary returned by :func:`pdpexplorer.pdp.partial_dependence`
         or a path to the file containing that data.
     :type pd_data: dict | str | Path

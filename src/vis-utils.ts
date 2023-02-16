@@ -1,8 +1,20 @@
 import { scaleLinear } from 'd3-scale';
 import { format } from 'd3-format';
-import type { ICELevel, OrderedOneWayPD, UnorderedOneWayPD } from './types';
+import { bisectRight, rollup, range } from 'd3-array';
+import type {
+  FeatureInfo,
+  ICELevel,
+  OrderedOneWayPD,
+  UnorderedOneWayPD,
+} from './types';
 import type { ScaleLinear } from 'd3-scale';
-export { scaleCanvas, defaultFormat, getYScale, categoricalColors };
+export {
+  scaleCanvas,
+  defaultFormat,
+  getYScale,
+  categoricalColors,
+  getHighlightedBins,
+};
 
 // Adapted from https://www.html5rocks.com/en/tutorials/canvas/hidpi/
 function scaleCanvas(
@@ -93,6 +105,56 @@ function getYScale(
         .nice()
         .range([facetHeight - margin.bottom, margin.top]);
     }
+  }
+}
+
+// TODO: should this function be in a different file?
+function getHighlightedBins(
+  info: FeatureInfo,
+  values: number[],
+  idx: number[]
+): {
+  bins: number[];
+  counts: number[];
+} {
+  const highlightedValues = idx.map((i) => values[i]);
+
+  if (info.kind === 'categorical') {
+    const highlightedCounts = rollup(
+      highlightedValues,
+      (g) => g.length,
+      (d) => d
+    );
+
+    const counts = info.distribution.bins.map(
+      (b) => highlightedCounts.get(b) ?? 0
+    );
+
+    return {
+      bins: info.distribution.bins,
+      counts,
+    };
+  } else {
+    const highlightedCounts = rollup(
+      highlightedValues,
+      (g) => g.length,
+      (d) =>
+        bisectRight(
+          info.distribution.bins,
+          d,
+          0,
+          info.distribution.bins.length - 1
+        ) - 1
+    );
+
+    const counts = range(info.distribution.counts.length).map(
+      (i) => highlightedCounts.get(i) ?? 0
+    );
+
+    return {
+      bins: info.distribution.bins,
+      counts,
+    };
   }
 }
 

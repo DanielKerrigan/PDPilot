@@ -2,11 +2,19 @@ import { derived, writable } from 'svelte/store';
 import type { Readable, Writable } from 'svelte/store';
 import type { DOMWidgetModel } from '@jupyter-widgets/base';
 
-import type { Dataset, TwoWayPD, OneWayPD, FeatureInfo, Tab } from './types';
+import type {
+  Dataset,
+  TwoWayPD,
+  OneWayPD,
+  FeatureInfo,
+  Tab,
+  Distribution,
+} from './types';
 
 import { scaleSequential, scaleDiverging } from 'd3-scale';
 import type { ScaleSequential, ScaleDiverging } from 'd3-scale';
 import { interpolateYlGnBu, interpolateBrBG } from 'd3-scale-chromatic';
+import { getHighlightedBins } from './vis-utils';
 
 /**
  *
@@ -56,7 +64,7 @@ function createSyncedWidget<T>(
   };
 }
 
-// Declare stores with their associated Traitlets here.
+// Stores that are synced with traitlets
 
 export let feature_names: Writable<string[]>;
 export let feature_info: Writable<Record<string, FeatureInfo>>;
@@ -82,15 +90,25 @@ export let highlighted_indices: Writable<number[]>;
 
 export let two_way_to_calculate: Writable<string[]>;
 
+// Stores that are not synced with traitlets
+
 export let selectedTab: Writable<Tab>;
+
 export let detailedFeature1: Writable<string>;
 export let detailedFeature2: Writable<string>;
+
+// is a brush currently being moved over a plot
+export let brushingInProgress: Writable<boolean>;
 
 export let globalColorTwoWayPdp: Readable<ScaleSequential<string, string>>;
 
 export let globalColorTwoWayInteraction: Readable<
   ScaleDiverging<string, string>
 >;
+
+export let featureToPd: Readable<Map<string, OneWayPD>>;
+
+export let highlightedDistributions: Readable<Map<string, Distribution>>;
 
 /**
  * Note that when the cell containing the widget is re-run, a new model is
@@ -172,6 +190,8 @@ export function setStores(model: DOMWidgetModel): void {
   detailedFeature1 = writable(detailedFeature1Default);
   detailedFeature2 = writable('');
 
+  brushingInProgress = writable(false);
+
   globalColorTwoWayPdp = derived(two_way_pdp_extent, ($two_way_pdp_extent) =>
     scaleSequential()
       .domain($two_way_pdp_extent)
@@ -190,5 +210,24 @@ export function setStores(model: DOMWidgetModel): void {
         ])
         .interpolator(interpolateBrBG)
         .unknown('black')
+  );
+
+  featureToPd = derived(
+    one_way_pds,
+    ($one_way_pds) => new Map($one_way_pds.map((d) => [d.x_feature, d]))
+  );
+
+  highlightedDistributions = derived(
+    [feature_info, dataset, highlighted_indices],
+    ([$feature_info, $dataset, $highlighted_indices]) =>
+      new Map(
+        Object.entries($feature_info).map(([featureName, info]) => {
+          const values = $dataset[featureName];
+          return [
+            featureName,
+            getHighlightedBins(info, values, $highlighted_indices),
+          ];
+        })
+      )
   );
 }

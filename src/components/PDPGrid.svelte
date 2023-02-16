@@ -10,6 +10,10 @@
     detailedFeature1,
     detailedFeature2,
     selectedTab,
+    highlighted_indices,
+    brushingInProgress,
+    highlightedDistributions,
+    feature_info,
   } from '../stores';
   import InfoTooltip from './InfoTooltip.svelte';
 
@@ -18,8 +22,11 @@
 
   $: ways = isOneWayPdArray(data) ? 1 : 2;
 
+  let sortedData: OneWayPD[] | TwoWayPD[];
+
   let showIceClusters = false;
   let colorShows: 'predictions' | 'interactions' = 'interactions';
+  let showMarginalDistribution = false;
 
   let div: HTMLDivElement;
   let legendDiv: HTMLDivElement;
@@ -94,6 +101,10 @@
   $: pdpWidth = Math.floor(gridWidth / numCols);
   $: pdpHeight = Math.floor(gridHeight / numRows);
 
+  // brushing
+
+  let brushingSinceSorting = false;
+
   // header
 
   const legendHeight = 24;
@@ -103,7 +114,27 @@
 
   let sortingOption = sortingOptions[0];
 
-  $: sortedData = sortingOption.sort(data);
+  $: if (!sortingOption.forBrushing) {
+    sortedData = sortingOption.sort(data);
+  }
+
+  // we don't want changes to highlights to trigger this
+  function sortByBrushing(data: OneWayPD[] | TwoWayPD[]) {
+    brushingSinceSorting = false;
+
+    sortedData = sortingOption.sort(data, {
+      highlightedIndices: $highlighted_indices,
+      highlightedDistributions: $highlightedDistributions,
+      featureInfo: $feature_info,
+    });
+  }
+  $: if (sortingOption.forBrushing) {
+    sortByBrushing(data);
+  }
+
+  $: if ($brushingInProgress) {
+    brushingSinceSorting = true;
+  }
 
   // pagination
 
@@ -145,6 +176,7 @@
       <button
         disabled={currentPage <= 1}
         on:click={() => setPage(currentPage - 1)}
+        title="Previous page"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -170,6 +202,7 @@
       <button
         disabled={currentPage >= numPages}
         on:click={() => setPage(currentPage + 1)}
+        title="Next page"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -200,6 +233,31 @@
       </select>
     </label>
 
+    {#if ways === 1 && sortingOption.forBrushing}
+      <button
+        title="Update sorting"
+        disabled={!brushingSinceSorting}
+        on:click={() => sortByBrushing(data)}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="icon icon-tabler icon-tabler-refresh"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          stroke-width="2"
+          stroke="currentColor"
+          fill="none"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+          <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+          <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+        </svg>
+      </button>
+    {/if}
+
     <label class="label-and-input dont-shrink">
       <input type="checkbox" bind:checked={scaleLocally} /><span
         >Scale locally</span
@@ -209,7 +267,13 @@
     {#if ways === 1}
       <label class="label-and-input">
         <input type="checkbox" bind:checked={showIceClusters} /><span
-          >Cluster ICE lines</span
+          >Cluster lines</span
+        >
+      </label>
+
+      <label class="label-and-input">
+        <input type="checkbox" bind:checked={showMarginalDistribution} /><span
+          >Distributions</span
         >
       </label>
     {/if}
@@ -315,11 +379,12 @@
             height={pdpHeight}
             {scaleLocally}
             {colorShows}
-            marginalDistributionKind={'none'}
+            {showMarginalDistribution}
             marginTop={10}
             marginRight={10}
             showColorLegend={scaleLocally}
             iceLevel={showIceClusters ? 'cluster-centers' : 'lines'}
+            allowBrushing={ways === 1}
           />
           <button class="expand-pdp-button" on:click={() => onClickPdp(pd)}>
             <svg
