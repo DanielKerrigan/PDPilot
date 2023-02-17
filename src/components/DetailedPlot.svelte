@@ -18,8 +18,8 @@
   let iceLevel: ICELevel = 'lines';
   const levels: { value: ICELevel; title: string }[] = [
     { value: 'lines', title: 'Lines' },
-    { value: 'cluster-bands', title: 'Cluster Bands' },
     { value: 'cluster-lines', title: 'Cluster Lines' },
+    { value: 'cluster-bands', title: 'Cluster Bands' },
     { value: 'cluster-centers', title: 'Cluster Centers' },
   ];
 
