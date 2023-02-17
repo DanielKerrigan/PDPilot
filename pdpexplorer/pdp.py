@@ -640,16 +640,16 @@ def _turn_one_hot_into_category(df_one_hot, md):
         info = md.feature_info[feature]
         # one-hot column names
         columns = [col for (col, _) in info["columns_and_values"]]
-        # undo one-hot encoding. this results in one categorical column
+        # undo one-hot encoding. this results in one categorical series
         # where the categories are the original column names
-        as_category = pd.from_dummies(df[columns])
-        as_category.columns = [feature]
+        # https://stackoverflow.com/a/61251205/5016634
+        as_category = df[columns].idxmax(axis=1)
         # map from one-hot column name to index
         column_to_index = dict(zip(columns, info["values"]))
         # turn the categories into integers
-        int_column = as_category[feature].map(column_to_index)
+        int_series = as_category.map(column_to_index).values
         # remove the one-hot columns from the df and add the integer column
         df.drop(columns=columns, inplace=True)
-        df[feature] = int_column.values
+        df[feature] = int_series
 
     return df
