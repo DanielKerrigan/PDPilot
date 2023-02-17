@@ -8,11 +8,11 @@ sys.path.insert(0, os.path.abspath("../.."))
 # -- Project information
 
 project = "pdpexplorer"
-copyright = "2022, Daniel Kerrigan"
+copyright = "2023, Daniel Kerrigan"
 author = "Daniel Kerrigan"
 
-release = "0.2"
-version = "0.2.4"
+release = "0.3"
+version = "0.3.0"
 
 # -- General configuration
 
