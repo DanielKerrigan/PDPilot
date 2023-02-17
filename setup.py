@@ -106,7 +106,7 @@ setup_args = dict(
             "pypandoc",
             "recommonmark",
             "sphinx>=1.5",
-            "sphinx_rtd_theme",
+            "furo",
         ],
         "dev": ["pylint", "black"],
         "test": ["pytest"],
