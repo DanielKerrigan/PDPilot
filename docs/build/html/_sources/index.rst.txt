@@ -3,7 +3,7 @@ pdp-explorer
 =====================================
 
 .. image:: screenshots/overview.png
-   :width: 600
+   :width: 800
    :alt: A screenshot of the "One-way Plots" tab of the tool's user interface.
 
 pdp-explorer is a Jupyter widget for exploring partial dependence plots (PDPs) and individual conditional expectation (ICE) plots. You can find the code on `GitHub <https://github.com/nyuvis/pdp-ranking>`_.

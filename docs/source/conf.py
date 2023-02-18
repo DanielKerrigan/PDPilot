@@ -11,8 +11,20 @@ project = "pdpexplorer"
 copyright = "2023, Daniel Kerrigan"
 author = "Daniel Kerrigan"
 
-release = "0.3"
-version = "0.3.1"
+# get version from python package:
+import os
+
+here = os.path.dirname(__file__)
+repo = os.path.join(here, "..", "..")
+_version_py = os.path.join(repo, "pdpexplorer", "_version.py")
+version_ns = {}
+with open(_version_py) as f:
+    exec(f.read(), version_ns)
+
+# The short X.Y version.
+version = "%i.%i" % version_ns["version_info"][:2]
+# The full version, including alpha/beta/rc tags.
+release = version_ns["__version__"]
 
 # -- General configuration
 

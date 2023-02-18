@@ -5,8 +5,6 @@
 Add module docstring for pdpexplorer
 """
 
-from .logging import mylog
-
 import json
 from pathlib import Path
 from typing import Callable, Union, List

@@ -1,6 +1,6 @@
 {
   "name": "pdp-explorer",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "A Jupyter widget for exploring partial dependence plots.",
   "keywords": [
     "jupyter",
@@ -13,9 +13,9 @@
     "dist/*.js",
     "css/*.css"
   ],
-  "homepage": "https://github.com/nyuvis/pdp-explorer",
+  "homepage": "https://github.com/nyuvis/pdp-ranking",
   "bugs": {
-    "url": "https://github.com/nyuvis/pdp-explorer/issues"
+    "url": "https://github.com/nyuvis/pdp-ranking/issues"
   },
   "license": "BSD-3-Clause",
   "author": {
@@ -26,7 +26,7 @@
   "types": "./lib/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nyuvis/pdp-explorer"
+    "url": "https://github.com/nyuvis/pdp-ranking"
   },
   "scripts": {
     "build": "webpack --mode=development && jupyter labextension build --development=True .",
@@ -44,7 +44,7 @@
     "test": "uvu -r tsm tests"
   },
   "dependencies": {
-    "@jupyter-widgets/base": "^1.1.10 || ^2.0.0 || ^3.0.0 || ^4.0.0",
+    "@jupyter-widgets/base": "^1.1.10 || ^2 || ^3 || ^4 || ^5 || ^6",
     "d3": "^7.4.4",
     "simple-statistics": "^7.8.0"
   },
@@ -52,8 +52,8 @@
     "@babel/core": "^7.5.0",
     "@babel/preset-env": "^7.5.0",
     "@jupyterlab/builder": "^3.0.0",
-    "@phosphor/application": "^1.6.0",
-    "@phosphor/widgets": "^1.6.0",
+    "@lumino/application": "^1.6.0",
+    "@lumino/widgets": "^1.6.0",
     "@tsconfig/svelte": "^3.0.0",
     "@types/d3": "^7.4.0",
     "@types/webpack-env": "^1.13.6",

@@ -6,13 +6,13 @@ const SveltePreprocess = require('svelte-preprocess');
 const rules = [
   { test: /\.ts$/, loader: 'ts-loader' },
   { test: /\.js$/, loader: 'source-map-loader' },
-  { test: /\.css$/, use: ['style-loader', 'css-loader']},
-    {
+  { test: /\.css$/, use: ['style-loader', 'css-loader'] },
+  {
     test: /\.svelte$/,
     loader: 'svelte-loader',
     options: {
       preprocess: SveltePreprocess(),
-    }
+    },
   },
 ];
 
@@ -21,8 +21,8 @@ const externals = ['@jupyter-widgets/base'];
 
 const resolve = {
   // Add '.ts' and '.tsx' as resolvable extensions.
-  extensions: [".webpack.js", ".web.js", ".ts", ".js", ".svelte"],
-  mainFields: ['svelte', 'browser', 'module', 'main']
+  extensions: ['.webpack.js', '.web.js', '.ts', '.js', '.svelte'],
+  mainFields: ['svelte', 'browser', 'module', 'main'],
 };
 
 module.exports = [
@@ -40,12 +40,11 @@ module.exports = [
       publicPath: '',
     },
     module: {
-      rules: rules
+      rules: rules,
     },
     externals,
     resolve,
   },
-
 
   /**
    * Notebook extension
@@ -62,7 +61,7 @@ module.exports = [
       publicPath: '',
     },
     module: {
-      rules: rules
+      rules: rules,
     },
     externals,
     resolve,
@@ -81,19 +80,18 @@ module.exports = [
   {
     entry: './src/index.ts',
     output: {
-        filename: 'index.js',
-        path: path.resolve(__dirname, 'dist'),
-        libraryTarget: 'amd',
-        library: "pdp-explorer",
-        publicPath: 'https://unpkg.com/pdp-explorer@' + version + '/dist/'
+      filename: 'index.js',
+      path: path.resolve(__dirname, 'dist'),
+      libraryTarget: 'amd',
+      library: 'pdp-explorer',
+      publicPath: 'https://unpkg.com/pdp-explorer@' + version + '/dist/',
     },
     module: {
-        rules: rules
+      rules: rules,
     },
     externals,
     resolve,
   },
-
 
   /**
    * Documentation widget bundle
@@ -105,14 +103,13 @@ module.exports = [
     output: {
       filename: 'embed-bundle.js',
       path: path.resolve(__dirname, 'docs', 'source', '_static'),
-      library: "pdp-explorer",
-      libraryTarget: 'amd'
+      library: 'pdp-explorer',
+      libraryTarget: 'amd',
     },
     module: {
-      rules: rules
+      rules: rules,
     },
     externals,
     resolve,
-  }
-
+  },
 ];
