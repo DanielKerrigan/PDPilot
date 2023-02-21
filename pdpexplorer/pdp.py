@@ -328,14 +328,16 @@ def calc_one_way_pd(
 
         # shape
 
-        # https://stackoverflow.com/a/30734735/5016634
-        is_increasing = np.all(y[1:] >= y[:-1])
-        is_decreasing = np.all(y[1:] <= y[:-1])
+        diff = np.diff(y)
+        pos = diff[diff > 0].sum()
+        neg = np.abs(diff[diff < 0].sum())
+        percent_pos = pos / (pos + neg) if pos + neg != 0 else 0.5
+        tol = 0.15
 
         par_dep["shape"] = (
             "increasing"
-            if is_increasing
-            else ("decreasing" if is_decreasing else "mixed")
+            if percent_pos > (0.5 + tol)
+            else ("decreasing" if percent_pos < (0.5 - tol) else "mixed")
         )
 
         # good-fit

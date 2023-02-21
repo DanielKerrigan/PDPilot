@@ -5,11 +5,7 @@
   let allShapes: Shape[] = ['increasing', 'decreasing', 'mixed'];
 
   let selections: ShapeSelections = {
-    quantitative: {
-      checked: true,
-      shapes: allShapes,
-    },
-    ordinal: {
+    ordered: {
       checked: true,
       shapes: allShapes,
     },
@@ -18,29 +14,16 @@
     },
   };
 
-  function quantitativeChange() {
-    if (selections.quantitative.checked) {
-      selections.quantitative.shapes = allShapes;
+  function orderedChange() {
+    if (selections.ordered.checked) {
+      selections.ordered.shapes = allShapes;
     } else {
-      selections.quantitative.shapes = [];
+      selections.ordered.shapes = [];
     }
   }
 
-  function quantitativeShapeChange() {
-    selections.quantitative.checked =
-      selections.quantitative.shapes.length !== 0;
-  }
-
-  function ordinalChange() {
-    if (selections.ordinal.checked) {
-      selections.ordinal.shapes = allShapes;
-    } else {
-      selections.ordinal.shapes = [];
-    }
-  }
-
-  function ordinalShapeChange() {
-    selections.ordinal.checked = selections.ordinal.shapes.length !== 0;
+  function orderedShapeChange() {
+    selections.ordered.checked = selections.ordered.shapes.length !== 0;
   }
 
   const dispatch = createEventDispatcher<{
@@ -60,74 +43,35 @@
       <label class="label-and-input">
         <input
           type="checkbox"
-          indeterminate={selections.quantitative.shapes.length > 0 &&
-            selections.quantitative.shapes.length < allShapes.length}
-          bind:checked={selections.quantitative.checked}
-          on:change={quantitativeChange}
-        /><span>Quantitative</span>
+          indeterminate={selections.ordered.shapes.length > 0 &&
+            selections.ordered.shapes.length < allShapes.length}
+          bind:checked={selections.ordered.checked}
+          on:change={orderedChange}
+        /><span>Ordered</span>
       </label>
       <ul>
         <li>
           <label class="label-and-input">
             <input
               type="checkbox"
-              bind:group={selections.quantitative.shapes}
-              on:change={quantitativeShapeChange}
+              bind:group={selections.ordered.shapes}
+              on:change={orderedShapeChange}
               value="increasing"
             /><span>Increasing</span>
           </label>
           <label class="label-and-input">
             <input
               type="checkbox"
-              bind:group={selections.quantitative.shapes}
-              on:change={quantitativeShapeChange}
+              bind:group={selections.ordered.shapes}
+              on:change={orderedShapeChange}
               value="decreasing"
             /><span>Decreasing</span>
           </label>
           <label class="label-and-input">
             <input
               type="checkbox"
-              bind:group={selections.quantitative.shapes}
-              on:change={quantitativeShapeChange}
-              value="mixed"
-            /><span>Mixed</span>
-          </label>
-        </li>
-      </ul>
-    </li>
-    <li>
-      <label class="label-and-input">
-        <input
-          type="checkbox"
-          indeterminate={selections.ordinal.shapes.length > 0 &&
-            selections.ordinal.shapes.length < allShapes.length}
-          bind:checked={selections.ordinal.checked}
-          on:change={ordinalChange}
-        /><span>Ordinal</span>
-      </label>
-      <ul>
-        <li>
-          <label class="label-and-input">
-            <input
-              type="checkbox"
-              bind:group={selections.ordinal.shapes}
-              on:change={ordinalShapeChange}
-              value="increasing"
-            /><span>Increasing</span>
-          </label>
-          <label class="label-and-input">
-            <input
-              type="checkbox"
-              bind:group={selections.ordinal.shapes}
-              on:change={ordinalShapeChange}
-              value="decreasing"
-            /><span>Decreasing</span>
-          </label>
-          <label class="label-and-input">
-            <input
-              type="checkbox"
-              bind:group={selections.ordinal.shapes}
-              on:change={ordinalShapeChange}
+              bind:group={selections.ordered.shapes}
+              on:change={orderedShapeChange}
               value="mixed"
             /><span>Mixed</span>
           </label>

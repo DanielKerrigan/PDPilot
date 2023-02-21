@@ -2,7 +2,7 @@
   import FeatureNameFilter from './FeatureNameFilter.svelte';
   import FeatureKindFilter from './FeatureKindFilter.svelte';
   import ToggleHeader from './ToggleHeader.svelte';
-  import { feature_names, feature_info, featureToPd } from '../stores';
+  import { feature_names, featureToPd } from '../stores';
   import type { ShapeSelections } from '../types';
   import { createEventDispatcher } from 'svelte';
 
@@ -22,24 +22,16 @@
   }
 
   $: filteredByKind = $feature_names.filter((f) => {
-    const info = $feature_info[f];
     const pd = $featureToPd.get(f);
 
-    if (!pd || !shapeSelections || !info) {
+    if (!pd || !shapeSelections) {
       return false;
     }
 
-    if (info.kind === 'quantitative' && pd.ordered) {
-      return shapeSelections.quantitative.shapes.includes(pd.shape);
-    } else if (info.subkind === 'ordinal' && pd.ordered) {
-      return shapeSelections.ordinal.shapes.includes(pd.shape);
-    } else if (
-      (info.subkind === 'nominal' || info.subkind === 'one_hot') &&
-      !pd.ordered
-    ) {
-      return shapeSelections.nominal.checked;
+    if (pd.ordered) {
+      return shapeSelections.ordered.shapes.includes(pd.shape);
     } else {
-      return false;
+      return shapeSelections.nominal.checked;
     }
   });
 </script>

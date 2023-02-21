@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.abspath("../.."))
 
 # -- Project information
 
-project = "pdpexplorer"
+project = "pdp-explorer"
 copyright = "2023, Daniel Kerrigan"
 author = "Daniel Kerrigan"
 

@@ -197,11 +197,7 @@ export type Tab = 'one-way-plots' | 'two-way-plots' | 'detailed-plot';
 // Filtering
 
 export type ShapeSelections = {
-  quantitative: {
-    checked: boolean;
-    shapes: Shape[];
-  };
-  ordinal: {
+  ordered: {
     checked: boolean;
     shapes: Shape[];
   };
