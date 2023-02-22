@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="prev" title="Developer Installation" href="developer-installation.html" />
 
     <!-- Generated with Sphinx 6.1.3 and Furo 2022.12.07 -->
-        <title>Release Process - pdp-explorer 0.3.2 documentation</title>
+        <title>Release Process - PDPilot 0.4.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=91d0f0d1c444bdcb17a68e833c7a53903343c195" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">pdp-explorer 0.3.2 documentation</div></a>
+      <a href="index.html"><div class="brand">PDPilot 0.4.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,7 +146,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
   
-  <span class="sidebar-brand-text">pdp-explorer 0.3.2 documentation</span>
+  <span class="sidebar-brand-text">PDPilot 0.4.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -200,14 +200,14 @@
           <section id="release-process">
 <h1>Release Process<a class="headerlink" href="#release-process" title="Permalink to this heading">#</a></h1>
 <ol class="arabic simple">
-<li><p>Update the versions in <code class="docutils literal notranslate"><span class="pre">package.json</span></code>, <code class="docutils literal notranslate"><span class="pre">pdpexplorer/_version.py</span></code>, and <code class="docutils literal notranslate"><span class="pre">pdpexplorer/_frontend.py</span></code>.</p></li>
+<li><p>Update the versions in <code class="docutils literal notranslate"><span class="pre">package.json</span></code>, <code class="docutils literal notranslate"><span class="pre">pdpilot/_version.py</span></code>, and <code class="docutils literal notranslate"><span class="pre">pdpilot/_frontend.py</span></code>.</p></li>
 <li><p>Update documentation and run <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">html</span></code>.</p></li>
 <li><p>Make a release commmit: <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">commit</span> <span class="pre">-m</span> <span class="pre">&quot;release</span> <span class="pre">vX.Y.Z&quot;</span></code></p></li>
 <li><p>Tag the commit: <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">tag</span> <span class="pre">vX.Y.Z</span></code></p></li>
 <li><p>Push the commit and tag: <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">push</span> <span class="pre">&amp;&amp;</span> <span class="pre">git</span> <span class="pre">push</span> <span class="pre">--tags</span></code></p></li>
 <li><p>Release the npm packages: <code class="docutils literal notranslate"><span class="pre">npm</span> <span class="pre">login</span></code> and <code class="docutils literal notranslate"><span class="pre">npm</span> <span class="pre">publish</span></code></p></li>
 <li><p>Bundle the Python package: <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">sdist</span> <span class="pre">bdist_wheel</span></code></p></li>
-<li><p>Publish the package to PyPI: <code class="docutils literal notranslate"><span class="pre">twine</span> <span class="pre">upload</span> <span class="pre">dist/pdpexplorer-X.Y.Z*</span></code></p></li>
+<li><p>Publish the package to PyPI: <code class="docutils literal notranslate"><span class="pre">twine</span> <span class="pre">upload</span> <span class="pre">dist/pdpilot-X.Y.Z*</span></code></p></li>
 </ol>
 </section>
 

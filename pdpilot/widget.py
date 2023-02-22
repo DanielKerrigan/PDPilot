@@ -2,7 +2,7 @@
 # coding: utf-8
 
 """
-Add module docstring for pdpexplorer
+PDPilot widget module.
 """
 
 import json
@@ -13,12 +13,12 @@ from ipywidgets import DOMWidget
 from traitlets import Dict, Int, List as ListTraitlet, Unicode, observe
 import pandas as pd
 
-from pdpexplorer.pdp import calc_two_way_pd, get_feature_to_pd
+from pdpilot.pdp import calc_two_way_pd, get_feature_to_pd
 
 from ._frontend import module_name, module_version
 
 
-class PDPExplorerWidget(DOMWidget):
+class PDPilotWidget(DOMWidget):
     """This class creates the interactive widget.
 
     :param predict: A function whose input is a DataFrame of instances and
@@ -26,7 +26,7 @@ class PDPExplorerWidget(DOMWidget):
     :type predict: Callable[[pd.DataFrame], list[float]]
     :param df: Instances to use to compute the PDPs and ICE plots.
     :type df: pd.DataFrame
-    :param pd_data: The dictionary returned by :func:`pdpexplorer.pdp.partial_dependence`
+    :param pd_data: The dictionary returned by :func:`pdpilot.pdp.partial_dependence`
         or a path to the file containing that data.
     :type pd_data: dict | str | Path
     :param height: The height of the widget in pixels, defaults to 600.
@@ -34,10 +34,10 @@ class PDPExplorerWidget(DOMWidget):
     :raises OSError: Raised if ``pd_data`` is a str or Path and the file cannot be read.
     """
 
-    _model_name = Unicode("PDPExplorerModel").tag(sync=True)
+    _model_name = Unicode("PDPilotModel").tag(sync=True)
     _model_module = Unicode(module_name).tag(sync=True)
     _model_module_version = Unicode(module_version).tag(sync=True)
-    _view_name = Unicode("PDPExplorerView").tag(sync=True)
+    _view_name = Unicode("PDPilotView").tag(sync=True)
     _view_module = Unicode(module_name).tag(sync=True)
     _view_module_version = Unicode(module_version).tag(sync=True)
 

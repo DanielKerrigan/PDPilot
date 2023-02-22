@@ -28,8 +28,8 @@ from tslearn.clustering import TimeSeriesKMeans
 from tslearn.clustering import silhouette_score as ts_silhouette_score
 from tslearn.utils import to_time_series_dataset
 
-from pdpexplorer.metadata import Metadata
-from pdpexplorer.tqdm_joblib import tqdm_joblib
+from pdpilot.metadata import Metadata
+from pdpilot.tqdm_joblib import tqdm_joblib
 
 
 def partial_dependence(

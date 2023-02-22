@@ -1,6 +1,6 @@
 {
-  "name": "pdp-explorer",
-  "version": "0.3.2",
+  "name": "pdpilot",
+  "version": "0.4.0",
   "description": "A Jupyter widget for exploring partial dependence plots.",
   "keywords": [
     "jupyter",
@@ -13,9 +13,9 @@
     "dist/*.js",
     "css/*.css"
   ],
-  "homepage": "https://github.com/nyuvis/pdp-ranking",
+  "homepage": "https://github.com/DanielKerrigan/PDPilot",
   "bugs": {
-    "url": "https://github.com/nyuvis/pdp-ranking/issues"
+    "url": "https://github.com/DanielKerrigan/PDPilot/issues"
   },
   "license": "BSD-3-Clause",
   "author": {
@@ -26,15 +26,15 @@
   "types": "./lib/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nyuvis/pdp-ranking"
+    "url": "https://github.com/DanielKerrigan/PDPilot"
   },
   "scripts": {
     "build": "webpack --mode=development && jupyter labextension build --development=True .",
     "build:prod": "webpack --mode=production && jupyter labextension build .",
     "clean": "yarn run clean:lib && yarn run clean:nbextension && yarn run clean:labextension",
     "clean:lib": "rimraf lib",
-    "clean:labextension": "rimraf pdpexplorer/labextension",
-    "clean:nbextension": "rimraf pdpexplorer/nbextension/static/index.js",
+    "clean:labextension": "rimraf pdpilot/labextension",
+    "clean:nbextension": "rimraf pdpilot/nbextension/static/index.js",
     "fix": "prettier --plugin-search-dir . --write src && eslint . --ext .ts,.tsx,.svelte --fix",
     "check": "prettier --plugin-search-dir . --check src && eslint . --ext .ts,.tsx,.svelte",
     "prepack": "yarn run build:prod",
@@ -86,6 +86,6 @@
   },
   "jupyterlab": {
     "extension": true,
-    "outputDir": "pdpexplorer/labextension/"
+    "outputDir": "pdpilot/labextension/"
   }
 }

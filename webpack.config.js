@@ -56,7 +56,7 @@ module.exports = [
     entry: './src/extension.ts',
     output: {
       filename: 'index.js',
-      path: path.resolve(__dirname, 'pdpexplorer', 'nbextension'),
+      path: path.resolve(__dirname, 'pdpilot', 'nbextension'),
       libraryTarget: 'amd',
       publicPath: '',
     },
@@ -68,7 +68,7 @@ module.exports = [
   },
 
   /**
-   * Embeddable pdp-explorer bundle
+   * Embeddable pdpilot bundle
    *
    * This bundle is almost identical to the notebook extension bundle. The only
    * difference is in the configuration of the webpack public path for the
@@ -83,8 +83,8 @@ module.exports = [
       filename: 'index.js',
       path: path.resolve(__dirname, 'dist'),
       libraryTarget: 'amd',
-      library: 'pdp-explorer',
-      publicPath: 'https://unpkg.com/pdp-explorer@' + version + '/dist/',
+      library: 'pdpilot',
+      publicPath: 'https://unpkg.com/pdpilot@' + version + '/dist/',
     },
     module: {
       rules: rules,
@@ -103,7 +103,7 @@ module.exports = [
     output: {
       filename: 'embed-bundle.js',
       path: path.resolve(__dirname, 'docs', 'source', '_static'),
-      library: 'pdp-explorer',
+      library: 'pdpilot',
       libraryTarget: 'amd',
     },
     module: {

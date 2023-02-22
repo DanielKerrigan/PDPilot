@@ -6,16 +6,16 @@ import { MODULE_NAME, MODULE_VERSION } from './version';
 
 import Widget from './components/Widget.svelte';
 
-export class PDPExplorerModel extends DOMWidgetModel {
+export class PDPilotModel extends DOMWidgetModel {
   defaults() {
     return {
       ...super.defaults(),
-      _model_name: PDPExplorerModel.model_name,
-      _model_module: PDPExplorerModel.model_module,
-      _model_module_version: PDPExplorerModel.model_module_version,
-      _view_name: PDPExplorerModel.view_name,
-      _view_module: PDPExplorerModel.view_module,
-      _view_module_version: PDPExplorerModel.view_module_version,
+      _model_name: PDPilotModel.model_name,
+      _model_module: PDPilotModel.model_module,
+      _model_module_version: PDPilotModel.model_module_version,
+      _view_name: PDPilotModel.view_name,
+      _view_module: PDPilotModel.view_module,
+      _view_module_version: PDPilotModel.view_module_version,
       feature_names: [],
       feature_info: {},
       dataset: {},
@@ -39,15 +39,15 @@ export class PDPExplorerModel extends DOMWidgetModel {
     // Add any extra serializers here
   };
 
-  static model_name = 'PDPExplorerModel';
+  static model_name = 'PDPilotModel';
   static model_module = MODULE_NAME;
   static model_module_version = MODULE_VERSION;
-  static view_name = 'PDPExplorerView'; // Set to null if no view
+  static view_name = 'PDPilotView'; // Set to null if no view
   static view_module = MODULE_NAME; // Set to null if no view
   static view_module_version = MODULE_VERSION;
 }
 
-export class PDPExplorerView extends DOMWidgetView {
+export class PDPilotView extends DOMWidgetView {
   render() {
     setStores(this.model);
     new Widget({ target: this.el });

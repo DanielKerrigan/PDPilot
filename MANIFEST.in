@@ -8,7 +8,7 @@ include .coverage.rc
 include tsconfig.json
 include package.json
 include webpack.config.js
-include pdpexplorer/labextension/*.tgz
+include pdpilot/labextension/*.tgz
 
 # Documentation
 graft docs
@@ -23,7 +23,7 @@ prune examples/scratch
 prune examples/.ipynb_checkpoints
 
 # Javascript files
-graft pdpexplorer/nbextension
+graft pdpilot/nbextension
 graft src
 prune **/node_modules
 prune lib

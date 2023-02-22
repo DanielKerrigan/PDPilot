@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from .widget import PDPExplorerWidget
+from .widget import PDPilotWidget
 from .pdp import partial_dependence
 from ._version import __version__, version_info
 
@@ -21,7 +21,7 @@ def _jupyter_labextension_paths():
     return [
         {
             "src": "labextension",
-            "dest": "pdp-explorer",
+            "dest": "pdpilot",
         }
     ]
 
@@ -46,7 +46,7 @@ def _jupyter_nbextension_paths():
         {
             "section": "notebook",
             "src": "nbextension",
-            "dest": "pdpexplorer",
-            "require": "pdpexplorer/extension",
+            "dest": "pdpilot",
+            "require": "pdpilot/extension",
         }
     ]

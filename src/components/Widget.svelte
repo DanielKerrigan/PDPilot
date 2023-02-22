@@ -6,7 +6,7 @@
   import TwoWayGridContainer from './TwoWayGridContainer.svelte';
 </script>
 
-<div class="pdp-explorer-widget-container" style:height="{$height}px">
+<div class="pdpilot-widget-container" style:height="{$height}px">
   <Tabs />
 
   <div
@@ -32,7 +32,7 @@
 </div>
 
 <style>
-  .pdp-explorer-widget-container {
+  .pdpilot-widget-container {
     box-sizing: border-box;
     width: 100%;
     display: flex;
@@ -68,23 +68,23 @@
 
   /* global styles */
 
-  .pdp-explorer-widget-container :global(.pdp-hide) {
+  .pdpilot-widget-container :global(.pdp-hide) {
     display: none;
   }
 
-  .pdp-explorer-widget-container :global(canvas),
-  .pdp-explorer-widget-container :global(svg) {
+  .pdpilot-widget-container :global(canvas),
+  .pdpilot-widget-container :global(svg) {
     display: block;
   }
 
-  .pdp-explorer-widget-container :global(*) {
+  .pdpilot-widget-container :global(*) {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
     line-height: 1.2;
   }
 
-  .pdp-explorer-widget-container :global(button) {
+  .pdpilot-widget-container :global(button) {
     color: black;
     background-color: white;
     border: 1px solid black;
@@ -96,56 +96,56 @@
     font-family: inherit;
   }
 
-  .pdp-explorer-widget-container :global(button:hover:enabled) {
+  .pdpilot-widget-container :global(button:hover:enabled) {
     background-color: var(--gray-0);
   }
 
-  .pdp-explorer-widget-container :global(button:active:enabled) {
+  .pdpilot-widget-container :global(button:active:enabled) {
     background-color: var(--gray-1);
   }
 
-  .pdp-explorer-widget-container :global(button:disabled) {
+  .pdpilot-widget-container :global(button:disabled) {
     cursor: not-allowed;
     background-color: transparent;
     color: var(--gray-4);
     border-color: var(--gray-4);
   }
 
-  .pdp-explorer-widget-container :global(h1) {
+  .pdpilot-widget-container :global(h1) {
     font-size: 1.125em;
     font-weight: 500;
   }
 
-  .pdp-explorer-widget-container :global(h2) {
+  .pdpilot-widget-container :global(h2) {
     font-size: 1.0625em;
     font-weight: 500;
   }
 
-  .pdp-explorer-widget-container :global(.large) {
+  .pdpilot-widget-container :global(.large) {
     font-size: 1.125em;
   }
 
-  .pdp-explorer-widget-container :global(.small) {
+  .pdpilot-widget-container :global(.small) {
     font-size: 0.875em;
   }
 
-  .pdp-explorer-widget-container :global(.bold) {
+  .pdpilot-widget-container :global(.bold) {
     font-weight: 500;
   }
 
-  .pdp-explorer-widget-container :global(.icon) {
+  .pdpilot-widget-container :global(.icon) {
     width: 1em;
     height: 1em;
   }
 
-  .pdp-explorer-widget-container :global(.cutoff) {
+  .pdpilot-widget-container :global(.cutoff) {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
   }
 
   /* https://stackoverflow.com/a/69029387/5016634 */
-  .pdp-explorer-widget-container :global(.icon-tabler) {
+  .pdpilot-widget-container :global(.icon-tabler) {
     -webkit-transform: translate(0px, 0px);
     transform: translate(0px, 0px);
   }

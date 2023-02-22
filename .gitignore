@@ -153,12 +153,12 @@ $RECYCLE.BIN/
 # ----
 
 **/node_modules/
-pdpexplorer/nbextension/index.*
-pdpexplorer/labextension/*.tgz
+pdpilot/nbextension/index.*
+pdpilot/labextension/*.tgz
 
 # Coverage data
 # -------------
 **/coverage/
 
 # Packed lab extensions
-pdpexplorer/labextension
+pdpilot/labextension

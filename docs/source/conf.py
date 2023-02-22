@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.abspath("../.."))
 
 # -- Project information
 
-project = "pdp-explorer"
+project = "PDPilot"
 copyright = "2023, Daniel Kerrigan"
 author = "Daniel Kerrigan"
 
@@ -16,7 +16,7 @@ import os
 
 here = os.path.dirname(__file__)
 repo = os.path.join(here, "..", "..")
-_version_py = os.path.join(repo, "pdpexplorer", "_version.py")
+_version_py = os.path.join(repo, "pdpilot", "_version.py")
 version_ns = {}
 with open(_version_py) as f:
     exec(f.read(), version_ns)

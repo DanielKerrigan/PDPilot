@@ -4,14 +4,14 @@ Developer Installation
 
 To start, create a virtual enviroment. For example::
 
-    conda create -n pdpexplorer
-    conda activate pdpexplorer
+    conda create -n pdpilot
+    conda activate pdpilot
     conda install python nodejs yarn jupyterlab
 
 Next, clone the repository::
 
-    git clone https://github.com/nyuvis/pdp-ranking
-    cd pdp-ranking
+    git clone https://github.com/DanielKerrigan/PDPilot
+    cd PDPilot
 
 Next, install the package::
 
@@ -19,8 +19,8 @@ Next, install the package::
 
 If you are using classic Jupyter notebook, then enable the extention with these commands::
 
-    jupyter nbextension install --sys-prefix --symlink --overwrite --py pdpexplorer
-    jupyter nbextension enable --sys-prefix --py pdpexplorer
+    jupyter nbextension install --sys-prefix --symlink --overwrite --py pdpilot
+    jupyter nbextension enable --sys-prefix --py pdpilot
 
 If you are using Jupyter Lab, then run::
 

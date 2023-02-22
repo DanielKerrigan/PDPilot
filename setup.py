@@ -24,7 +24,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 
 # The name of the project
-name = "pdpexplorer"
+name = "pdpilot"
 
 # Get the version
 version = get_version(pjoin(name, "_version.py"))
@@ -41,10 +41,10 @@ package_data_spec = {name: ["nbextension/**js*", "labextension/**"]}
 
 
 data_files_spec = [
-    ("share/jupyter/nbextensions/pdpexplorer", "pdpexplorer/nbextension", "**"),
-    ("share/jupyter/labextensions/pdp-explorer", "pdpexplorer/labextension", "**"),
-    ("share/jupyter/labextensions/pdp-explorer", ".", "install.json"),
-    ("etc/jupyter/nbconfig/notebook.d", ".", "pdpexplorer.json"),
+    ("share/jupyter/nbextensions/pdpilot", "pdpilot/nbextension", "**"),
+    ("share/jupyter/labextensions/pdpilot", "pdpilot/labextension", "**"),
+    ("share/jupyter/labextensions/pdpilot", ".", "install.json"),
+    ("etc/jupyter/nbconfig/notebook.d", ".", "pdpilot.json"),
 ]
 
 
@@ -67,7 +67,7 @@ setup_args = dict(
     packages=find_packages(),
     author="Daniel Kerrigan",
     author_email="kerrigan.d@northeastern.edu",
-    url="https://github.com/nyuvis/pdp-explorer",
+    url="https://github.com/DanielKerrigan/PDPilot",
     license="BSD",
     platforms="Linux, Mac OS X, Windows",
     keywords=["Jupyter", "Widgets", "IPython"],
