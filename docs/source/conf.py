@@ -4,8 +4,11 @@ import os
 import sys
 from pathlib import Path
 
-root = Path(__file__).parents[2]
+root = Path(__file__).resolve().parents[2] / "pdpilot"
 sys.path.insert(0, str(root))
+
+print("root", root)
+print("sys.path", sys.path)
 
 # -- Project information
 
