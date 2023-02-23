@@ -1,15 +1,15 @@
 version: 2
 
 sphinx:
-   configuration: docs/source/conf.py
-   fail_on_warning: true
+  configuration: docs/source/conf.py
+  fail_on_warning: true
 
 conda:
   environment: docs/environment.yml
 
 python:
-   install:
+  install:
     - method: pip
       path: .
       extra_requirements:
-          - docs
+        - docs

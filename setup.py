@@ -98,10 +98,6 @@ setup_args = dict(
     extras_require={
         "examples": ["pmlb", "xgboost"],
         "docs": [
-            "jupyter_sphinx",
-            "nbsphinx",
-            "nbsphinx-link",
-            "pytest_check_links",
             "pypandoc",
             "recommonmark",
             "sphinx>=1.5",
