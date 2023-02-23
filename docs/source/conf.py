@@ -2,8 +2,10 @@
 
 import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.abspath("../.."))
+root = Path(__file__).parents[2]
+sys.path.insert(0, str(root))
 
 # -- Project information
 
@@ -12,7 +14,6 @@ copyright = "2023, Daniel Kerrigan"
 author = "Daniel Kerrigan"
 
 # get version from python package:
-import os
 
 here = os.path.dirname(__file__)
 repo = os.path.join(here, "..", "..")
