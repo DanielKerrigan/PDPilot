@@ -1,6 +1,6 @@
 API
 ===
 
-.. autofunction:: pdpilot.pdp.partial_dependence
+.. autofunction:: pdpilot.partial_dependence
 
-.. autoclass:: pdpilot.widget.PDPilotWidget
+.. autoclass:: pdpilot.PDPilotWidget

@@ -98,10 +98,11 @@ setup_args = dict(
     extras_require={
         "examples": ["pmlb", "xgboost"],
         "docs": [
-            "pypandoc",
-            "recommonmark",
-            "sphinx>=1.5",
-            "furo",
+            "recommonmark=0.7.1",
+            "readthedocs-sphinx-ext=2.2.0",
+            "sphinx=6.1.3",
+            "furo=2022.12.07",
+            "sphinx_rtd_theme=1.2.0",
         ],
         "dev": ["pylint", "black", "twine", "jupyter_packaging"],
         "test": ["pytest"],
