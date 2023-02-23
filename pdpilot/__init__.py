@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from .widget import PDPilotWidget
-from .pdp import partial_dependence
-from ._version import __version__, version_info
+from pdpilot.widget import PDPilotWidget
+from pdpilot.pdp import partial_dependence
+from pdpilot._version import __version__, version_info
 
 
 def _jupyter_labextension_paths():
