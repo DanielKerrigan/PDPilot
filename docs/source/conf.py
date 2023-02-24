@@ -51,9 +51,6 @@ templates_path = ["_templates"]
 autodoc_mock_imports = [
     "numpy",
     "pandas",
-    "sklearn",
-    "scipy",
-    "tslearn",
 ]
 
 # -- Options for HTML output
