@@ -48,10 +48,7 @@ intersphinx_disabled_domains = ["std"]
 
 templates_path = ["_templates"]
 
-autodoc_mock_imports = [
-    "numpy",
-    "pandas",
-]
+autodoc_mock_imports = ["numpy", "pandas", "scipy"]
 
 # -- Options for HTML output
 
