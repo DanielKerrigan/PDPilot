@@ -12,4 +12,4 @@ The easiest way to install the widget is through pip:
 pip install pdpilot
 ```
 
-See the [documentation](https://danielkerrigan.github.io/pdp-ranking/build/html/index.html) for usage details.
+See the [documentation](https://pdpilot.readthedocs.io/) for usage details.
