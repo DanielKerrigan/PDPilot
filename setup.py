@@ -103,9 +103,6 @@ setup_args = dict(
             "sphinx==6.1.3",
             "furo==2022.12.07",
             "sphinx_rtd_theme==1.2.0",
-            # Without this, readthedocs builds result in this error:
-            # No module named 'pyximport'
-            # "Cython",
         ],
         "dev": ["pylint", "black", "twine", "jupyter_packaging"],
         "test": ["pytest"],

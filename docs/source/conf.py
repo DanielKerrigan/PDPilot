@@ -7,9 +7,6 @@ from pathlib import Path
 root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(root))
 
-print("sys.path", sys.path)
-print([x for x in root.iterdir()])
-
 # -- Project information
 
 project = "PDPilot"
@@ -48,7 +45,9 @@ intersphinx_disabled_domains = ["std"]
 
 templates_path = ["_templates"]
 
-autodoc_mock_imports = ["numpy", "pandas", "scipy", "sklearn"]
+# Not mocking these imports leads to errors when building on readthedocs.
+# These errors are likely due to dependencies on Cython.
+autodoc_mock_imports = ["numpy", "pandas", "scipy", "sklearn", "tslearn"]
 
 # -- Options for HTML output
 
