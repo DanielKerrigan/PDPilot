@@ -48,6 +48,18 @@ intersphinx_disabled_domains = ["std"]
 
 templates_path = ["_templates"]
 
+autodoc_mock_imports = [
+    "numpy",
+    "pandas",
+    "joblib",
+    "sklearn",
+    "scipy",
+    "tqdm",
+    "tslearn",
+    "ipywidgets",
+    "traitlets",
+]
+
 # -- Options for HTML output
 
 html_theme = "furo"
