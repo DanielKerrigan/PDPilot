@@ -2,8 +2,10 @@
 
 import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.abspath("../.."))
+root = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(root))
 
 # -- Project information
 
@@ -12,7 +14,6 @@ copyright = "2023, Daniel Kerrigan"
 author = "Daniel Kerrigan"
 
 # get version from python package:
-import os
 
 here = os.path.dirname(__file__)
 repo = os.path.join(here, "..", "..")
@@ -43,6 +44,10 @@ intersphinx_mapping = {
 intersphinx_disabled_domains = ["std"]
 
 templates_path = ["_templates"]
+
+# Not mocking these imports leads to errors when building on readthedocs.
+# These errors are likely due to dependencies on Cython.
+autodoc_mock_imports = ["numpy", "pandas", "scipy", "sklearn", "tslearn"]
 
 # -- Options for HTML output
 

@@ -15,7 +15,7 @@ import pandas as pd
 
 from pdpilot.pdp import calc_two_way_pd, get_feature_to_pd
 
-from ._frontend import module_name, module_version
+from pdpilot._frontend import module_name, module_version
 
 
 class PDPilotWidget(DOMWidget):
