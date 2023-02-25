@@ -29,7 +29,7 @@
   export let showMarginalDistribution: boolean;
   export let indices: number[] | null;
   export let marginTop: number;
-  export let marginRight: number;
+  export let distributionHeight: number;
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
@@ -39,7 +39,7 @@
   // TODO: better handle marginTop vs. margin.top
   $: margin = {
     top: 5,
-    right: marginRight,
+    right: 10,
     bottom: 35,
     left: 50,
   };
@@ -184,15 +184,17 @@
       <MarginalBarChart
         data={$feature_info[pd.x_feature].distribution}
         {x}
-        height={marginTop}
+        height={distributionHeight}
         direction="horizontal"
+        translate={[0, marginTop - distributionHeight]}
       />
     {:else}
       <MarginalHistogram
         data={$feature_info[pd.x_feature].distribution}
         {x}
-        height={marginTop}
+        height={distributionHeight}
         direction="horizontal"
+        translate={[0, marginTop - distributionHeight]}
       />
     {/if}
   </svg>

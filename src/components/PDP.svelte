@@ -14,6 +14,7 @@
   export let showMarginalDistribution = false;
   export let marginTop = 0;
   export let marginRight = 0;
+  export let distributionHeight = 0;
   export let allowBrushing = false;
 </script>
 
@@ -27,7 +28,7 @@
       {iceLevel}
       {showMarginalDistribution}
       {marginTop}
-      {marginRight}
+      {distributionHeight}
       {indices}
       {allowBrushing}
     />
@@ -41,6 +42,7 @@
       {showColorLegend}
       {marginTop}
       {marginRight}
+      {distributionHeight}
       {showMarginalDistribution}
     />
   {/if}

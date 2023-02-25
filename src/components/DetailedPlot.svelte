@@ -23,6 +23,8 @@
     { value: 'cluster-centers', title: 'Cluster Centers' },
   ];
 
+  const marginalChartHeight = 50;
+
   // changing features
 
   function onChangeFeature() {
@@ -107,7 +109,10 @@
   let gridHeight: number;
 
   $: halfWidth = gridWidth / 2;
-  $: halfHeight = gridHeight / 2;
+  // $: halfHeight = gridHeight / 2;
+
+  $: thirdHeight = gridHeight / 3;
+  $: twoThirdHeight = (2 * gridHeight) / 3;
 
   onMount(() => {
     // Adapted from https://blog.sethcorker.com/question/how-do-you-use-the-resize-observer-api-in-svelte/
@@ -255,8 +260,10 @@
             height={gridHeight}
             {scaleLocally}
             {showMarginalDistribution}
-            marginTop={showMarginalDistribution ? 100 : 10}
-            marginRight={10}
+            marginTop={showMarginalDistribution ? marginalChartHeight : 10}
+            distributionHeight={showMarginalDistribution
+              ? marginalChartHeight
+              : 0}
             {iceLevel}
             {indices}
             showColorLegend={false}
@@ -286,11 +293,13 @@
             <PDP
               pd={xPdp}
               width={halfWidth}
-              height={halfHeight}
+              height={thirdHeight}
               {scaleLocally}
               {showMarginalDistribution}
-              marginTop={showMarginalDistribution ? 100 : 10}
-              marginRight={10}
+              marginTop={showMarginalDistribution ? marginalChartHeight : 10}
+              distributionHeight={showMarginalDistribution
+                ? marginalChartHeight
+                : 0}
               iceLevel="lines"
             />
           </div>
@@ -299,11 +308,13 @@
             <PDP
               pd={yPdp}
               width={halfWidth}
-              height={halfHeight}
+              height={thirdHeight}
               {scaleLocally}
               {showMarginalDistribution}
-              marginTop={showMarginalDistribution ? 100 : 10}
-              marginRight={10}
+              marginTop={showMarginalDistribution ? marginalChartHeight : 10}
+              distributionHeight={showMarginalDistribution
+                ? marginalChartHeight
+                : 0}
               iceLevel="lines"
             />
           </div>
@@ -315,12 +326,15 @@
               {pd}
               width={colorShows === 'both' ? halfWidth : gridWidth}
               height={xPdp !== null && yPdp !== null && showOneWay
-                ? halfHeight
+                ? twoThirdHeight
                 : gridHeight}
               {scaleLocally}
               {showMarginalDistribution}
-              marginTop={showMarginalDistribution ? 100 : 10}
-              marginRight={showMarginalDistribution ? 100 : 10}
+              marginTop={showMarginalDistribution ? marginalChartHeight : 10}
+              marginRight={showMarginalDistribution ? marginalChartHeight : 10}
+              distributionHeight={showMarginalDistribution
+                ? marginalChartHeight
+                : 0}
               iceLevel="lines"
               colorShows="interactions"
               showColorLegend={true}
@@ -334,12 +348,15 @@
               {pd}
               width={colorShows === 'both' ? halfWidth : gridWidth}
               height={xPdp !== null && yPdp !== null && showOneWay
-                ? halfHeight
+                ? twoThirdHeight
                 : gridHeight}
               {scaleLocally}
               {showMarginalDistribution}
-              marginTop={showMarginalDistribution ? 100 : 10}
-              marginRight={showMarginalDistribution ? 100 : 10}
+              marginTop={showMarginalDistribution ? marginalChartHeight : 10}
+              marginRight={showMarginalDistribution ? marginalChartHeight : 10}
+              distributionHeight={showMarginalDistribution
+                ? marginalChartHeight
+                : 0}
               {iceLevel}
               showColorLegend={true}
             />
@@ -431,7 +448,7 @@
   }
 
   .showOneWay-true-color-both {
-    grid-template-rows: 1fr 1fr;
+    grid-template-rows: 1fr 2fr;
     grid-template-columns: 1fr 1fr;
     grid-template-areas:
       'one-way-left one-way-right'
@@ -439,7 +456,7 @@
   }
 
   .showOneWay-true-color-interactions {
-    grid-template-rows: 1fr 1fr;
+    grid-template-rows: 1fr 2fr;
     grid-template-columns: 1fr 1fr;
     grid-template-areas:
       'one-way-left one-way-right'
@@ -447,7 +464,7 @@
   }
 
   .showOneWay-true-color-predictions {
-    grid-template-rows: 1fr 1fr;
+    grid-template-rows: 1fr 2fr;
     grid-template-columns: 1fr 1fr;
     grid-template-areas:
       'one-way-left one-way-right'

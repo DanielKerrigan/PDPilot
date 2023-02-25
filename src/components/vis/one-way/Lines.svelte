@@ -31,7 +31,7 @@
   export let scaleLocally: boolean;
   export let showMarginalDistribution: boolean;
   export let marginTop: number;
-  export let marginRight: number;
+  export let distributionHeight: number;
   export let allowBrushing = false;
 
   let canvas: HTMLCanvasElement;
@@ -41,7 +41,7 @@
 
   $: margin = {
     top: marginTop,
-    right: marginRight,
+    right: 10,
     bottom: 35,
     left: 50,
   };
@@ -309,16 +309,18 @@
             data={highlightedDistribution}
             fill={'red'}
             {x}
-            height={margin.top}
+            height={distributionHeight}
             direction="horizontal"
+            translate={[0, margin.top - distributionHeight]}
           />
         {:else}
           <MarginalHistogram
             data={highlightedDistribution}
             fill={'red'}
             {x}
-            height={margin.top}
+            height={distributionHeight}
             direction="horizontal"
+            translate={[0, margin.top - distributionHeight]}
           />
         {/if}
       {:else if showMarginalDistribution}
@@ -327,16 +329,18 @@
             data={feature.distribution}
             fill={'var(--gray-3)'}
             {x}
-            height={margin.top}
+            height={distributionHeight}
             direction="horizontal"
+            translate={[0, margin.top - distributionHeight]}
           />
         {:else}
           <MarginalHistogram
             data={feature.distribution}
             fill={'var(--gray-3)'}
             {x}
-            height={margin.top}
+            height={distributionHeight}
             direction="horizontal"
+            translate={[0, margin.top - distributionHeight]}
           />
         {/if}
       {/if}

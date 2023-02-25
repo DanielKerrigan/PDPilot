@@ -25,6 +25,35 @@
   export let showColorLegend: boolean;
   export let marginTop = 0;
   export let marginRight = 0;
+  export let distributionHeight: number;
+
+  $: legendHeight = showColorLegend ? 24 : 0;
+  $: heightExcludingLegend = height - legendHeight;
+
+  $: minMargin = {
+    top: marginTop,
+    right: marginRight,
+    bottom: 35,
+    left: 50,
+  };
+
+  $: sideLength = Math.min(
+    width - minMargin.left - minMargin.right,
+    heightExcludingLegend - minMargin.top - minMargin.bottom
+  );
+
+  $: extraLeftRightMargin =
+    (width - sideLength - minMargin.left - minMargin.right) / 2;
+
+  $: extraTopBottomMargin =
+    (heightExcludingLegend - sideLength - minMargin.top - minMargin.bottom) / 2;
+
+  $: margin = {
+    top: minMargin.top + extraTopBottomMargin,
+    right: minMargin.right + extraLeftRightMargin,
+    bottom: minMargin.bottom + extraTopBottomMargin,
+    left: minMargin.left + extraLeftRightMargin,
+  };
 
   $: xFeature = $feature_info[pd.x_feature];
   $: yFeature = $feature_info[pd.y_feature];
@@ -45,16 +74,6 @@
       : scaleLocally
       ? localColorPdp
       : $globalColorTwoWayPdp;
-
-  $: legendHeight = showColorLegend ? 24 : 0;
-  $: pdpHeight = height - legendHeight;
-
-  $: margin = {
-    top: marginTop,
-    right: marginRight,
-    bottom: 35,
-    left: 50,
-  };
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
@@ -82,10 +101,10 @@
     yFeature.kind === 'quantitative'
       ? scaleLinear()
           .domain([minY, maxY])
-          .range([pdpHeight - margin.bottom, margin.top])
+          .range([heightExcludingLegend - margin.bottom, margin.top])
       : scaleBand<number>()
           .domain(pd.y_axis)
-          .range([pdpHeight - margin.bottom, margin.top]);
+          .range([heightExcludingLegend - margin.bottom, margin.top]);
 
   $: rectWidth =
     'bandwidth' in x ? x.bandwidth() - 2 : x(minX + minDiffX) - x(minX);
@@ -109,7 +128,7 @@
         pd,
         ctx,
         width,
-        pdpHeight,
+        heightExcludingLegend,
         x,
         y,
         color,
@@ -120,7 +139,7 @@
     }
   }
   $: if (ctx) {
-    scaleCanvas(canvas, ctx, width, pdpHeight);
+    scaleCanvas(canvas, ctx, width, heightExcludingLegend);
     draw();
   }
 
@@ -135,7 +154,7 @@
       pd,
       ctx,
       width,
-      pdpHeight,
+      heightExcludingLegend,
       x,
       y,
       color,
@@ -159,10 +178,10 @@
 
   <canvas bind:this={canvas} />
 
-  <svg {width} height={pdpHeight}>
+  <svg {width} height={heightExcludingLegend}>
     <XAxis
       scale={x}
-      y={pdpHeight - margin.bottom}
+      y={heightExcludingLegend - margin.bottom}
       label={pd.x_feature}
       integerOnly={xFeature.subkind === 'discrete'}
       value_map={'value_map' in xFeature ? xFeature.value_map : {}}
@@ -181,15 +200,17 @@
         <MarginalBarChart
           data={xFeature.distribution}
           {x}
-          height={margin.top}
+          height={distributionHeight}
           direction="horizontal"
+          translate={[0, margin.top - distributionHeight]}
         />
       {:else}
         <MarginalHistogram
           data={xFeature.distribution}
           {x}
-          height={margin.top}
+          height={distributionHeight}
           direction="horizontal"
+          translate={[0, margin.top - distributionHeight]}
         />
       {/if}
 
@@ -197,7 +218,7 @@
         <MarginalBarChart
           data={yFeature.distribution}
           x={y}
-          height={margin.top}
+          height={distributionHeight}
           direction="vertical"
           translate={[width - margin.right, 0]}
         />
@@ -205,7 +226,7 @@
         <MarginalHistogram
           data={yFeature.distribution}
           x={y}
-          height={margin.top}
+          height={distributionHeight}
           direction="vertical"
           translate={[width - margin.right, 0]}
         />

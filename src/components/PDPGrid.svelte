@@ -94,9 +94,20 @@
 
   // number of rows and columns
 
+  function getNumberOfRowsAndCols(perPage: number) {
+    const numRows = Math.ceil(Math.sqrt(perPage));
+    const numCols = Math.ceil(perPage / numRows);
+
+    if (ways === 1) {
+      return [numRows, numCols];
+    } else {
+      return [numCols, numRows];
+    }
+  }
+
   $: perPage = Math.min(data.length, 12);
-  $: numRows = Math.ceil(Math.sqrt(perPage));
-  $: numCols = Math.ceil(perPage / numRows);
+
+  $: [numRows, numCols] = getNumberOfRowsAndCols(perPage);
 
   $: pdpWidth = Math.floor(gridWidth / numCols);
   $: pdpHeight = Math.floor(gridHeight / numRows);
@@ -382,6 +393,7 @@
             {showMarginalDistribution}
             marginTop={10}
             marginRight={10}
+            distributionHeight={showMarginalDistribution ? 10 : 0}
             showColorLegend={scaleLocally}
             iceLevel={showIceClusters ? 'cluster-centers' : 'lines'}
             allowBrushing={ways === 1}

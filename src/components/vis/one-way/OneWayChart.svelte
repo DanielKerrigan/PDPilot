@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { ICELevel, OneWayPD } from '../../../types';
-  import ClusterBands from './ClusterBands.svelte';
   import ClusterLines from './ClusterLines.svelte';
   import ClusterCenters from './ClusterCenters.svelte';
   import Lines from './Lines.svelte';
@@ -12,7 +11,7 @@
   export let iceLevel: ICELevel;
   export let showMarginalDistribution: boolean;
   export let marginTop: number;
-  export let marginRight: number;
+  export let distributionHeight: number;
   export let indices: number[] | null;
   export let allowBrushing: boolean;
 </script>
@@ -25,7 +24,7 @@
     {scaleLocally}
     {showMarginalDistribution}
     {marginTop}
-    {marginRight}
+    {distributionHeight}
     {allowBrushing}
   />
 {:else if iceLevel === 'cluster-centers'}
@@ -36,17 +35,7 @@
     {scaleLocally}
     {showMarginalDistribution}
     {marginTop}
-    {marginRight}
-  />
-{:else if iceLevel === 'cluster-bands'}
-  <ClusterBands
-    {pd}
-    {width}
-    {height}
-    {scaleLocally}
-    {showMarginalDistribution}
-    {marginTop}
-    {marginRight}
+    {distributionHeight}
   />
 {:else}
   <ClusterLines
@@ -56,7 +45,7 @@
     {scaleLocally}
     {showMarginalDistribution}
     {marginTop}
-    {marginRight}
+    {distributionHeight}
     {indices}
   />
 {/if}
