@@ -15,13 +15,6 @@
   let pd: OneWayPD | TwoWayPD | null = null;
 
   let scaleLocally = false;
-  let iceLevel: ICELevel = 'lines';
-  const levels: { value: ICELevel; title: string }[] = [
-    { value: 'lines', title: 'Lines' },
-    { value: 'cluster-lines', title: 'Cluster Lines' },
-    { value: 'cluster-bands', title: 'Cluster Bands' },
-    { value: 'cluster-centers', title: 'Cluster Centers' },
-  ];
 
   const marginalChartHeight = 50;
 
@@ -92,10 +85,15 @@
     yPdp = $featureToPd.get(pd.y_feature) ?? null;
   }
 
+  let showClusters = false;
   let showClusterDescriptions = false;
-  $: if (iceLevel !== 'cluster-bands' && iceLevel !== 'cluster-lines') {
+
+  $: if (!showClusters) {
     showClusterDescriptions = false;
   }
+
+  let iceLevel: ICELevel = 'lines';
+  $: iceLevel = showClusters ? 'cluster-lines' : 'lines';
 
   let showMarginalDistribution = false;
   let showOneWay = true;
@@ -208,15 +206,10 @@
         </label>
       {:else}
         <label class="label-and-input">
-          <span>ICE:</span>
-          <select bind:value={iceLevel}>
-            {#each levels as { value, title }}
-              <option {value}>{title}</option>
-            {/each}
-          </select>
+          <input type="checkbox" bind:checked={showClusters} />Cluster
         </label>
 
-        {#if iceLevel === 'cluster-bands' || iceLevel === 'cluster-lines'}
+        {#if showClusters}
           <label class="label-and-input">
             <input
               type="checkbox"
