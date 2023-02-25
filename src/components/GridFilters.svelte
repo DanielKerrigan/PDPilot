@@ -8,8 +8,8 @@
 
   const dispatch = createEventDispatcher<{ changeFilters: string[] }>();
 
-  let showFeatureType = false;
-  let showFeatureName = false;
+  let showFeatureType = true;
+  let showFeatureName = true;
 
   let shapeSelections: ShapeSelections;
 
