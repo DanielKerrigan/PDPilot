@@ -151,6 +151,11 @@
 
   let currentPage = 1;
 
+  // go to the first page when the data is filtered
+  $: if (data) {
+    setPage(1);
+  }
+
   $: numPages = Math.ceil(data.length / perPage);
 
   $: pageCharts = sortedData.slice(
