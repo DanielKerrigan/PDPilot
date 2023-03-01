@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { OneWayPD, TwoWayPD, PDSortingOption } from '../types';
+  import type { OneWayPD, TwoWayPD, PDSortingOption, ICELevel } from '../types';
   import { isOneWayPdArray } from '../types';
   import PDP from './PDP.svelte';
   import QuantitativeColorLegend from './vis/two-way/QuantitativeColorLegend.svelte';
@@ -24,7 +24,14 @@
 
   let sortedData: OneWayPD[] | TwoWayPD[];
 
-  let showIceClusters = false;
+  const iceLevels: { value: ICELevel; title: string }[] = [
+    { value: 'lines', title: 'Standard' },
+    { value: 'centered-lines', title: 'Centered' },
+    { value: 'cluster-centers', title: 'Clusters' },
+  ];
+
+  let iceLevel: ICELevel = 'lines';
+
   let colorShows: 'predictions' | 'interactions' = 'interactions';
   let showMarginalDistribution = false;
 
@@ -240,14 +247,61 @@
       </button>
     </div>
 
-    <label class="label-and-input dont-shrink">
-      Sort by
-      <select bind:value={sortingOption}>
-        {#each sortingOptions as option}
-          <option value={option}>{option.name}</option>
-        {/each}
-      </select>
-    </label>
+    <div class="dont-shrink label-and-input">
+      <label class="label-and-input">
+        Sort:
+        <select bind:value={sortingOption}>
+          {#each sortingOptions as option}
+            <option value={option}>{option.name}</option>
+          {/each}
+        </select>
+      </label>
+
+      <InfoTooltip
+        kind="help"
+        left="0"
+        top="0"
+        marginRight="1em"
+        marginTop="1.5em"
+        width="30em"
+      >
+        <div>
+          {#if ways === 1}
+            <ul>
+              <li>
+                <span class="bold">Variance:</span> Plots that have more variance
+                in their ICE lines are ranked higher.
+              </li>
+              <li>
+                <span class="bold">Cluster difference:</span> Plots that have ICE
+                clusters farther from the partial dependence line are ranked higher.
+              </li>
+              <li>
+                <span class="bold">Highlighted similarity:</span> Plots where the
+                highlighted lines are closer together and farther from the partial
+                dependence line are ranked higher.
+              </li>
+              <li>
+                <span class="bold">Highlighted distribution:</span> Plots for features
+                whose distributions of highlighted instances are more different from
+                the overall distributions are ranked higher.
+              </li>
+            </ul>
+          {:else}
+            <ul>
+              <li>
+                <span class="bold">Interaction:</span> Plots for feature pairs with
+                more interaction are ranked higher.
+              </li>
+              <li>
+                <span class="bold">Variance:</span> Plots that have more variation
+                in their average predictions are ranked higher.
+              </li>
+            </ul>
+          {/if}
+        </div>
+      </InfoTooltip>
+    </div>
 
     {#if ways === 1 && sortingOption.forBrushing}
       <button
@@ -274,6 +328,17 @@
       </button>
     {/if}
 
+    {#if ways === 1}
+      <label class="label-and-input dont-shrink">
+        ICE:
+        <select bind:value={iceLevel}>
+          {#each iceLevels as { value, title }}
+            <option {value}>{title}</option>
+          {/each}
+        </select>
+      </label>
+    {/if}
+
     <label class="label-and-input dont-shrink">
       <input type="checkbox" bind:checked={scaleLocally} /><span
         >Scale locally</span
@@ -281,12 +346,6 @@
     </label>
 
     {#if ways === 1}
-      <label class="label-and-input">
-        <input type="checkbox" bind:checked={showIceClusters} /><span
-          >Cluster lines</span
-        >
-      </label>
-
       <label class="label-and-input">
         <input type="checkbox" bind:checked={showMarginalDistribution} /><span
           >Distributions</span
@@ -296,13 +355,54 @@
 
     <div class="two-way-color-container">
       {#if ways === 2}
-        <label class="label-and-input dont-shrink">
-          Color
-          <select bind:value={colorShows}>
-            <option value="interactions">interactions</option>
-            <option value="predictions">predictions</option>
-          </select>
-        </label>
+        <div class="label-and-input dont-shrink">
+          <label class="label-and-input">
+            Color
+            <select bind:value={colorShows}>
+              <option value="interactions">interactions</option>
+              <option value="predictions">predictions</option>
+            </select>
+          </label>
+
+          <InfoTooltip
+            kind="help"
+            right="0"
+            top="0"
+            marginRight="1em"
+            marginTop="1.5em"
+            width="30em"
+          >
+            <div>
+              {#if colorShows === 'interactions'}
+                This color scale shows the difference between the value in a
+                two-way PDP and the expected value if there was no interaction
+                between the pair of features. It indicates whether the
+                interaction between the two features makes the model's average
+                prediction for the given values <span
+                  style:background={$globalColorTwoWayInteraction.interpolator()(
+                    0.1
+                  )}
+                  style:border-radius="4px"
+                  style:padding="0.125em 0.25em"
+                  style:color="white">lower</span
+                >
+                or
+                <span
+                  style:background={$globalColorTwoWayInteraction.interpolator()(
+                    0.9
+                  )}
+                  style:border-radius="4px"
+                  style:padding="0.125em 0.25em"
+                  style:color="white">higher</span
+                >. The units are the same as your target variable.
+              {:else}
+                This color scale is for a standard two-way PDP. The color of a
+                cell represents the model's average prediction when setting the
+                instances to have the given values for pair of features.
+              {/if}
+            </div>
+          </InfoTooltip>
+        </div>
       {/if}
       <!--
       We want this div to persist so that the ResizeObserver works correctly.
@@ -322,46 +422,6 @@
           marginRight={15}
         />
       </div>
-      {#if ways === 2}
-        <InfoTooltip
-          kind="help"
-          right="0"
-          top="0"
-          marginRight="1em"
-          marginTop="1.5em"
-          width="30em"
-        >
-          <div>
-            {#if colorShows === 'interactions'}
-              This color scale shows the difference between the value in a
-              two-way PDP and the expected value if there was no interaction
-              between the pair of features. It indicates whether the interaction
-              between the two features makes the model's average prediction for
-              the given values <span
-                style:background={$globalColorTwoWayInteraction.interpolator()(
-                  0.1
-                )}
-                style:border-radius="4px"
-                style:padding="0.125em 0.25em"
-                style:color="white">lower</span
-              >
-              or
-              <span
-                style:background={$globalColorTwoWayInteraction.interpolator()(
-                  0.9
-                )}
-                style:border-radius="4px"
-                style:padding="0.125em 0.25em"
-                style:color="white">higher</span
-              >. The units are the same as your target variable.
-            {:else}
-              This color scale is for a standard two-way PDP. The color of a
-              cell represents the model's average prediction when setting the
-              instances to have the given values for pair of features.
-            {/if}
-          </div>
-        </InfoTooltip>
-      {/if}
     </div>
   </div>
 
@@ -398,10 +458,11 @@
             {showMarginalDistribution}
             marginTop={10}
             marginRight={10}
-            distributionHeight={showMarginalDistribution ? 10 : 0}
+            distributionHeight={10}
             showColorLegend={scaleLocally}
-            iceLevel={showIceClusters ? 'cluster-centers' : 'lines'}
+            {iceLevel}
             allowBrushing={ways === 1}
+            iceLineWidth={0.5}
           />
           <button class="expand-pdp-button" on:click={() => onClickPdp(pd)}>
             <svg
@@ -509,5 +570,13 @@
 
   .dont-show {
     display: none;
+  }
+
+  ul {
+    list-style: none;
+  }
+
+  li + li {
+    margin-top: 0.5em;
   }
 </style>

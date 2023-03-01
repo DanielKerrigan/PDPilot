@@ -79,9 +79,9 @@
     .domain(clusterIds)
     .range(categoricalColors.dark);
 
-  $: medium = scaleOrdinal<number, string>()
+  $: light = scaleOrdinal<number, string>()
     .domain(clusterIds)
-    .range(categoricalColors.medium);
+    .range(categoricalColors.light);
 
   $: line = d3line<number>()
     .x((_, i) => x(pd.x_values[i]) ?? 0)
@@ -122,16 +122,26 @@
       // cluster ice lines
 
       ctx.lineWidth = 1.0;
-      ctx.strokeStyle = medium(cluster.id);
+      ctx.strokeStyle = light(cluster.id);
       ctx.globalAlpha = 0.25;
 
-      cluster.centered_ice_lines.forEach((d, i) => {
-        if (indices === null || indices.includes(cluster.indices[i])) {
+      cluster.indices.forEach((idx) => {
+        if (indices === null || indices.includes(idx)) {
           ctx.beginPath();
-          line(d);
+          line(pd.ice.centered_ice_lines[idx]);
           ctx.stroke();
         }
       });
+
+      // pdp line
+
+      ctx.lineWidth = 1.0;
+      ctx.strokeStyle = 'black';
+      ctx.globalAlpha = 1.0;
+
+      ctx.beginPath();
+      line(pd.ice.centered_pdp);
+      ctx.stroke();
 
       // cluster mean line
 
@@ -141,16 +151,6 @@
 
       ctx.beginPath();
       line(cluster.centered_mean);
-      ctx.stroke();
-
-      // pdp line
-
-      ctx.lineWidth = 2.0;
-      ctx.strokeStyle = 'black';
-      ctx.globalAlpha = 1.0;
-
-      ctx.beginPath();
-      line(pd.ice.centered_pdp);
       ctx.stroke();
 
       // undo translate

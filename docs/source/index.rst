@@ -21,9 +21,9 @@ To get started, install with pip::
 
     pip install pdpilot
 
-Or, you can try the widget in this `Colab notebook <https://colab.research.google.com/github/DanielKerrigan/PDPilot/blob/main/examples/colab-example.ipynb>`_.
+See the `example notebooks <https://github.com/DanielKerrigan/PDPilot/tree/main/examples>`_ for demonstrations.
 
-See the `example notebooks <https://github.com/DanielKerrigan/PDPilot/tree/main/examples>`_ for more demonstrations.
+Or, you can try the widget in this `Colab notebook <https://colab.research.google.com/github/DanielKerrigan/PDPilot/blob/main/examples/colab-example.ipynb>`_.
 
 .. toctree::
    :caption: User Guide

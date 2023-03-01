@@ -11,7 +11,13 @@
     ticks,
   } from 'd3-array';
   import { format } from 'd3-format';
-  import { stack, stackOffsetExpand, stackOffsetNone, area } from 'd3-shape';
+  import {
+    stack,
+    stackOffsetExpand,
+    stackOffsetNone,
+    stackOrderReverse,
+    area,
+  } from 'd3-shape';
   import { dataset, feature_info, num_instances } from '../../../stores';
   import type { FeatureInfo, OneWayPD } from '../../../types';
   import { categoricalColors, defaultFormat } from '../../../vis-utils';
@@ -68,7 +74,8 @@
     // "A series (layer) is generated for each key."
     .keys(clusterIds)
     .value((d, key) => d[1].get(key) ?? 0)
-    .offset(normalize ? stackOffsetExpand : stackOffsetNone);
+    .offset(normalize ? stackOffsetExpand : stackOffsetNone)
+    .order(stackOrderReverse);
 
   // map from the name of a feature to its x scale
   $: x = Object.fromEntries(
@@ -231,7 +238,7 @@
   // y-scale for faceting the violin plots by cluster
   $: yBox = scaleBand<number>()
     .domain(clusterIds)
-    .range([fy.bandwidth() - margin.bottom, margin.top])
+    .range([margin.top, fy.bandwidth() - margin.bottom])
     .padding(0.05);
 
   function getViolinPath(

@@ -104,7 +104,7 @@
           {disabled}
           on:change={() => onFeatureManuallyChanged(feature)}
         />
-        <label class="cutoff" for="{feature}-checkbox" title={feature}
+        <label class="pdpilot-cutoff" for="{feature}-checkbox" title={feature}
           >{feature}</label
         >
       </li>

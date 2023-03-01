@@ -16,6 +16,7 @@
   export let marginRight = 0;
   export let distributionHeight = 0;
   export let allowBrushing = false;
+  export let iceLineWidth = 1;
 </script>
 
 {#if width > 0 && height > 0}
@@ -31,6 +32,7 @@
       {distributionHeight}
       {indices}
       {allowBrushing}
+      {iceLineWidth}
     />
   {:else if pd.num_features === 2}
     <TwoWayChart

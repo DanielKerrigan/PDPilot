@@ -138,7 +138,7 @@
     height: 1em;
   }
 
-  .pdpilot-widget-container :global(.cutoff) {
+  .pdpilot-widget-container :global(.pdpilot-cutoff) {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;

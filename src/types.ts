@@ -76,10 +76,10 @@ export type ICE = {
   p10_min: number;
   p90_max: number;
   ice_lines: number[][];
+  centered_ice_lines: number[][];
   clusters: {
     id: number;
     indices: number[];
-    centered_ice_lines: number[][];
     p10: number[];
     p25: number[];
     p75: number[];
@@ -95,8 +95,8 @@ export type ICE = {
 
 export type ICELevel =
   | 'lines'
+  | 'centered-lines'
   | 'cluster-centers'
-  | 'cluster-bands'
   | 'cluster-lines';
 
 // Partial dependence

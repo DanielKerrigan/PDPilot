@@ -16,13 +16,11 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 from scipy.stats import iqr as inner_quartile_range
-from sklearn.cluster import KMeans
 from sklearn.linear_model import Ridge
-from sklearn.metrics import mean_squared_error, silhouette_score
+from sklearn.metrics import mean_squared_error
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import SplineTransformer, StandardScaler
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.linear_model import LinearRegression
 from tqdm import tqdm
 from tslearn.clustering import TimeSeriesKMeans
 from tslearn.clustering import silhouette_score as ts_silhouette_score
@@ -558,7 +556,6 @@ def _calculate_ice(ice_lines, data, feature, md):
             {
                 "id": n,
                 "indices": indices.tolist(),
-                "centered_ice_lines": centered_lines.tolist(),
                 "mean": mean.tolist(),
                 "p10": p10.tolist(),
                 "p25": p25.tolist(),
@@ -612,6 +609,7 @@ def _calculate_ice(ice_lines, data, feature, md):
         "p10_min": p10_min.item(),
         "p90_max": p90_max.item(),
         "ice_lines": ice_lines.tolist(),
+        "centered_ice_lines": centered_ice_lines.tolist(),
         "clusters": clusters,
         "centered_pdp": centered_pdp.tolist(),
         "cluster_distance": cluster_distance.item(),

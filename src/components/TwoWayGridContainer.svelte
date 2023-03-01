@@ -1,5 +1,5 @@
 <script lang="ts">
-  import GridFilters from './GridFilters.svelte';
+  import TwoWayGridFilters from './TwoWayGridFilters.svelte';
   import PDPGrid from './PDPGrid.svelte';
   import { feature_names, two_way_pds } from '../stores';
   import { doublePDPSortingOptions } from '../sorting';
@@ -19,7 +19,7 @@
 
 <div class="two-way-grid-container">
   <div>
-    <GridFilters on:changeFilters={onChangeFilters} />
+    <TwoWayGridFilters on:changeFilters={onChangeFilters} />
   </div>
   <div class="pdp-grid-wrapper">
     <PDPGrid

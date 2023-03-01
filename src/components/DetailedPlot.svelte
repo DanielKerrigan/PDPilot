@@ -85,15 +85,19 @@
     yPdp = $featureToPd.get(pd.y_feature) ?? null;
   }
 
-  let showClusters = false;
   let showClusterDescriptions = false;
 
-  $: if (!showClusters) {
-    showClusterDescriptions = false;
-  }
+  const iceLevels: { value: ICELevel; title: string }[] = [
+    { value: 'lines', title: 'Standard' },
+    { value: 'centered-lines', title: 'Centered' },
+    { value: 'cluster-lines', title: 'Clusters' },
+  ];
 
   let iceLevel: ICELevel = 'lines';
-  $: iceLevel = showClusters ? 'cluster-lines' : 'lines';
+
+  $: if (iceLevel !== 'cluster-lines') {
+    showClusterDescriptions = false;
+  }
 
   let showMarginalDistribution = false;
   let showOneWay = true;
@@ -206,10 +210,14 @@
         </label>
       {:else}
         <label class="label-and-input">
-          <input type="checkbox" bind:checked={showClusters} />Cluster
+          ICE:
+          <select bind:value={iceLevel}>
+            {#each iceLevels as { value, title }}
+              <option {value}>{title}</option>
+            {/each}
+          </select>
         </label>
-
-        {#if showClusters}
+        {#if iceLevel === 'cluster-lines'}
           <label class="label-and-input">
             <input
               type="checkbox"

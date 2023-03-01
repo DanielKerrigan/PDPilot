@@ -19,19 +19,19 @@ not support anything like `text-overflow: ellipsis` -->
   width={rotate ? height : width}
   height={rotate ? width : height}
 >
-  <div class="label-container">
+  <div class="pdpilot-label-container">
     <div
-      class="label-content"
-      class:rotate
+      class="pdpilot-label-content"
+      class:pdpilot-rotate={rotate}
       style="width: {width}px; height: {height}px;"
       style:width="{width}px"
       style:height="{height}px"
       style:--outlineColor={outlineColor}
-      class:outlineText={outlineColor !== 'transparent'}
+      class:pdpilot-outline-text={outlineColor !== 'transparent'}
     >
       <div
         class:bold
-        class="cutoff"
+        class="pdpilot-cutoff"
         style="font-size: {fontSize}px; line-height: normal;"
         title={label}
       >
@@ -42,7 +42,7 @@ not support anything like `text-overflow: ellipsis` -->
 </foreignObject>
 
 <style>
-  .label-container {
+  .pdpilot-label-container {
     width: 100%;
     height: 100%;
 
@@ -54,7 +54,7 @@ not support anything like `text-overflow: ellipsis` -->
     align-items: center;
   }
 
-  .label-content {
+  .pdpilot-label-content {
     /* center the label in the div */
     display: flex;
     justify-content: center;
@@ -65,7 +65,7 @@ not support anything like `text-overflow: ellipsis` -->
     position: fixed;
   }
 
-  .outlineText {
+  .pdpilot-outline-text {
     --outline-size-pos: 1px;
     --outline-size-neg: -1px;
     text-shadow: var(--outline-size-neg) var(--outline-size-neg) 0
@@ -79,7 +79,7 @@ not support anything like `text-overflow: ellipsis` -->
       var(--outline-size-neg) 0 0 var(--outlineColor);
   }
 
-  .rotate {
+  .pdpilot-rotate {
     transform: rotate(270deg);
   }
 </style>

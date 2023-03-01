@@ -67,16 +67,16 @@ function getYScale(
         .domain([pdp.ice.ice_min, pdp.ice.ice_max])
         .nice()
         .range([height - margin.bottom, margin.top]);
+    } else if (iceLevel === 'centered-lines') {
+      return scaleLinear()
+        .domain([pdp.ice.centered_ice_min, pdp.ice.centered_ice_max])
+        .nice()
+        .range([height - margin.bottom, margin.top]);
     } else if (iceLevel === 'cluster-centers') {
       return scaleLinear()
         .domain([pdp.ice.centered_mean_min, pdp.ice.centered_mean_max])
         .nice()
         .range([height - margin.bottom, margin.top]);
-    } else if (iceLevel === 'cluster-bands') {
-      return scaleLinear()
-        .domain([pdp.ice.p10_min, pdp.ice.p90_max])
-        .nice()
-        .range([facetHeight - margin.bottom, margin.top]);
     } else {
       return scaleLinear()
         .domain([pdp.ice.centered_ice_min, pdp.ice.centered_ice_max])
@@ -89,16 +89,16 @@ function getYScale(
         .domain(iceLineExtent)
         .nice()
         .range([height - margin.bottom, margin.top]);
+    } else if (iceLevel === 'centered-lines') {
+      return scaleLinear()
+        .domain(iceClusterLineExtent)
+        .nice()
+        .range([height - margin.bottom, margin.top]);
     } else if (iceLevel === 'cluster-centers') {
       return scaleLinear()
         .domain(iceClusterCenterExtent)
         .nice()
         .range([height - margin.bottom, margin.top]);
-    } else if (iceLevel === 'cluster-bands') {
-      return scaleLinear()
-        .domain(iceClusterBandExtent)
-        .nice()
-        .range([facetHeight - margin.bottom, margin.top]);
     } else {
       return scaleLinear()
         .domain(iceClusterLineExtent)
@@ -159,40 +159,7 @@ function getHighlightedBins(
 }
 
 const categoricalColors = {
-  dark: [
-    '#1f77b4',
-    '#ff7f0e',
-    '#2ca02c',
-    '#d62728',
-    '#9467bd',
-    '#8c564b',
-    '#e377c2',
-    '#7f7f7f',
-    '#bcbd22',
-    '#17becf',
-  ],
-  medium: [
-    '#5da6e6',
-    '#ffb048',
-    '#65d25c',
-    '#ff6151',
-    '#c696f0',
-    '#be8377',
-    '#ffa8f5',
-    '#aeaeae',
-    '#f1ef5a',
-    '#66f1ff',
-  ],
-  light: [
-    '#92d7ff',
-    '#ffe479',
-    '#9aff8c',
-    '#ff967e',
-    '#fac7ff',
-    '#f2b3a6',
-    '#ffdcff',
-    '#e0e0e0',
-    '#ffff8d',
-    '#9fffff',
-  ],
+  light: ['#a6cee3', '#fdbf6f', '#b2df8a', '#fb9a99', '#cab2d6'],
+  medium: ['#67a3cb', '#fea13f', '#7abf5a', '#f4645d', '#9c76b7'],
+  dark: ['#1f78b4', '#ff7f00', '#33a02c', '#e31a1c', '#6a3d9a'],
 };

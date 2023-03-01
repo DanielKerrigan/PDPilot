@@ -17,6 +17,7 @@
     shapeSelections = event.detail;
   }
 
+  // we could just pass this up
   function onChangeNameFilters(event: CustomEvent<string[]>) {
     dispatch('changeFilters', event.detail);
   }

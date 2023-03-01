@@ -124,7 +124,7 @@
     value_map={'value_map' in feature ? feature.value_map : {}}
   />
 
-  <YAxis scale={y} x={margin.left} label={'centered avg. prediction'} />
+  <YAxis scale={y} x={margin.left} label={'centered prediction'} />
 
   {#if showMarginalDistribution}
     {#if 'bandwidth' in x}

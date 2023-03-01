@@ -33,6 +33,8 @@
   export let marginTop: number;
   export let distributionHeight: number;
   export let allowBrushing = false;
+  export let iceLineWidth: number;
+  export let center = false;
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
@@ -65,7 +67,7 @@
     pd,
     chartHeight,
     facetHeight,
-    'lines',
+    center ? 'centered-lines' : 'lines',
     scaleLocally,
     $ice_line_extent,
     $ice_cluster_center_extent,
@@ -97,10 +99,12 @@
     highlight: number[],
     x: ScaleLinear<number, number, never> | ScalePoint<number>,
     y: ScaleLinear<number, number, never>,
+    iceLineWidth: number,
     radius: number,
     showHighlights: boolean,
     width: number,
-    height: number
+    height: number,
+    center: boolean
   ) {
     // TODO: is this check needed?
     if (
@@ -117,12 +121,14 @@
 
     // normal ice lines
 
-    ctx.lineWidth = 0.5;
+    ctx.lineWidth = iceLineWidth;
     // same as css var(--gray-2)
     ctx.strokeStyle = 'rgb(198, 198, 198)';
     ctx.globalAlpha = 0.15;
 
-    pd.ice.ice_lines.forEach((d) => {
+    const iceLines = center ? pd.ice.centered_ice_lines : pd.ice.ice_lines;
+
+    iceLines.forEach((d) => {
       ctx.beginPath();
       line(d);
       ctx.stroke();
@@ -136,7 +142,7 @@
 
       highlight.forEach((i) => {
         ctx.beginPath();
-        line(pd.ice.ice_lines[i]);
+        line(iceLines[i]);
         ctx.stroke();
       });
     }
@@ -148,7 +154,7 @@
     ctx.globalAlpha = 1;
 
     ctx.beginPath();
-    line(pd.mean_predictions);
+    line(center ? pd.ice.centered_pdp : pd.mean_predictions);
     ctx.stroke();
 
     // pdp circles
@@ -156,7 +162,7 @@
     if ('step' in x) {
       for (let i = 0; i < pd.x_values.length; i++) {
         const cx = x(pd.x_values[i]) ?? 0;
-        const cy = y(pd.mean_predictions[i]);
+        const cy = y(center ? pd.ice.centered_pdp[i] : pd.mean_predictions[i]);
 
         ctx.beginPath();
         ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
@@ -181,10 +187,12 @@
       $highlighted_indices,
       x,
       y,
+      iceLineWidth,
       radius,
       showHighlights,
       width,
-      height
+      height,
+      center
     );
   }
 
@@ -200,10 +208,12 @@
     $highlighted_indices,
     x,
     y,
+    iceLineWidth,
     radius,
     showHighlights,
     width,
-    height
+    height,
+    center
   );
 
   // brushing
@@ -235,7 +245,9 @@
 
     const xs = pd.x_values.map((v) => x(v) ?? 0);
 
-    $highlighted_indices = pd.ice.ice_lines
+    const iceLines = center ? pd.ice.centered_ice_lines : pd.ice.ice_lines;
+
+    $highlighted_indices = iceLines
       .map((il, i) => ({ lines: il, index: i }))
       .filter(({ lines }) => {
         return lines.some((point, i) => {
@@ -301,7 +313,11 @@
         value_map={'value_map' in feature ? feature.value_map : {}}
       />
 
-      <YAxis scale={y} x={margin.left} label={'prediction'} />
+      <YAxis
+        scale={y}
+        x={margin.left}
+        label={center ? 'centered prediction' : 'prediction'}
+      />
 
       {#if allowBrushing && highlightedDistribution && $highlighted_indices.length > 0}
         {#if 'bandwidth' in x}

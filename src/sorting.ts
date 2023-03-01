@@ -2,18 +2,24 @@ import type { OneWayPD, TwoWayPD, PDSortingOption } from './types';
 
 import { isOneWayPdArray } from './types';
 
-import { ascending, descending, transpose, mean, sum } from 'd3-array';
+import { descending, transpose, mean, sum } from 'd3-array';
 
 export { singlePDPSortingOptions, doublePDPSortingOptions };
 
-function meanAbsolute(lines: number[][], center: number[]): number[] {
-  return lines.map((line) => {
-    // calculate distance between line and center
-    let score = 0;
-    for (let i = 0; i < line.length; i++) {
-      score += Math.abs(line[i] - center[i]);
+function distanceRatio(
+  highlightedLines: number[][],
+  highlightedCenter: number[],
+  pd: number[]
+): number[] {
+  return highlightedLines.map((highlightedLine) => {
+    let distanceToHighltedCenter = 0;
+    let distanceToPd = 0;
+    for (let i = 0; i < highlightedLine.length; i++) {
+      distanceToHighltedCenter +=
+        (highlightedLine[i] - highlightedCenter[i]) ** 2;
+      distanceToPd += (highlightedLine[i] - pd[i]) ** 2;
     }
-    return score / center.length;
+    return Math.sqrt(distanceToPd) / Math.sqrt(distanceToHighltedCenter);
   });
 }
 
@@ -24,7 +30,7 @@ function normalize(x: number[]): number[] {
 
 const singlePDPSortingOptions: PDSortingOption[] = [
   {
-    name: 'variance',
+    name: 'Variance',
     forBrushing: false,
     sort: function (data: OneWayPD[] | TwoWayPD[]): OneWayPD[] | TwoWayPD[] {
       if (data.length === 0 || !isOneWayPdArray(data)) {
@@ -35,7 +41,7 @@ const singlePDPSortingOptions: PDSortingOption[] = [
     },
   },
   {
-    name: 'cluster difference',
+    name: 'Cluster difference',
     forBrushing: false,
     sort: function (data: OneWayPD[] | TwoWayPD[]): OneWayPD[] | TwoWayPD[] {
       if (data.length === 0 || !isOneWayPdArray(data)) {
@@ -48,7 +54,7 @@ const singlePDPSortingOptions: PDSortingOption[] = [
     },
   },
   {
-    name: 'complexity',
+    name: 'Complexity',
     forBrushing: false,
     sort: function (data: OneWayPD[] | TwoWayPD[]): OneWayPD[] | TwoWayPD[] {
       if (data.length === 0 || !isOneWayPdArray(data)) {
@@ -73,7 +79,7 @@ const singlePDPSortingOptions: PDSortingOption[] = [
     },
   },
   {
-    name: 'highlighted similarity',
+    name: 'Highlighted similarity',
     forBrushing: true,
     sort: function (
       data: OneWayPD[] | TwoWayPD[],
@@ -93,24 +99,30 @@ const singlePDPSortingOptions: PDSortingOption[] = [
 
       const scores = Object.fromEntries(
         data.map((pd) => {
-          const lines = indices.map((i) => pd.ice.ice_lines[i]);
-          const center = transpose<number>(lines).map(
+          const highlightedLines = indices.map(
+            (i) => pd.ice.centered_ice_lines[i]
+          );
+          const highlightedCenter = transpose<number>(highlightedLines).map(
             (points) => mean(points) ?? 0
           );
 
-          const scores = meanAbsolute(lines, center);
+          const scores = distanceRatio(
+            highlightedLines,
+            highlightedCenter,
+            pd.ice.centered_pdp
+          );
 
           return [pd.x_feature, mean(scores) ?? 0];
         })
       );
 
       return data.sort((a, b) =>
-        ascending(scores[a.x_feature], scores[b.x_feature])
+        descending(scores[a.x_feature], scores[b.x_feature])
       );
     },
   },
   {
-    name: 'highlighted distribution',
+    name: 'Highlighted distribution',
     forBrushing: true,
     sort: function (
       data: OneWayPD[] | TwoWayPD[],
@@ -162,7 +174,7 @@ const singlePDPSortingOptions: PDSortingOption[] = [
 
 const doublePDPSortingOptions: PDSortingOption[] = [
   {
-    name: 'interaction',
+    name: 'Interaction',
     forBrushing: false,
     sort: function (data: OneWayPD[] | TwoWayPD[]): OneWayPD[] | TwoWayPD[] {
       if (data.length === 0 || isOneWayPdArray(data)) {
@@ -173,7 +185,7 @@ const doublePDPSortingOptions: PDSortingOption[] = [
     },
   },
   {
-    name: 'variance',
+    name: 'Variance',
     forBrushing: false,
     sort: function (data: OneWayPD[] | TwoWayPD[]): OneWayPD[] | TwoWayPD[] {
       if (data.length === 0 || isOneWayPdArray(data)) {

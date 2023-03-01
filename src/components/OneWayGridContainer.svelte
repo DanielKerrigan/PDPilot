@@ -1,5 +1,5 @@
 <script lang="ts">
-  import GridFilters from './GridFilters.svelte';
+  import OneWayGridFilters from './OneWayGridFilters.svelte';
   import PDPGrid from './PDPGrid.svelte';
   import { feature_names, one_way_pds } from '../stores';
   import { singlePDPSortingOptions } from '../sorting';
@@ -17,7 +17,7 @@
 
 <div class="one-way-grid-container">
   <div>
-    <GridFilters on:changeFilters={onChangeFilters} />
+    <OneWayGridFilters on:changeFilters={onChangeFilters} />
   </div>
   <div class="pdp-grid-wrapper">
     <PDPGrid

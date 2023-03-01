@@ -14,9 +14,10 @@
   export let distributionHeight: number;
   export let indices: number[] | null;
   export let allowBrushing: boolean;
+  export let iceLineWidth: number;
 </script>
 
-{#if iceLevel === 'lines'}
+{#if iceLevel === 'lines' || iceLevel === 'centered-lines'}
   <Lines
     {pd}
     {width}
@@ -26,6 +27,8 @@
     {marginTop}
     {distributionHeight}
     {allowBrushing}
+    {iceLineWidth}
+    center={iceLevel === 'centered-lines'}
   />
 {:else if iceLevel === 'cluster-centers'}
   <ClusterCenters
