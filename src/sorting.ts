@@ -2,7 +2,7 @@ import type { OneWayPD, TwoWayPD, PDSortingOption } from './types';
 
 import { isOneWayPdArray } from './types';
 
-import { descending, transpose, mean, sum } from 'd3-array';
+import { descending, transpose, mean } from 'd3-array';
 
 export { singlePDPSortingOptions, doublePDPSortingOptions };
 
@@ -21,11 +21,6 @@ function distanceRatio(
     }
     return Math.sqrt(distanceToPd) / Math.sqrt(distanceToHighltedCenter);
   });
-}
-
-function normalize(x: number[]): number[] {
-  const total = sum(x);
-  return x.map((a) => a / total);
 }
 
 const singlePDPSortingOptions: PDSortingOption[] = [
@@ -150,10 +145,8 @@ const singlePDPSortingOptions: PDSortingOption[] = [
             return [pd.x_feature, 0];
           }
 
-          const overall = normalize(
-            featureInfo[pd.x_feature].distribution.counts
-          );
-          const highlighted = normalize(highlightedDistribution.counts);
+          const overall = featureInfo[pd.x_feature].distribution.percents;
+          const highlighted = highlightedDistribution.percents;
 
           let distance = 0;
 

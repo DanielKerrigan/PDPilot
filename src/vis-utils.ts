@@ -2,12 +2,14 @@ import { scaleLinear } from 'd3-scale';
 import { format } from 'd3-format';
 import { bisectRight, rollup, range } from 'd3-array';
 import type {
+  Distribution,
   FeatureInfo,
   ICELevel,
   OrderedOneWayPD,
   UnorderedOneWayPD,
 } from './types';
 import type { ScaleLinear } from 'd3-scale';
+import { countsToPercents } from './utils';
 export {
   scaleCanvas,
   defaultFormat,
@@ -113,10 +115,7 @@ function getHighlightedBins(
   info: FeatureInfo,
   values: number[],
   idx: number[]
-): {
-  bins: number[];
-  counts: number[];
-} {
+): Distribution {
   const highlightedValues = idx.map((i) => values[i]);
 
   if (info.kind === 'categorical') {
@@ -130,9 +129,12 @@ function getHighlightedBins(
       (b) => highlightedCounts.get(b) ?? 0
     );
 
+    const percents = countsToPercents(counts);
+
     return {
       bins: info.distribution.bins,
       counts,
+      percents,
     };
   } else {
     const highlightedCounts = rollup(
@@ -151,9 +153,12 @@ function getHighlightedBins(
       (i) => highlightedCounts.get(i) ?? 0
     );
 
+    const percents = countsToPercents(counts);
+
     return {
       bins: info.distribution.bins,
       counts,
+      percents,
     };
   }
 }

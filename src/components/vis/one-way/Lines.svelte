@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { OneWayPD } from '../../../types';
+  import type { Distribution, OneWayPD } from '../../../types';
   import { scaleLinear, scalePoint } from 'd3-scale';
   import type { ScaleLinear, ScalePoint } from 'd3-scale';
   import { line as d3line } from 'd3-shape';
@@ -296,8 +296,28 @@
     selection.call(brush.clear);
   }
 
-  let highlightedDistribution: { bins: number[]; counts: number[] } | undefined;
+  let highlightedDistribution: Distribution | undefined;
   $: highlightedDistribution = $highlightedDistributions.get(pd.x_feature);
+
+  $: showHighlightedDistribution =
+    allowBrushing && highlightedDistribution && $highlighted_indices.length > 0;
+
+  function getMaxPercent(
+    overall: Distribution,
+    highlighted: Distribution | undefined
+  ) {
+    const maxOverall = Math.max(...overall.percents);
+
+    if (!highlighted) {
+      return maxOverall;
+    }
+
+    const maxHighlighted = Math.max(...highlighted.percents);
+
+    return Math.max(maxOverall, maxHighlighted);
+  }
+
+  $: maxPercent = getMaxPercent(feature.distribution, highlightedDistribution);
 </script>
 
 <div>
@@ -319,44 +339,55 @@
         label={center ? 'centered prediction' : 'prediction'}
       />
 
-      {#if allowBrushing && highlightedDistribution && $highlighted_indices.length > 0}
-        {#if 'bandwidth' in x}
-          <MarginalBarChart
-            data={highlightedDistribution}
-            fill={'red'}
-            {x}
-            height={distributionHeight}
-            direction="horizontal"
-            translate={[0, margin.top - distributionHeight]}
-          />
-        {:else}
-          <MarginalHistogram
-            data={highlightedDistribution}
-            fill={'red'}
-            {x}
-            height={distributionHeight}
-            direction="horizontal"
-            translate={[0, margin.top - distributionHeight]}
-          />
+      {#if showMarginalDistribution}
+        {#if allowBrushing && highlightedDistribution && $highlighted_indices.length > 0}
+          {#if 'bandwidth' in x}
+            <MarginalBarChart
+              data={highlightedDistribution}
+              fill={'var(--light-red)'}
+              {x}
+              height={distributionHeight}
+              direction="horizontal"
+              translate={[0, margin.top - distributionHeight]}
+              unit={'percent'}
+              maxValue={maxPercent}
+            />
+          {:else}
+            <MarginalHistogram
+              data={highlightedDistribution}
+              fill={'var(--light-red)'}
+              {x}
+              height={distributionHeight}
+              direction="horizontal"
+              translate={[0, margin.top - distributionHeight]}
+              unit={'percent'}
+              maxValue={maxPercent}
+            />
+          {/if}
         {/if}
-      {:else if showMarginalDistribution}
         {#if 'bandwidth' in x}
           <MarginalBarChart
             data={feature.distribution}
-            fill={'var(--gray-3)'}
+            fill={showHighlightedDistribution ? 'none' : 'var(--gray-3)'}
+            stroke={showHighlightedDistribution ? 'var(--black)' : 'none'}
             {x}
             height={distributionHeight}
             direction="horizontal"
             translate={[0, margin.top - distributionHeight]}
+            unit={'percent'}
+            maxValue={maxPercent}
           />
         {:else}
           <MarginalHistogram
             data={feature.distribution}
-            fill={'var(--gray-3)'}
+            fill={showHighlightedDistribution ? 'none' : 'var(--gray-3)'}
+            stroke={showHighlightedDistribution ? 'var(--black)' : 'none'}
             {x}
             height={distributionHeight}
             direction="horizontal"
             translate={[0, margin.top - distributionHeight]}
+            unit={'percent'}
+            maxValue={maxPercent}
           />
         {/if}
       {/if}

@@ -4,7 +4,11 @@ export type Dataset = Record<string, number[]>;
 
 // Distribution
 
-export type Distribution = { bins: number[]; counts: number[] };
+export type Distribution = {
+  bins: number[];
+  counts: number[];
+  percents: number[];
+};
 
 // Features
 

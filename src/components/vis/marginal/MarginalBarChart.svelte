@@ -2,18 +2,38 @@
   import { scaleLinear } from 'd3-scale';
   import { range } from 'd3-array';
   import type { ScalePoint, ScaleBand } from 'd3-scale';
+  import type { Distribution } from '../../../types';
 
-  export let data: { bins: number[]; counts: number[] };
+  export let data: Distribution;
   export let height: number;
   export let direction: 'vertical' | 'horizontal';
   export let x: ScalePoint<number> | ScaleBand<number>;
   export let translate: [number, number] = [0, 0];
   export let fill = 'var(--gray-3)';
+  export let stroke = 'none';
+  export let unit: 'count' | 'percent' = 'count';
+  export let maxValue = 0;
+
+  $: maxY = maxValue
+    ? maxValue
+    : unit === 'count'
+    ? Math.max(...data.counts)
+    : Math.max(...data.percents);
+
+  function getCount(data: Distribution, i: number): number {
+    return data.counts[i];
+  }
+
+  function getPercent(data: Distribution, i: number): number {
+    return data.percents[i];
+  }
+
+  $: accessor = unit === 'count' ? getCount : getPercent;
 
   $: indices = range(data.counts.length);
 
   $: y = scaleLinear()
-    .domain([0, Math.max(...data.counts)])
+    .domain([0, maxY])
     .range(direction === 'horizontal' ? [height, 0] : [0, height]);
 
   $: barWidth = (x.bandwidth() || x.step() * x.padding()) - 2;
@@ -25,10 +45,11 @@
     {#each indices as i}
       <rect
         x={(x(data.bins[i]) ?? 0) - offset}
-        y={y(data.counts[i])}
+        y={y(accessor(data, i))}
         width={barWidth}
-        height={y(0) - y(data.counts[i])}
+        height={y(0) - y(accessor(data, i))}
         {fill}
+        {stroke}
       />
     {/each}
     <line
@@ -43,9 +64,10 @@
       <rect
         x={0}
         y={(x(data.bins[i]) ?? 0) - offset}
-        width={y(data.counts[i])}
+        width={y(accessor(data, i))}
         height={barWidth}
         {fill}
+        {stroke}
       />
     {/each}
     <line

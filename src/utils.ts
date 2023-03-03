@@ -1,4 +1,6 @@
-export { isNumeric, areArraysEqual };
+import { sum } from 'd3-array';
+
+export { isNumeric, areArraysEqual, countsToPercents };
 
 /**
  * Checks if two arrays are equal to each other.
@@ -29,4 +31,14 @@ function areArraysEqual<T>(
    return true if the passed in value is a number or a string that is number */
 function isNumeric(value: any): boolean {
   return !isNaN(value) && !isNaN(parseFloat(value));
+}
+
+/**
+ * Divides each number in the passed array by the sum of the array.
+ * @param x array of counts
+ * @returns array of percents
+ */
+function countsToPercents(x: number[]): number[] {
+  const total = sum(x);
+  return x.map((d) => d / total);
 }

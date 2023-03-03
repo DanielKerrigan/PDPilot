@@ -59,6 +59,7 @@
     --black: black;
 
     --red: #d62728;
+    --light-red: #fc655a;
   }
 
   .pdp-tab-content {

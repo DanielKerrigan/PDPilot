@@ -90,12 +90,18 @@ class Metadata:
                 bins.append(i)
                 counts.append(df[col].sum().item())
 
+            percents = np.array(counts) / np.sum(counts)
+
             self.feature_info[feature] = {
                 "kind": "categorical",
                 "subkind": "one_hot",
                 "ordered": False,
                 "values": unique_feature_vals[feature],
-                "distribution": {"bins": bins, "counts": counts},
+                "distribution": {
+                    "bins": bins,
+                    "counts": counts,
+                    "percents": percents.tolist(),
+                },
                 "columns_and_values": one_hot_info,
                 "value_to_column": {value: col for col, value in one_hot_info},
                 "value_map": feature_value_mappings.get(feature, {}),
@@ -103,23 +109,33 @@ class Metadata:
 
         for feature in nominal_features:
             bins, counts = np.unique(df[feature], return_counts=True)
+            percents = counts / np.sum(counts)
             self.feature_info[feature] = {
                 "kind": "categorical",
                 "subkind": "nominal",
                 "ordered": False,
                 "values": unique_feature_vals[feature],
-                "distribution": {"bins": bins.tolist(), "counts": counts.tolist()},
+                "distribution": {
+                    "bins": bins.tolist(),
+                    "counts": counts.tolist(),
+                    "percents": percents.tolist(),
+                },
                 "value_map": feature_value_mappings.get(feature, {}),
             }
 
         for feature in ordinal_features:
             bins, counts = np.unique(df[feature], return_counts=True)
+            percents = counts / np.sum(counts)
             self.feature_info[feature] = {
                 "kind": "categorical",
                 "subkind": "ordinal",
                 "ordered": True,
                 "values": unique_feature_vals[feature],
-                "distribution": {"bins": bins.tolist(), "counts": counts.tolist()},
+                "distribution": {
+                    "bins": bins.tolist(),
+                    "counts": counts.tolist(),
+                    "percents": percents.tolist(),
+                },
                 "value_map": feature_value_mappings.get(feature, {}),
             }
 
@@ -130,6 +146,7 @@ class Metadata:
             counts, bins = np.histogram(
                 df[feature], "sturges", (unique_vals[0], unique_vals[-1])
             )
+            percents = counts / np.sum(counts)
 
             if np.issubdtype(df[feature].dtype, np.integer):
                 # TODO: remove this?
@@ -155,7 +172,11 @@ class Metadata:
                     "subkind": "discrete",
                     "ordered": True,
                     "values": values,
-                    "distribution": {"bins": bins.tolist(), "counts": counts.tolist()},
+                    "distribution": {
+                        "bins": bins.tolist(),
+                        "counts": counts.tolist(),
+                        "percents": percents.tolist(),
+                    },
                 }
             else:
                 values = (
@@ -169,5 +190,9 @@ class Metadata:
                     "subkind": "continuous",
                     "ordered": True,
                     "values": values,
-                    "distribution": {"bins": bins.tolist(), "counts": counts.tolist()},
+                    "distribution": {
+                        "bins": bins.tolist(),
+                        "counts": counts.tolist(),
+                        "percents": percents.tolist(),
+                    },
                 }
