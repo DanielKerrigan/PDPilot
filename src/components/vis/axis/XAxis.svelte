@@ -21,7 +21,6 @@
   export let showTickLabels = true;
   export let showBaseline = false;
 
-  export let tickLabelOutlineColor = 'transparent';
   export let tickColor = 'black';
   export let baselineColor = 'black';
 
@@ -82,11 +81,10 @@
             <Label
               width={scale.bandwidth() || scale.step()}
               height={fontSize * lineHeight}
-              x={scale.bandwidth() === 0 ? -scale.step() / 2 : 0}
+              x={scale.bandwidth() === 0 ? 0 : scale.bandwidth() / 2}
               y={tickSize + gapBetweenTickAndTickLabel}
               bold={false}
               label={value_map[tick] ?? tick}
-              outlineColor={tickLabelOutlineColor}
               {fontSize}
             />
           {/if}
@@ -102,7 +100,6 @@
               text-anchor="middle"
               dominant-baseline="hanging"
               font-size={fontSize}
-              stroke={tickLabelOutlineColor}
               fill="black"
               stroke-width={2}
               paint-order="stroke"
@@ -119,7 +116,7 @@
     <Label
       {width}
       height={fontSize * lineHeight}
-      x={left}
+      x={width / 2 + left}
       y={tickSize +
         gapBetweenTickAndTickLabel +
         fontSize +

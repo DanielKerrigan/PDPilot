@@ -38,8 +38,9 @@
     "fix": "prettier --plugin-search-dir . --write src && eslint . --ext .ts,.tsx,.svelte --fix",
     "check": "prettier --plugin-search-dir . --check src && eslint . --ext .ts,.tsx,.svelte",
     "prepack": "npm run build:prod",
-    "watch:nb": "webpack --watch --mode=development",
-    "watch:lab": "jupyter labextension watch .",
+    "watch": "npm run watch:nbextension",
+    "watch:nbextension": "webpack --watch --mode=development",
+    "watch:labextension": "jupyter labextension watch .",
     "test": "uvu -r tsm tests"
   },
   "dependencies": {

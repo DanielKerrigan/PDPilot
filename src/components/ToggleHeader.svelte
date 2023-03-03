@@ -13,6 +13,8 @@
     style:padding="0"
     on:click={() => (expanded = !expanded)}
   >
+    <!-- no pdpilot-icon class here because we don't want the
+      default 1em size to apply -->
     <svg
       xmlns="http://www.w3.org/2000/svg"
       class="icon-tabler icon-tabler-chevron-down"

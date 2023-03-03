@@ -203,7 +203,7 @@
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          class="icon icon-tabler icon-tabler-arrow-left"
+          class="pdpilot-icon icon-tabler icon-tabler-arrow-left"
           width="24"
           height="24"
           viewBox="0 0 24 24"
@@ -229,7 +229,7 @@
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          class="icon icon-tabler icon-tabler-arrow-right"
+          class="pdpilot-icon icon-tabler icon-tabler-arrow-right"
           width="24"
           height="24"
           viewBox="0 0 24 24"
@@ -269,33 +269,34 @@
           {#if ways === 1}
             <ul>
               <li>
-                <span class="bold">Variance:</span> Plots that have more variance
-                in their ICE lines are ranked higher.
+                <span class="pdpilot-bold">Variance:</span> Plots that have more
+                variance in their ICE lines are ranked higher.
               </li>
               <li>
-                <span class="bold">Cluster difference:</span> Plots that have ICE
-                clusters farther from the partial dependence line are ranked higher.
+                <span class="pdpilot-bold">Cluster difference:</span> Plots that
+                have ICE clusters farther from the partial dependence line are ranked
+                higher.
               </li>
               <li>
-                <span class="bold">Highlighted similarity:</span> Plots where the
-                highlighted lines are closer together and farther from the partial
+                <span class="pdpilot-bold">Highlighted similarity:</span> Plots where
+                the highlighted lines are closer together and farther from the partial
                 dependence line are ranked higher.
               </li>
               <li>
-                <span class="bold">Highlighted distribution:</span> Plots for features
-                whose distributions of highlighted instances are more different from
-                the overall distributions are ranked higher.
+                <span class="pdpilot-bold">Highlighted distribution:</span> Plots
+                for features whose distributions of highlighted instances are more
+                different from the overall distributions are ranked higher.
               </li>
             </ul>
           {:else}
             <ul>
               <li>
-                <span class="bold">Interaction:</span> Plots for feature pairs with
-                more interaction are ranked higher.
+                <span class="pdpilot-bold">Interaction:</span> Plots for feature
+                pairs with more interaction are ranked higher.
               </li>
               <li>
-                <span class="bold">Variance:</span> Plots that have more variation
-                in their average predictions are ranked higher.
+                <span class="pdpilot-bold">Variance:</span> Plots that have more
+                variation in their average predictions are ranked higher.
               </li>
             </ul>
           {/if}
@@ -311,7 +312,7 @@
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          class="icon icon-tabler icon-tabler-refresh"
+          class="pdpilot-icon icon-tabler icon-tabler-refresh"
           width="24"
           height="24"
           viewBox="0 0 24 24"
@@ -467,7 +468,7 @@
           <button class="expand-pdp-button" on:click={() => onClickPdp(pd)}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              class="icon icon-tabler icon-tabler-arrows-maximize"
+              class="pdpilot-icon icon-tabler icon-tabler-arrows-maximize"
               width="24"
               height="24"
               viewBox="0 0 24 24"

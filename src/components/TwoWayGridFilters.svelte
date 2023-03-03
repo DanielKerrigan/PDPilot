@@ -14,7 +14,7 @@
 </script>
 
 <div class="controls-container">
-  <div class="bold">Feature Filters</div>
+  <div class="pdpilot-bold">Feature Filters</div>
 
   <div class="filter-container feature-selector-wrapper-outer">
     <div class="filter-header">

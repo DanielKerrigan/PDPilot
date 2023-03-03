@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
+
   export let width = 0;
   export let height = 0;
   export let x = 0;
@@ -7,79 +9,46 @@
   export let rotate = false;
   export let label = '';
   export let fontSize = 14;
-  export let outlineColor = 'transparent';
+
+  let text: SVGTextElement;
+
+  function updateText(label: string, width: number) {
+    if (!text) {
+      return;
+    }
+
+    text.textContent = label;
+
+    let part = label;
+
+    while (part.length > 0 && text.getComputedTextLength() > width) {
+      part = part.slice(0, -1);
+      text.textContent = part + '…';
+    }
+  }
+
+  onMount(() => {
+    updateText(label, width);
+  });
+
+  $: updateText(label, width);
 </script>
 
-<!-- using a foreignObject because SVG text does
-not support anything like `text-overflow: ellipsis` -->
-
-<foreignObject
+<text
+  bind:this={text}
   {x}
   {y}
-  width={rotate ? height : width}
-  height={rotate ? width : height}
+  {width}
+  {height}
+  fill="black"
+  dominant-baseline="hanging"
+  text-anchor="middle"
+  class:pdpilot-bold={bold}
+  font-size={fontSize}
+  transform={rotate ? `rotate(270, ${x}, ${y})` : null}
 >
-  <div class="pdpilot-label-container">
-    <div
-      class="pdpilot-label-content"
-      class:pdpilot-rotate={rotate}
-      style="width: {width}px; height: {height}px;"
-      style:width="{width}px"
-      style:height="{height}px"
-      style:--outlineColor={outlineColor}
-      class:pdpilot-outline-text={outlineColor !== 'transparent'}
-    >
-      <div
-        class:bold
-        class="pdpilot-cutoff"
-        style="font-size: {fontSize}px; line-height: normal;"
-        title={label}
-      >
-        {label}
-      </div>
-    </div>
-  </div>
-</foreignObject>
+  <title>{label}</title>
+</text>
 
 <style>
-  .pdpilot-label-container {
-    width: 100%;
-    height: 100%;
-
-    /* we want to center the content div in the container
-    so that we can rotate the content div around its center
-    and have it stay in the foreignObject */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .pdpilot-label-content {
-    /* center the label in the div */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    /* removing this messes up the rotation on safari,
-    but adding it causes the div to appear above tooltips */
-    position: fixed;
-  }
-
-  .pdpilot-outline-text {
-    --outline-size-pos: 1px;
-    --outline-size-neg: -1px;
-    text-shadow: var(--outline-size-neg) var(--outline-size-neg) 0
-        var(--outlineColor),
-      0 var(--outline-size-neg) 0 var(--outlineColor),
-      var(--outline-size-pos) var(--outline-size-neg) 0 var(--outlineColor),
-      var(--outline-size-pos) 0 0 var(--outlineColor),
-      var(--outline-size-pos) var(--outline-size-pos) 0 var(--outlineColor),
-      0 var(--outline-size-pos) 0 var(--outlineColor),
-      var(--outline-size-neg) var(--outline-size-pos) 0 var(--outlineColor),
-      var(--outline-size-neg) 0 0 var(--outlineColor);
-  }
-
-  .pdpilot-rotate {
-    transform: rotate(270deg);
-  }
 </style>

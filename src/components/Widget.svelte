@@ -121,19 +121,19 @@
     font-weight: 500;
   }
 
-  .pdpilot-widget-container :global(.large) {
+  .pdpilot-widget-container :global(.pdpilot-large) {
     font-size: 1.125em;
   }
 
-  .pdpilot-widget-container :global(.small) {
+  .pdpilot-widget-container :global(.pdpilot-small) {
     font-size: 0.875em;
   }
 
-  .pdpilot-widget-container :global(.bold) {
+  .pdpilot-widget-container :global(.pdpilot-bold) {
     font-weight: 500;
   }
 
-  .pdpilot-widget-container :global(.icon) {
+  .pdpilot-widget-container :global(.pdpilot-icon) {
     width: 1em;
     height: 1em;
   }

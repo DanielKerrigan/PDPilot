@@ -21,7 +21,6 @@
   export let showTickLabels = true;
   export let showBaseline = false;
 
-  export let tickLabelOutlineColor = 'transparent';
   export let tickColor = 'black';
   export let baselineColor = 'black';
 
@@ -89,11 +88,10 @@
               width={scale.bandwidth() || scale.step()}
               height={fontSize * lineHeight}
               x={-(tickSize + fontSize + gapBetweenTickAndTickLabel)}
-              y={scale.bandwidth() === 0 ? -scale.step() / 2 : 0}
+              y={scale.bandwidth() === 0 ? 0 : scale.bandwidth() / 2}
               bold={false}
               label={value_map[tick] ?? tick}
               {fontSize}
-              outlineColor={tickLabelOutlineColor}
               rotate={true}
             />
           {/if}
@@ -109,7 +107,6 @@
               text-anchor="end"
               dominant-baseline="middle"
               font-size={fontSize}
-              stroke={tickLabelOutlineColor}
               fill="black"
               stroke-width={2}
               paint-order="stroke"
@@ -132,7 +129,7 @@
         fontSize +
         gapBetweenTicksAndAxisLabel
       )}
-      y={minimum}
+      y={height / 2 + minimum}
       bold={true}
       {label}
       rotate={true}

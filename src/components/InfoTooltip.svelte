@@ -19,7 +19,7 @@
   {#if kind === 'alert'}
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      class="icon icon-tabler icon-tabler-alert-circle"
+      class="pdpilot-icon icon-tabler icon-tabler-alert-circle"
       width="24"
       height="24"
       viewBox="0 0 24 24"
@@ -40,7 +40,7 @@
     <!-- question mark icon -->
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      class="icon icon-tabler icon-tabler-help"
+      class="pdpilot-icon icon-tabler icon-tabler-help"
       width="24"
       height="24"
       viewBox="0 0 24 24"
@@ -61,7 +61,7 @@
 
   {#if show}
     <div
-      class="tooltip-content small"
+      class="tooltip-content pdpilot-small"
       style:top
       style:right
       style:bottom

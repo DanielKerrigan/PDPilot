@@ -29,7 +29,7 @@ If you are using classic Jupyter notebook, then enable the extention with these 
 
 In one terminal, watch for JS changes::
 
-    npm run watch:nb
+    npm run watch
 
 In another terminal, run Jupyter::
 
@@ -44,12 +44,12 @@ If you are using Jupyter Lab, then run::
 
     jupyter labextension develop --overwrite .
 
-In one terminal, watch for JS changes::
-
-    npm run watch:lab
-
-In another terminal, run Jupyter::
+Then run Jupyter::
 
     jupyter lab
 
-After making JS changes, refresh your browser window. After making Python changes, restart the kernel.
+After making JS changes, run::
+
+    npm run build
+
+After making Python changes, restart the kernel.
