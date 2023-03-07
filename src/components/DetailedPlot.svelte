@@ -186,9 +186,7 @@
     {#if pd}
       <label class="label-and-input">
         <input type="checkbox" bind:checked={showMarginalDistribution} />
-        {pd.num_features === 1
-          ? 'Marginal distribution'
-          : 'Marginal distributions'}
+        {pd.num_features === 1 ? 'Distribution' : 'Distributions'}
       </label>
 
       <label class="label-and-input">
