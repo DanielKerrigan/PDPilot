@@ -49,31 +49,6 @@ const singlePDPSortingOptions: PDSortingOption[] = [
     },
   },
   {
-    name: 'Complexity',
-    forBrushing: false,
-    sort: function (data: OneWayPD[] | TwoWayPD[]): OneWayPD[] | TwoWayPD[] {
-      if (data.length === 0 || !isOneWayPdArray(data)) {
-        return data;
-      }
-
-      data.sort((a, b) => {
-        if (!a.ordered) {
-          return 1;
-        } else if (!b.ordered) {
-          return -1;
-        }
-
-        if (a.knots_good_fit === b.knots_good_fit) {
-          return descending(a.nrmse_good_fit, b.nrmse_good_fit);
-        } else {
-          return descending(a.knots_good_fit, b.knots_good_fit);
-        }
-      });
-
-      return data;
-    },
-  },
-  {
     name: 'Highlighted similarity',
     forBrushing: true,
     sort: function (
