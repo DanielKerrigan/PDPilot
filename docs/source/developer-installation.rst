@@ -8,7 +8,7 @@ To start, create a virtual enviroment. For example::
     conda activate pdpilot
     conda install "python=3.8" nodejs jupyterlab "jupyter_client<8" "pyzmq<25"
 
-The inclusion of :code:`jupyter_client<8` and :code:`pyzmq<25` is needed until this `issue <https://github.com/jupyter/notebook/issues/6721>_` is resolved.
+The inclusion of :code:`jupyter_client<8` and :code:`pyzmq<25` is needed until this `issue <https://github.com/jupyter/notebook/issues/6721>`_ is resolved.
 
 Next, clone the repository::
 
