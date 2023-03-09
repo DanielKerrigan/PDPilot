@@ -252,33 +252,39 @@
       </div>
     {:else if pd.num_features === 1}
       <div class="one-way-pdp-grid">
-        <div style:flex="1">
-          <PDP
-            {pd}
-            width={showClusterDescriptions ? halfWidth : gridWidth}
-            height={gridHeight}
-            {scaleLocally}
-            {showMarginalDistribution}
-            marginTop={showMarginalDistribution ? marginalChartHeight : 10}
-            distributionHeight={showMarginalDistribution
-              ? marginalChartHeight
-              : 0}
-            {iceLevel}
-            {indices}
-            showColorLegend={false}
-          />
-        </div>
-
-        {#if showClusterDescriptions}
+        {#if iceLevel === 'cluster-lines' && pd.ice.clusters.length === 0}
+          <div class="pdpilot-no-clusters-message">
+            This feature does not have any distinct clusters of ICE lines.
+          </div>
+        {:else}
           <div style:flex="1">
-            <ViolinPlot
-              on:filter={onFilterIndices}
+            <PDP
               {pd}
-              width={halfWidth}
+              width={showClusterDescriptions ? halfWidth : gridWidth}
               height={gridHeight}
-              features={pd.ice.interacting_features}
+              {scaleLocally}
+              {showMarginalDistribution}
+              marginTop={showMarginalDistribution ? marginalChartHeight : 10}
+              distributionHeight={showMarginalDistribution
+                ? marginalChartHeight
+                : 0}
+              {iceLevel}
+              {indices}
+              showColorLegend={false}
             />
           </div>
+
+          {#if showClusterDescriptions}
+            <div style:flex="1">
+              <ViolinPlot
+                on:filter={onFilterIndices}
+                {pd}
+                width={halfWidth}
+                height={gridHeight}
+                features={pd.ice.interacting_features}
+              />
+            </div>
+          {/if}
         {/if}
       </div>
     {:else}
@@ -517,5 +523,11 @@
 
   .detailed-plot-message-content > button {
     margin: auto;
+  }
+
+  .pdpilot-no-clusters-message {
+    flex: 1;
+    text-align: center;
+    align-self: center;
   }
 </style>

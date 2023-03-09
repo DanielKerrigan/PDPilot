@@ -510,6 +510,14 @@ def _calculate_ice(ice_lines, data, feature, md):
         cluster_model.fit(timeseries_dataset)
         labels = cluster_model.predict(timeseries_dataset)
 
+        if len(np.unique(labels)) == 1:
+            # all of the lines were assigned to the same cluster.
+            # this can happen if the feature is not used by the model, causing
+            # all of the centered ice lines to be the same
+            best_n_clusters = 1
+            best_labels = np.array([])
+            break
+
         score = ts_silhouette_score(timeseries_dataset, labels, metric="euclidean")
 
         if score > best_score:
@@ -530,50 +538,60 @@ def _calculate_ice(ice_lines, data, feature, md):
 
     interacting_features = defaultdict(int)
 
-    for n in range(best_n_clusters):
-        mask = best_labels == n
-        # get the indices of the ICE lines in this cluster
-        indices = mask.nonzero()[0]
-        lines = ice_lines[mask]
-        centered_lines = centered_ice_lines[mask]
+    if best_n_clusters == 1:
+        mean_min = ice_lines[0].min()
+        mean_max = ice_lines[0].max()
 
-        y = mask.astype(int)
+        centered_mean_min = centered_ice_lines[0].min()
+        centered_mean_max = centered_ice_lines[0].max()
 
-        importances = _get_interacting_features(data, y, md)
-        for feat, imp in importances.items():
-            interacting_features[feat] += imp
+        p10_min = centered_mean_min
+        p90_max = centered_mean_max
+    else:
+        for n in range(best_n_clusters):
+            mask = best_labels == n
+            # get the indices of the ICE lines in this cluster
+            indices = mask.nonzero()[0]
+            lines = ice_lines[mask]
+            centered_lines = centered_ice_lines[mask]
 
-        mean = lines.mean(axis=0)
-        centered_mean = centered_lines.mean(axis=0)
-        compared_mean = mean - mean[0]
+            y = mask.astype(int)
 
-        p10 = np.percentile(centered_lines, 10, axis=0)
-        p25 = np.percentile(centered_lines, 25, axis=0)
-        p75 = np.percentile(centered_lines, 75, axis=0)
-        p90 = np.percentile(centered_lines, 90, axis=0)
+            importances = _get_interacting_features(data, y, md)
+            for feat, imp in importances.items():
+                interacting_features[feat] += imp
 
-        clusters.append(
-            {
-                "id": n,
-                "indices": indices.tolist(),
-                "mean": mean.tolist(),
-                "p10": p10.tolist(),
-                "p25": p25.tolist(),
-                "p75": p75.tolist(),
-                "p90": p90.tolist(),
-                "centered_mean": centered_mean.tolist(),
-                "compared_mean": compared_mean.tolist(),
-            }
-        )
+            mean = lines.mean(axis=0)
+            centered_mean = centered_lines.mean(axis=0)
+            compared_mean = mean - mean[0]
 
-        p10_min = min(p10_min, p10.min())
-        p90_max = max(p90_max, p90.max())
+            p10 = np.percentile(centered_lines, 10, axis=0)
+            p25 = np.percentile(centered_lines, 25, axis=0)
+            p75 = np.percentile(centered_lines, 75, axis=0)
+            p90 = np.percentile(centered_lines, 90, axis=0)
 
-        mean_min = min(mean_min, mean.min())
-        mean_max = max(mean_max, mean.max())
+            clusters.append(
+                {
+                    "id": n,
+                    "indices": indices.tolist(),
+                    "mean": mean.tolist(),
+                    "p10": p10.tolist(),
+                    "p25": p25.tolist(),
+                    "p75": p75.tolist(),
+                    "p90": p90.tolist(),
+                    "centered_mean": centered_mean.tolist(),
+                    "compared_mean": compared_mean.tolist(),
+                }
+            )
 
-        centered_mean_min = min(centered_mean_min, centered_mean.min())
-        centered_mean_max = max(centered_mean_max, centered_mean.max())
+            p10_min = min(p10_min, p10.min())
+            p90_max = max(p90_max, p90.max())
+
+            mean_min = min(mean_min, mean.min())
+            mean_max = max(mean_max, mean.max())
+
+            centered_mean_min = min(centered_mean_min, centered_mean.min())
+            centered_mean_max = max(centered_mean_max, centered_mean.max())
 
     pairs = {
         (min(feature, other), max(feature, other))
@@ -590,7 +608,7 @@ def _calculate_ice(ice_lines, data, feature, md):
 
     centered_pdp = centered_ice_lines.mean(axis=0)
 
-    cluster_distance = 0
+    cluster_distance = np.float64(0)
 
     for cluster in clusters:
         cluster_distance += np.mean(
