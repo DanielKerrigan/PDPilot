@@ -134,6 +134,8 @@
 
   $: if (!sortingOption.forBrushing) {
     sortedData = sortingOption.sort(data);
+    // when the sorting or data changes, go to the first page
+    setPage(1);
   }
 
   // we don't want changes to highlights to trigger this
@@ -145,6 +147,9 @@
       highlightedDistributions: $highlightedDistributions,
       featureInfo: $feature_info,
     });
+
+    // when the sorting or data changes, go to the first page
+    setPage(1);
   }
   $: if (sortingOption.forBrushing) {
     sortByBrushing(data);
@@ -157,11 +162,6 @@
   // pagination
 
   let currentPage = 1;
-
-  // go to the first page when the data is filtered
-  $: if (data) {
-    setPage(1);
-  }
 
   $: numPages = Math.ceil(data.length / perPage);
 
@@ -177,8 +177,6 @@
 
     currentPage = page;
   }
-
-  $: data, setPage(1);
 
   // scaling
 
