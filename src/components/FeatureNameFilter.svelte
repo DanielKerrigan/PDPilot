@@ -27,7 +27,7 @@
 
   $: featureCheckboxes = $feature_names.map((feature) => ({
     feature,
-    hidden: !feature.includes(search),
+    hidden: !feature.toLocaleLowerCase().includes(search.toLocaleLowerCase()),
     disabled: !enabledFeatures.includes(feature),
   }));
 
