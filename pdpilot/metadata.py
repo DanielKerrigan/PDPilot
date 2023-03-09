@@ -68,7 +68,7 @@ class Metadata:
             df[non_one_hot_features].select_dtypes(["number"]).columns
         )
         quantitative_features = quantitative_features - (
-            nominal_features | ordinal_features
+            set(nominal_features) | set(ordinal_features)
         )
 
         # list of features to show in the UI.
