@@ -10,20 +10,20 @@
   export let label = '';
   export let fontSize = 14;
 
-  let text: SVGTextElement;
+  let tspan: SVGTSpanElement;
 
   function updateText(label: string, width: number) {
-    if (!text) {
+    if (!tspan) {
       return;
     }
 
-    text.textContent = label;
+    tspan.textContent = label;
 
     let part = label;
 
-    while (part.length > 0 && text.getComputedTextLength() > width) {
+    while (part.length > 0 && tspan.getComputedTextLength() > width) {
       part = part.slice(0, -1);
-      text.textContent = part + '…';
+      tspan.textContent = part + '…';
     }
   }
 
@@ -35,18 +35,16 @@
 </script>
 
 <text
-  bind:this={text}
   {x}
   {y}
   {width}
   {height}
   fill="black"
-  dominant-baseline="hanging"
-  text-anchor="middle"
   class:pdpilot-bold={bold}
   font-size={fontSize}
   transform={rotate ? `rotate(270, ${x}, ${y})` : null}
 >
+  <tspan dominant-baseline="hanging" text-anchor="middle" bind:this={tspan} />
   <title>{label}</title>
 </text>
 
