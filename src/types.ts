@@ -116,9 +116,6 @@ export type OrderedOneWayPD = {
   mean_predictions: number[];
   pdp_min: number;
   pdp_max: number;
-  trend_good_fit: number[];
-  nrmse_good_fit: number;
-  knots_good_fit: number;
   deviation: number;
   cluster: number;
   ice: ICE;

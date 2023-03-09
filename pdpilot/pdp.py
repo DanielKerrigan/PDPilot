@@ -338,26 +338,6 @@ def calc_one_way_pd(
             else ("decreasing" if percent_pos < (0.5 - tol) else "mixed")
         )
 
-        # good-fit
-
-        for i in range(2, 10):
-            trend_model = make_pipeline(
-                StandardScaler(), SplineTransformer(i, 3), Ridge(alpha=0.1)
-            )
-
-            trend_model.fit(X, y)
-            trend = trend_model.predict(X)
-
-            rmse = mean_squared_error(y, trend, squared=False)
-            # normalize it
-            nrmse = rmse / iqr
-
-            if nrmse < 0.02 or i == 9:
-                par_dep["trend_good_fit"] = trend.tolist()
-                par_dep["nrmse_good_fit"] = nrmse.item()
-                par_dep["knots_good_fit"] = i
-                break
-
     return par_dep, pairs
 
 
