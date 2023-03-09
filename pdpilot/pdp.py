@@ -543,7 +543,6 @@ def _calculate_ice(ice_lines, data, feature, md):
 
             mean = lines.mean(axis=0)
             centered_mean = centered_lines.mean(axis=0)
-            compared_mean = mean - mean[0]
 
             p10 = np.percentile(centered_lines, 10, axis=0)
             p25 = np.percentile(centered_lines, 25, axis=0)
@@ -560,7 +559,6 @@ def _calculate_ice(ice_lines, data, feature, md):
                     "p75": p75.tolist(),
                     "p90": p90.tolist(),
                     "centered_mean": centered_mean.tolist(),
-                    "compared_mean": compared_mean.tolist(),
                 }
             )
 
