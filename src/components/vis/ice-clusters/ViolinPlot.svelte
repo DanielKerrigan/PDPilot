@@ -245,14 +245,23 @@
     scale: ScaleLinear<number, number, never> | ScaleBand<number>,
     densities: { x: number; density: number }[]
   ) {
+    // the densities can be really small values that end up getting respresented
+    // in scientific notation in the path strings. we want to avoid that.
+
     const violinHeight = scaleLinear()
       .domain([0, max(densities, (d) => d.density) ?? 0])
       .range([0, yBox.bandwidth() / 2]);
 
     const violinArea = area<{ x: number; density: number }>()
       .x((d) => scale(d.x) ?? 0)
-      .y0((d) => -violinHeight(d.density))
-      .y1((d) => violinHeight(d.density));
+      .y0((d) => {
+        const yCoord = violinHeight(d.density);
+        return yCoord > 0.01 ? -yCoord : 0;
+      })
+      .y1((d) => {
+        const yCoord = violinHeight(d.density);
+        return yCoord > 0.01 ? yCoord : 0;
+      });
 
     return violinArea(densities);
   }
