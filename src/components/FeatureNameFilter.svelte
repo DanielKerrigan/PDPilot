@@ -3,6 +3,8 @@
   import { feature_names } from '../stores';
 
   export let enabledFeatures: string[];
+  // IDs used for linking label to checkboxes must be unique
+  export let idPrefix: string;
 
   const dispatch = createEventDispatcher<{ changeNameFilters: string[] }>();
 
@@ -76,14 +78,14 @@
   <ul>
     <li class="fs-row">
       <input
-        id="features-checkbox"
+        id="{idPrefix}-features-checkbox"
         type="checkbox"
         bind:checked={featuresChecked}
         indeterminate={featuresCheckboxIndeterminate}
         on:change={onAllFeaturesChange}
         disabled={search !== '' || !allFeaturesEnabled}
       />
-      <label for="features-checkbox">All features</label>
+      <label for="{idPrefix}-features-checkbox">All features</label>
     </li>
   </ul>
 
@@ -96,7 +98,7 @@
     {#each featureCheckboxes as { feature, hidden, disabled } (feature)}
       <li class="fs-row" class:hidden>
         <input
-          id="{feature}-checkbox"
+          id="{idPrefix}-{feature}-checkbox"
           type="checkbox"
           bind:group={selectedFeatures}
           name="features"
@@ -104,8 +106,10 @@
           {disabled}
           on:change={() => onFeatureManuallyChanged(feature)}
         />
-        <label class="pdpilot-cutoff" for="{feature}-checkbox" title={feature}
-          >{feature}</label
+        <label
+          class="pdpilot-cutoff"
+          for="{idPrefix}-{feature}-checkbox"
+          title={feature}>{feature}</label
         >
       </li>
     {/each}

@@ -27,6 +27,7 @@
       <FeatureNameFilter
         enabledFeatures={$feature_names}
         on:changeNameFilters={onChangeNameFilters}
+        idPrefix={'pdpilot-two'}
       />
     </div>
   </div>

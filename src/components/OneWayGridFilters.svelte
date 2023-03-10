@@ -60,6 +60,7 @@
       <FeatureNameFilter
         enabledFeatures={filteredByKind}
         on:changeNameFilters={onChangeNameFilters}
+        idPrefix={'pdpilot-one'}
       />
     </div>
   </div>
