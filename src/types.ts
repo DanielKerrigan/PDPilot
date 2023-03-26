@@ -68,33 +68,32 @@ export type FeatureInfo = QuantitativeFeatureInfo | CategoricalFeatureInfo;
 
 // ICE
 
+type Cluster = {
+  id: number;
+  indices: number[];
+  centered_mean: number[];
+};
+
 export type ICE = {
   ice_min: number;
   ice_max: number;
   centered_ice_min: number;
   centered_ice_max: number;
-  mean_min: number;
-  mean_max: number;
-  centered_mean_min: number;
-  centered_mean_max: number;
-  p10_min: number;
-  p90_max: number;
   ice_lines: number[][];
   centered_ice_lines: number[][];
-  clusters: {
-    id: number;
-    indices: number[];
-    p10: number[];
-    p25: number[];
-    p75: number[];
-    p90: number[];
-    mean: number[];
-    centered_mean: number[];
-  }[];
+  clusters: Record<
+    number,
+    {
+      clusters: Cluster[];
+      cluster_labels: number[];
+      cluster_distance: number;
+      centered_mean_min: number;
+      centered_mean_max: number;
+      interacting_features: string[];
+    }
+  >;
   centered_pdp: number[];
-  cluster_distance: number;
-  interacting_features: string[];
-  cluster_labels: number[];
+  num_clusters: number;
 };
 
 export type ICELevel =
@@ -117,7 +116,6 @@ export type OrderedOneWayPD = {
   pdp_min: number;
   pdp_max: number;
   deviation: number;
-  cluster: number;
   ice: ICE;
   shape: Shape;
 };
@@ -133,7 +131,6 @@ export type UnorderedOneWayPD = {
   pdp_max: number;
   deviation: number;
   distance_to_cluster_center: number;
-  cluster: number;
   ice: ICE;
 };
 

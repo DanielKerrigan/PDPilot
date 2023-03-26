@@ -455,7 +455,7 @@
             {scaleLocally}
             {colorShows}
             {showMarginalDistribution}
-            marginTop={10}
+            marginTop={11}
             marginRight={10}
             distributionHeight={10}
             showColorLegend={scaleLocally}

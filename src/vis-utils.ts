@@ -59,8 +59,7 @@ function getYScale(
   scaleLocally: boolean,
   iceLineExtent: [number, number],
   iceClusterCenterExtent: [number, number],
-  iceClusterBandExtent: [number, number],
-  iceClusterLineExtent: [number, number],
+  centeredIceLineExtent: [number, number],
   margin: { top: number; right: number; bottom: number; left: number }
 ): ScaleLinear<number, number> {
   if (scaleLocally) {
@@ -75,11 +74,13 @@ function getYScale(
         .nice()
         .range([height - margin.bottom, margin.top]);
     } else if (iceLevel === 'cluster-centers') {
+      const cluster = pdp.ice.clusters[pdp.ice.num_clusters];
       return scaleLinear()
-        .domain([pdp.ice.centered_mean_min, pdp.ice.centered_mean_max])
+        .domain([cluster.centered_mean_min, cluster.centered_mean_max])
         .nice()
         .range([height - margin.bottom, margin.top]);
     } else {
+      // cluster-lines
       return scaleLinear()
         .domain([pdp.ice.centered_ice_min, pdp.ice.centered_ice_max])
         .nice()
@@ -93,7 +94,7 @@ function getYScale(
         .range([height - margin.bottom, margin.top]);
     } else if (iceLevel === 'centered-lines') {
       return scaleLinear()
-        .domain(iceClusterLineExtent)
+        .domain(centeredIceLineExtent)
         .nice()
         .range([height - margin.bottom, margin.top]);
     } else if (iceLevel === 'cluster-centers') {
@@ -102,8 +103,9 @@ function getYScale(
         .nice()
         .range([height - margin.bottom, margin.top]);
     } else {
+      // cluster-lines
       return scaleLinear()
-        .domain(iceClusterLineExtent)
+        .domain(centeredIceLineExtent)
         .nice()
         .range([facetHeight - margin.bottom, margin.top]);
     }

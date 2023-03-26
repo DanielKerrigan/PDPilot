@@ -4,12 +4,31 @@
   import { createEventDispatcher } from 'svelte';
   import { feature_names } from '../stores';
 
-  const dispatch = createEventDispatcher<{ changeFilters: string[] }>();
+  const dispatch = createEventDispatcher<{
+    changeFilters: {
+      features: string[];
+      op: 'and' | 'or';
+    };
+  }>();
 
   let showFeatureName = true;
 
+  let op: 'and' | 'or' = 'and';
+  let selectedFeatures: string[] = $feature_names;
+
   function onChangeNameFilters(event: CustomEvent<string[]>) {
-    dispatch('changeFilters', event.detail);
+    dispatch('changeFilters', {
+      features: event.detail,
+      op: op,
+    });
+    selectedFeatures = event.detail;
+  }
+
+  function onChangeOp() {
+    dispatch('changeFilters', {
+      features: selectedFeatures,
+      op: op,
+    });
   }
 </script>
 
@@ -24,6 +43,32 @@
       class="filter-content feature-selector-wrapper-inner"
       class:pdp-hide={!showFeatureName}
     >
+      <div>
+        Plots must contain
+        <label>
+          <input
+            type="radio"
+            bind:group={op}
+            name="op"
+            value="or"
+            on:change={onChangeOp}
+          />
+          1+ selected feature
+        </label>
+        <label>
+          <input
+            type="radio"
+            bind:group={op}
+            name="op"
+            value="and"
+            on:change={onChangeOp}
+          />
+          2 selected features
+        </label>
+      </div>
+
+      <hr />
+
       <FeatureNameFilter
         enabledFeatures={$feature_names}
         on:changeNameFilters={onChangeNameFilters}
@@ -66,5 +111,12 @@
 
   .filter-content {
     margin-left: 0.75em;
+  }
+
+  hr {
+    margin: 0.75em 0;
+    border: 0;
+    height: 1px;
+    background: var(--gray-2);
   }
 </style>

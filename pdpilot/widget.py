@@ -13,7 +13,7 @@ from ipywidgets import DOMWidget
 from traitlets import Dict, Int, List as ListTraitlet, Unicode, observe
 import pandas as pd
 
-from pdpilot.pdp import calc_two_way_pd, get_feature_to_pd
+from pdpilot.pdp import _calc_two_way_pd, _get_feature_to_pd
 
 from pdpilot._frontend import module_name, module_version
 
@@ -58,8 +58,7 @@ class PDPilotWidget(DOMWidget):
 
     ice_line_extent = ListTraitlet([0, 0]).tag(sync=True)
     ice_cluster_center_extent = ListTraitlet([0, 0]).tag(sync=True)
-    ice_cluster_band_extent = ListTraitlet([0, 0]).tag(sync=True)
-    ice_cluster_line_extent = ListTraitlet([0, 0]).tag(sync=True)
+    centered_ice_line_extent = ListTraitlet([0, 0]).tag(sync=True)
 
     height = Int(600).tag(sync=True)
 
@@ -104,15 +103,14 @@ class PDPilotWidget(DOMWidget):
 
         self.ice_line_extent = pd_data["ice_line_extent"]
         self.ice_cluster_center_extent = pd_data["ice_cluster_center_extent"]
-        self.ice_cluster_band_extent = pd_data["ice_cluster_band_extent"]
-        self.ice_cluster_line_extent = pd_data["ice_cluster_line_extent"]
+        self.centered_ice_line_extent = pd_data["centered_ice_line_extent"]
 
         self.height = height
 
         # not synced
         self.df = df
         self.predict = predict
-        self.feature_to_pd = get_feature_to_pd(self.one_way_pds)
+        self.feature_to_pd = _get_feature_to_pd(self.one_way_pds)
 
     @observe("two_way_to_calculate")
     def _on_two_way_to_calculate_change(self, change):
@@ -127,7 +125,7 @@ class PDPilotWidget(DOMWidget):
             ):
                 return
 
-        result = calc_two_way_pd(
+        result = _calc_two_way_pd(
             self.predict,
             self.df.copy(),
             self.df.copy(),

@@ -8,8 +8,7 @@
   import {
     ice_line_extent,
     ice_cluster_center_extent,
-    ice_cluster_band_extent,
-    ice_cluster_line_extent,
+    centered_ice_line_extent,
     feature_info,
   } from '../../../stores';
   import MarginalHistogram from '../marginal/MarginalHistogram.svelte';
@@ -34,7 +33,6 @@
   };
 
   $: chartHeight = height;
-  $: facetHeight = chartHeight / pd.ice.clusters.length;
 
   $: x =
     feature.kind === 'quantitative'
@@ -51,13 +49,12 @@
   $: y = getYScale(
     pd,
     chartHeight,
-    facetHeight,
+    0,
     'cluster-centers',
     scaleLocally,
     $ice_line_extent,
     $ice_cluster_center_extent,
-    $ice_cluster_band_extent,
-    $ice_cluster_line_extent,
+    $centered_ice_line_extent,
     margin
   );
 
@@ -74,7 +71,7 @@
 <svg {width} {height}>
   <!-- cluster means -->
   <g>
-    {#each pd.ice.clusters as cluster}
+    {#each pd.ice.clusters[pd.ice.num_clusters].clusters as cluster}
       <path
         d={line(cluster.centered_mean)}
         stroke={'var(--gray-2)'}

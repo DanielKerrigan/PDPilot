@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { OneWayPD } from '../../../types';
+  import { range } from 'd3-array';
   import { scaleLinear, scaleOrdinal, scalePoint, scaleBand } from 'd3-scale';
   import type { ScaleBand } from 'd3-scale';
   import type { Line } from 'd3-shape';
@@ -9,9 +10,10 @@
   import {
     ice_line_extent,
     ice_cluster_center_extent,
-    ice_cluster_band_extent,
-    ice_cluster_line_extent,
+    centered_ice_line_extent,
     feature_info,
+    one_way_pds,
+    detailedFeature1,
   } from '../../../stores';
   import MarginalHistogram from '../marginal/MarginalHistogram.svelte';
   import {
@@ -34,6 +36,8 @@
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
 
+  const toolbarHeight = 30;
+
   $: feature = $feature_info[pd.x_feature];
 
   // TODO: better handle marginTop vs. margin.top
@@ -44,9 +48,11 @@
     left: 50,
   };
 
-  $: chartHeight = height - marginTop;
+  $: chartHeight = height - marginTop - toolbarHeight;
 
-  $: clusterIds = pd.ice.clusters.map((d) => d.id);
+  $: clusterIds = range(pd.ice.num_clusters);
+
+  $: clusters = pd.ice.clusters[pd.ice.num_clusters].clusters;
 
   $: fy = scaleBand<number>().domain(clusterIds).range([0, chartHeight]);
 
@@ -70,8 +76,7 @@
     scaleLocally,
     $ice_line_extent,
     $ice_cluster_center_extent,
-    $ice_cluster_band_extent,
-    $ice_cluster_line_extent,
+    $centered_ice_line_extent,
     margin
   );
 
@@ -116,7 +121,7 @@
 
     ctx.clearRect(0, 0, width, height);
 
-    pd.ice.clusters.forEach((cluster) => {
+    clusters.forEach((cluster) => {
       ctx.translate(0, fy(cluster.id) ?? 0);
 
       // cluster ice lines
@@ -176,56 +181,166 @@
   }
 
   $: drawIcePdp(pd, ctx, line, indices, fy, width, chartHeight);
+
+  function setNumClusters(numClusters: number) {
+    if (numClusters < 2 || numClusters > 5) {
+      return;
+    }
+
+    Object.assign(pd.ice, { num_clusters: numClusters });
+    $one_way_pds = $one_way_pds;
+    // this causes the detailed plot to update
+    // TODO: find a better way to do this
+    $detailedFeature1 = '';
+    $detailedFeature1 = pd.x_feature;
+
+    // update the extent for ICE cluster centers
+
+    let clusterCenterMin = Infinity;
+    let clusterCenterMax = -Infinity;
+
+    for (const owp of $one_way_pds) {
+      const clusters = owp.ice.clusters;
+      const n = owp.ice.num_clusters;
+
+      if (n in clusters) {
+        const cluster = clusters[n];
+
+        if (cluster.centered_mean_min < clusterCenterMin) {
+          clusterCenterMin = cluster.centered_mean_min;
+        }
+
+        if (cluster.centered_mean_max > clusterCenterMax) {
+          clusterCenterMax = cluster.centered_mean_max;
+        }
+      }
+    }
+
+    $ice_cluster_center_extent = [clusterCenterMin, clusterCenterMax];
+  }
 </script>
 
-{#if showMarginalDistribution}
-  <svg {width} height={marginTop}>
-    {#if 'bandwidth' in x}
-      <MarginalBarChart
-        data={$feature_info[pd.x_feature].distribution}
-        {x}
-        height={distributionHeight}
-        direction="horizontal"
-        translate={[0, marginTop - distributionHeight]}
-      />
-    {:else}
-      <MarginalHistogram
-        data={$feature_info[pd.x_feature].distribution}
-        {x}
-        height={distributionHeight}
-        direction="horizontal"
-        translate={[0, marginTop - distributionHeight]}
-      />
-    {/if}
-  </svg>
-{/if}
+<div class="cluster-lines-container">
+  <div class="cluster-lines-toolbar" style:height="{toolbarHeight}px">
+    <div>Number of clusters:</div>
+    <div class="num-cluster-change">
+      <button
+        disabled={pd.ice.num_clusters <= 2}
+        on:click={() => setNumClusters(pd.ice.num_clusters - 1)}
+        title="Decrement number of clusters"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="pdpilot-icon icon-tabler icon-tabler-minus"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          stroke-width="2"
+          stroke="currentColor"
+          fill="none"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+          <path d="M5 12l14 0" />
+        </svg>
+      </button>
 
-<div>
-  <canvas bind:this={canvas} />
+      <div class="current-num-clusters">{pd.ice.num_clusters}</div>
 
-  <svg class="svg-for-clusters" height={chartHeight} {width}>
-    {#each pd.ice.clusters as cluster}
-      <g transform="translate(0,{fy(cluster.id) ?? 0})">
-        <YAxis scale={y} x={margin.left} label={'centered prediction'} />
-        <XAxis
-          scale={x}
-          y={facetHeight - margin.bottom}
-          showTickLabels={cluster.id === clusterIds[clusterIds.length - 1]}
-          showAxisLabel={cluster.id === clusterIds[clusterIds.length - 1]}
-          label={pd.x_feature}
-          integerOnly={feature.subkind === 'discrete'}
-          value_map={'value_map' in feature ? feature.value_map : {}}
+      <button
+        disabled={pd.ice.num_clusters === 1 || pd.ice.num_clusters >= 5}
+        on:click={() => setNumClusters(pd.ice.num_clusters + 1)}
+        title="Increment number of clusters"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="pdpilot-icon icon-tabler icon-tabler-plus"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          stroke-width="2"
+          stroke="currentColor"
+          fill="none"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+          <path d="M12 5l0 14" />
+          <path d="M5 12l14 0" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  {#if showMarginalDistribution}
+    <svg {width} height={marginTop}>
+      {#if 'bandwidth' in x}
+        <MarginalBarChart
+          data={$feature_info[pd.x_feature].distribution}
+          {x}
+          height={distributionHeight}
+          direction="horizontal"
+          translate={[0, marginTop - distributionHeight]}
         />
-      </g>
-    {/each}
-  </svg>
+      {:else}
+        <MarginalHistogram
+          data={$feature_info[pd.x_feature].distribution}
+          {x}
+          height={distributionHeight}
+          direction="horizontal"
+          translate={[0, marginTop - distributionHeight]}
+        />
+      {/if}
+    </svg>
+  {/if}
+
+  <div class="cluster-lines-chart">
+    <canvas bind:this={canvas} />
+
+    <svg class="svg-for-clusters" height={chartHeight} {width}>
+      {#each clusters as cluster}
+        <g transform="translate(0,{fy(cluster.id) ?? 0})">
+          <YAxis scale={y} x={margin.left} label={'centered prediction'} />
+          <XAxis
+            scale={x}
+            y={facetHeight - margin.bottom}
+            showTickLabels={cluster.id === clusterIds[clusterIds.length - 1]}
+            showAxisLabel={cluster.id === clusterIds[clusterIds.length - 1]}
+            label={pd.x_feature}
+            integerOnly={feature.subkind === 'discrete'}
+            value_map={'value_map' in feature ? feature.value_map : {}}
+          />
+        </g>
+      {/each}
+    </svg>
+  </div>
 </div>
 
 <style>
-  div {
-    position: relative;
+  .cluster-lines-container {
     width: 100%;
     height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cluster-lines-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+  }
+
+  .cluster-lines-chart {
+    position: relative;
+    width: 100%;
+    flex: 1;
+  }
+
+  .num-cluster-change {
+    display: flex;
+    align-items: center;
+    gap: 0.25em;
   }
 
   .svg-for-clusters,

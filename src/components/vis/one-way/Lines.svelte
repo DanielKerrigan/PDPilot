@@ -9,12 +9,12 @@
   import {
     ice_line_extent,
     ice_cluster_center_extent,
-    ice_cluster_band_extent,
-    ice_cluster_line_extent,
+    centered_ice_line_extent,
     feature_info,
     highlighted_indices,
     brushingInProgress,
     highlightedDistributions,
+    brushedFeature,
   } from '../../../stores';
   import { select } from 'd3-selection';
   import type { Selection } from 'd3-selection';
@@ -36,6 +36,9 @@
   export let iceLineWidth: number;
   export let center = false;
 
+  const highlightColorLines = '#4EBA72';
+  const highlightColorBars = '#4EBA72';
+
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
 
@@ -49,7 +52,6 @@
   };
 
   $: chartHeight = height;
-  $: facetHeight = chartHeight / pd.ice.clusters.length;
 
   $: x =
     feature.kind === 'quantitative'
@@ -66,13 +68,12 @@
   $: y = getYScale(
     pd,
     chartHeight,
-    facetHeight,
+    0,
     center ? 'centered-lines' : 'lines',
     scaleLocally,
     $ice_line_extent,
     $ice_cluster_center_extent,
-    $ice_cluster_band_extent,
-    $ice_cluster_line_extent,
+    $centered_ice_line_extent,
     margin
   );
 
@@ -137,8 +138,8 @@
     // highlighted ice lines
 
     if (showHighlights) {
-      ctx.strokeStyle = 'red';
-      ctx.globalAlpha = 0.15;
+      ctx.strokeStyle = highlightColorLines;
+      ctx.globalAlpha = 0.3;
 
       highlight.forEach((i) => {
         ctx.beginPath();
@@ -151,6 +152,7 @@
 
     ctx.lineWidth = 2;
     ctx.strokeStyle = 'black';
+    ctx.fillStyle = 'black';
     ctx.globalAlpha = 1;
 
     ctx.beginPath();
@@ -219,6 +221,7 @@
   // brushing
 
   // does the brush for this feature have a selection
+  // TODO: can we get rid of this and just use $brushedFeature?
   let activeBrush = false;
   // is the brush for this feature being moved
   let brushingThisFeatureInProgress = false;
@@ -236,6 +239,8 @@
       $highlighted_indices = [];
       return;
     }
+
+    $brushedFeature = pd.x_feature;
 
     // get the left and right x pixel coordinates of the brush
     const [[x1, y1], [x2, y2]] = selection as [
@@ -264,6 +269,7 @@
     if (selection === null) {
       activeBrush = false;
       $highlighted_indices = [];
+      $brushedFeature = '';
     }
 
     $brushingInProgress = false;
@@ -344,7 +350,7 @@
           {#if 'bandwidth' in x}
             <MarginalBarChart
               data={highlightedDistribution}
-              fill={'var(--light-red)'}
+              fill={highlightColorBars}
               {x}
               height={distributionHeight}
               direction="horizontal"
@@ -355,7 +361,7 @@
           {:else}
             <MarginalHistogram
               data={highlightedDistribution}
-              fill={'var(--light-red)'}
+              fill={highlightColorBars}
               {x}
               height={distributionHeight}
               direction="horizontal"
@@ -390,6 +396,18 @@
             maxValue={maxPercent}
           />
         {/if}
+      {/if}
+
+      <!-- border around brushed plot -->
+      {#if $brushedFeature === pd.x_feature}
+        <rect
+          x={margin.left}
+          y={margin.top}
+          width={width - margin.left - margin.right}
+          height={height - margin.top - margin.bottom}
+          stroke={'var(--gray-2)'}
+          pointer-events={'none'}
+        />
       {/if}
     </g>
   </svg>

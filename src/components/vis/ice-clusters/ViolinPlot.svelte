@@ -30,7 +30,7 @@
   import type { Selection } from 'd3-selection';
   import type { D3BrushEvent } from 'd3-brush';
   import { kernelDensityEstimation } from 'simple-statistics';
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, tick } from 'svelte';
 
   export let pd: OneWayPD;
   export let width: number;
@@ -44,12 +44,23 @@
     left: 50,
   };
 
-  const checkBoxHeight = 20;
+  const toolbarHeight = 30;
   let normalize = false;
 
-  $: visHeight = height - checkBoxHeight;
+  // size of the box plot inside of the violin
+  const boxWidth = 5;
 
-  $: clusterIds = range(pd.ice.clusters.length);
+  $: visViewHeight = height - toolbarHeight;
+
+  $: visTotalHeight = Math.max(
+    visViewHeight,
+    features.length *
+      (pd.ice.num_clusters * boxWidth * 4 + margin.top + margin.bottom)
+  );
+
+  $: cluster_labels = pd.ice.clusters[pd.ice.num_clusters].cluster_labels;
+
+  $: clusterIds = range(pd.ice.num_clusters);
 
   $: categoricalFeatures = features.filter(
     (f) => $feature_info[f].kind === 'categorical'
@@ -60,7 +71,7 @@
     .range(categoricalColors.medium);
 
   // y-scale for faceting by feature
-  $: fy = scaleBand<string>().domain(features).range([0, visHeight]);
+  $: fy = scaleBand<string>().domain(features).range([0, visTotalHeight]);
 
   $: I = range($num_instances);
   $: filteredI = range($num_instances);
@@ -137,7 +148,7 @@
         // first group by value
         (i) => $dataset[f][i],
         // then group by cluster
-        (i) => pd.ice.cluster_labels[i]
+        (i) => cluster_labels[i]
       );
 
       return {
@@ -204,7 +215,7 @@
           };
         },
         // group by cluster
-        (i) => pd.ice.cluster_labels[i]
+        (i) => cluster_labels[i]
       );
       return {
         feature: f,
@@ -239,7 +250,8 @@
   $: yBox = scaleBand<number>()
     .domain(clusterIds)
     .range([margin.top, fy.bandwidth() - margin.bottom])
-    .padding(0.05);
+    .paddingInner(0.1)
+    .paddingOuter(0.5);
 
   function getViolinPath(
     scale: ScaleLinear<number, number, never> | ScaleBand<number>,
@@ -265,9 +277,6 @@
 
     return violinArea(densities);
   }
-
-  // size of the box plot inside of the violin
-  $: boxWidth = Math.min(5, yBox.bandwidth() / 2);
 
   function getValueMap(feature: FeatureInfo): Record<number, string> {
     return 'value_map' in feature ? feature.value_map : {};
@@ -296,7 +305,7 @@
 
   // interaction
 
-  const brushHeight = 20;
+  const brushHeight = 10;
   // map from feature to the brush selection for that feature
   const selectedRanges = new Map<
     string,
@@ -366,14 +375,22 @@
   let group: SVGGElement;
   let selection: Selection<SVGGElement, undefined, SVGElement, undefined>;
 
-  $: if (group) {
+  async function setupBrush() {
+    // this is needed for when the number of clusters is changed.
+    // without it, the features variable is updated before the UI.
+    await tick();
     selection = select(group).selectAll('.x-axis');
     selection.call(brush);
+    selection.call(brush.clear);
+  }
+
+  $: if (group && features) {
+    setupBrush();
   }
 </script>
 
 <div>
-  <div style:height="{checkBoxHeight}px" class="controls-container">
+  <div style:height="{toolbarHeight}px" class="controls-container">
     {#if categoricalFeatures.length > 0}
       <label class="label-and-input">
         <input type="checkbox" bind:checked={normalize} />Normalize bar charts
@@ -384,102 +401,99 @@
       {filteredI.length === 1 ? 'instance' : 'instances'} selected
     </div>
   </div>
-  <svg {width} height={visHeight}>
-    <g bind:this={group}>
-      {#each distributions as d}
-        <g transform="translate(0,{fy(d.feature)})">
-          {#if d.kind === 'categorical'}
-            <g>
-              {#each d.data as series, i}
-                <g fill={color(i)}>
-                  {#each series as point}
-                    {#if point[0] !== point[1]}
-                      <rect
-                        x={getBarX(point.data[0], x[d.feature]) + 1}
-                        width={getBarWidth(x[d.feature]) - 2}
-                        y={yBar(point[1])}
-                        height={yBar(point[0]) - yBar(point[1])}
-                      />
-                    {/if}
-                  {/each}
-                </g>
-              {/each}
+  <div style:height="{visViewHeight}px" style:overflow="scroll">
+    <svg {width} height={visTotalHeight}>
+      <g bind:this={group}>
+        {#each distributions as d}
+          <g transform="translate(0,{fy(d.feature)})">
+            {#if d.kind === 'categorical'}
+              <g>
+                {#each d.data as series, i}
+                  <g fill={color(i)}>
+                    {#each series as point}
+                      {#if point[0] !== point[1]}
+                        <rect
+                          x={getBarX(point.data[0], x[d.feature]) + 1}
+                          width={getBarWidth(x[d.feature]) - 2}
+                          y={yBar(point[1])}
+                          height={yBar(point[0]) - yBar(point[1])}
+                        />
+                      {/if}
+                    {/each}
+                  </g>
+                {/each}
+              </g>
+              <YAxis
+                scale={yBar}
+                x={margin.left}
+                label={normalize ? 'percent' : 'count'}
+                format={normalize ? format('~%') : defaultFormat}
+              />
+            {:else}
+              <g>
+                {#each d.data as { cluster, box }}
+                  <g
+                    transform="translate(0,{(yBox(cluster) ?? 0) +
+                      yBox.bandwidth() / 2})"
+                  >
+                    <!-- KDE -->
+                    <path
+                      d={getViolinPath(x[d.feature], box.densities)}
+                      fill={color(cluster)}
+                    />
+                    <!-- IQR -->
+                    <rect
+                      x={x[d.feature](box.q1) ?? 0}
+                      width={(x[d.feature](box.q3) ?? 0) -
+                        (x[d.feature](box.q1) ?? 0)}
+                      y={-boxWidth / 2}
+                      height={boxWidth}
+                      fill="var(--gray-1)"
+                    />
+                    <!-- median -->
+                    <line
+                      x1={x[d.feature](box.median) ?? 0}
+                      x2={x[d.feature](box.median) ?? 0}
+                      stroke-width={2}
+                      y1={-boxWidth / 2}
+                      y2={boxWidth / 2}
+                      stroke={'black'}
+                    />
+                    <!-- whiskers -->
+                    <line
+                      x1={x[d.feature](box.low) ?? 0}
+                      x2={x[d.feature](box.q1) ?? 0}
+                      stroke-width={1}
+                      stroke="var(--gray-1)"
+                    />
+                    <line
+                      x1={x[d.feature](box.q3) ?? 0}
+                      x2={x[d.feature](box.high) ?? 0}
+                      stroke-width={1}
+                      stroke="var(--gray-1)"
+                    />
+                  </g>
+                {/each}
+              </g>
+            {/if}
+            <!-- we need the id so that we can determine which feature the brush is for -->
+            <g class="x-axis" id="axis-{d.feature}">
+              <XAxis
+                scale={x[d.feature]}
+                y={fy.bandwidth() - margin.bottom}
+                showBaseline={true}
+                baselineColor={'var(--gray-6)'}
+                tickColor={'var(--gray-6)'}
+                integerOnly={$feature_info[d.feature].subkind === 'discrete'}
+                value_map={getValueMap($feature_info[d.feature])}
+                label={d.feature}
+              />
             </g>
-
-            <YAxis
-              scale={yBar}
-              x={margin.left}
-              label={normalize ? 'percent' : 'count'}
-              format={normalize ? format('~%') : defaultFormat}
-            />
-          {:else}
-            <g>
-              {#each d.data as { cluster, box }}
-                <g
-                  transform="translate(0,{(yBox(cluster) ?? 0) +
-                    yBox.bandwidth() / 2})"
-                >
-                  <!-- KDE -->
-                  <path
-                    d={getViolinPath(x[d.feature], box.densities)}
-                    fill={color(cluster)}
-                  />
-
-                  <!-- IQR -->
-                  <rect
-                    x={x[d.feature](box.q1) ?? 0}
-                    width={(x[d.feature](box.q3) ?? 0) -
-                      (x[d.feature](box.q1) ?? 0)}
-                    y={-boxWidth / 2}
-                    height={boxWidth}
-                    fill="var(--gray-1)"
-                  />
-
-                  <!-- median -->
-                  <line
-                    x1={x[d.feature](box.median) ?? 0}
-                    x2={x[d.feature](box.median) ?? 0}
-                    stroke-width={2}
-                    y1={-boxWidth / 2}
-                    y2={boxWidth / 2}
-                    stroke={'black'}
-                  />
-
-                  <!-- whiskers -->
-                  <line
-                    x1={x[d.feature](box.low) ?? 0}
-                    x2={x[d.feature](box.q1) ?? 0}
-                    stroke-width={1}
-                    stroke="var(--gray-1)"
-                  />
-
-                  <line
-                    x1={x[d.feature](box.q3) ?? 0}
-                    x2={x[d.feature](box.high) ?? 0}
-                    stroke-width={1}
-                    stroke="var(--gray-1)"
-                  />
-                </g>
-              {/each}
-            </g>
-          {/if}
-          <!-- we need the id so that we can determine which feature the brush is for -->
-          <g class="x-axis" id="axis-{d.feature}">
-            <XAxis
-              scale={x[d.feature]}
-              y={fy.bandwidth() - margin.bottom}
-              showBaseline={true}
-              baselineColor={'var(--gray-6)'}
-              tickColor={'var(--gray-6)'}
-              integerOnly={$feature_info[d.feature].subkind === 'discrete'}
-              value_map={getValueMap($feature_info[d.feature])}
-              label={d.feature}
-            />
           </g>
-        </g>
-      {/each}
-    </g>
-  </svg>
+        {/each}
+      </g>
+    </svg>
+  </div>
 </div>
 
 <style>

@@ -15,11 +15,6 @@ from typing import Callable, Union, Dict, Tuple, List
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
-from scipy.stats import iqr as inner_quartile_range
-from sklearn.linear_model import Ridge
-from sklearn.metrics import mean_squared_error
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import SplineTransformer, StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 from tqdm import tqdm
 from tslearn.clustering import TimeSeriesKMeans
@@ -44,8 +39,8 @@ def partial_dependence(
     output_path: Union[str, None] = None,
 ) -> Union[dict, None]:
     """Calculates the data needed for the widget. This includes computing the
-    data for the partial dependence plots and ICE plots, calculating the metrics
-    to rank the plots by, clustering the PDPs, and clustering the lines within
+    data for the PDP and ICE plots, calculating the metrics
+    to rank the plots by, and clustering the lines within
     each ICE plot.
 
     :param predict: A function whose input is a DataFrame of instances and
@@ -106,8 +101,6 @@ def partial_dependence(
     subset = df.copy()
     subset_copy = df.copy()
 
-    iqr = inner_quartile_range(predict(df))
-
     # one-way
 
     one_way_work = [
@@ -117,7 +110,6 @@ def partial_dependence(
             "data_copy": subset_copy,
             "feature": feature,
             "md": md,
-            "iqr": iqr,
             "feature_to_pd": None,
         }
         for feature in features
@@ -139,7 +131,7 @@ def partial_dependence(
     )
     feature_pairs = {pair for x in one_way_results for pair in x[1]}
 
-    feature_to_pd = get_feature_to_pd(one_way_pds) if one_way_pds else None
+    feature_to_pd = _get_feature_to_pd(one_way_pds) if one_way_pds else None
 
     # two-way
 
@@ -150,7 +142,6 @@ def partial_dependence(
             "data_copy": subset_copy,
             "feature": pair,
             "md": md,
-            "iqr": iqr,
             "feature_to_pd": feature_to_pd,
         }
         for pair in feature_pairs
@@ -170,43 +161,60 @@ def partial_dependence(
 
     # min and max predictions
 
-    ice_line_min = min(one_way_pds, key=lambda d: d["ice"]["ice_min"])["ice"]["ice_min"]
-    ice_line_max = max(one_way_pds, key=lambda d: d["ice"]["ice_max"])["ice"]["ice_max"]
+    ice_line_min = math.inf
+    ice_line_max = -math.inf
 
-    ice_cluster_center_min = min(
-        one_way_pds, key=lambda d: d["ice"]["centered_mean_min"]
-    )["ice"]["centered_mean_min"]
-    ice_cluster_center_max = max(
-        one_way_pds, key=lambda d: d["ice"]["centered_mean_max"]
-    )["ice"]["centered_mean_max"]
+    centered_ice_line_min = math.inf
+    centered_ice_line_max = -math.inf
 
-    ice_cluster_band_min = min(one_way_pds, key=lambda d: d["ice"]["p10_min"])["ice"][
-        "p10_min"
-    ]
-    ice_cluster_band_max = max(one_way_pds, key=lambda d: d["ice"]["p90_max"])["ice"][
-        "p90_max"
-    ]
+    ice_cluster_center_min = math.inf
+    ice_cluster_center_max = -math.inf
 
-    ice_cluster_line_min = min(one_way_pds, key=lambda d: d["ice"]["centered_ice_min"])[
-        "ice"
-    ]["centered_ice_min"]
-    ice_cluster_line_max = max(one_way_pds, key=lambda d: d["ice"]["centered_ice_max"])[
-        "ice"
-    ]["centered_ice_max"]
+    for owp in one_way_pds:
+        ice = owp["ice"]
 
-    two_way_pdp_min = min(two_way_pds, key=itemgetter("pdp_min"))["pdp_min"]
-    two_way_pdp_max = max(two_way_pds, key=itemgetter("pdp_max"))["pdp_max"]
+        # ice line min and max
 
-    # TODO: we already get the abs min/max for each pdp, don't need to do it again here
-    two_way_interaction_min = min(two_way_pds, key=itemgetter("interaction_min"))[
-        "interaction_min"
-    ]
-    two_way_interaction_max = max(two_way_pds, key=itemgetter("interaction_max"))[
-        "interaction_max"
-    ]
-    two_way_interaction_abs_max = max(
-        abs(two_way_interaction_min), abs(two_way_interaction_max)
-    )
+        if ice["ice_min"] < ice_line_min:
+            ice_line_min = ice["ice_min"]
+
+        if ice["ice_max"] > ice_line_max:
+            ice_line_max = ice["ice_max"]
+
+        # centered ice line min and max
+
+        if ice["centered_ice_min"] < centered_ice_line_min:
+            centered_ice_line_min = ice["centered_ice_min"]
+
+        if ice["centered_ice_max"] > centered_ice_line_max:
+            centered_ice_line_max = ice["centered_ice_max"]
+
+        # cluster center min and max
+
+        num_clusters = ice["num_clusters"]
+        clusters = ice["clusters"]
+
+        if num_clusters in clusters:
+            if clusters[num_clusters]["centered_mean_min"] < ice_cluster_center_min:
+                ice_cluster_center_min = clusters[num_clusters]["centered_mean_min"]
+
+            if clusters[num_clusters]["centered_mean_max"] > ice_cluster_center_max:
+                ice_cluster_center_max = clusters[num_clusters]["centered_mean_max"]
+
+    two_way_pdp_min = math.inf
+    two_way_pdp_max = -math.inf
+
+    two_way_interaction_max = -math.inf
+
+    for twp in two_way_pds:
+        if twp["pdp_min"] < two_way_pdp_min:
+            two_way_pdp_min = twp["pdp_min"]
+
+        if twp["pdp_max"] > two_way_pdp_max:
+            two_way_pdp_max = twp["pdp_max"]
+
+        if twp["interaction_max"] > two_way_interaction_max:
+            two_way_interaction_max = twp["interaction_max"]
 
     # to make the dataset easier to work with on the frontend,
     # turn one-hot encoded features into integer encoded categories
@@ -219,13 +227,12 @@ def partial_dependence(
         "two_way_pds": two_way_pds,
         "two_way_pdp_extent": [two_way_pdp_min, two_way_pdp_max],
         "two_way_interaction_extent": [
-            -two_way_interaction_abs_max,
-            two_way_interaction_abs_max,
+            -two_way_interaction_max,
+            two_way_interaction_max,
         ],
         "ice_line_extent": [ice_line_min, ice_line_max],
         "ice_cluster_center_extent": [ice_cluster_center_min, ice_cluster_center_max],
-        "ice_cluster_band_extent": [ice_cluster_band_min, ice_cluster_band_max],
-        "ice_cluster_line_extent": [ice_cluster_line_min, ice_cluster_line_max],
+        "centered_ice_line_extent": [centered_ice_line_min, centered_ice_line_max],
         "num_instances": md.size,
         "dataset": frontend_df.to_dict(orient="list"),
         "feature_info": md.feature_info,
@@ -243,11 +250,10 @@ def _calc_pd(
     data_copy,
     feature,
     md,
-    iqr,
     feature_to_pd,
 ):
     if isinstance(feature, tuple) or isinstance(feature, list):
-        return calc_two_way_pd(
+        return _calc_two_way_pd(
             predict,
             data,
             data_copy,
@@ -256,23 +262,21 @@ def _calc_pd(
             feature_to_pd,
         )
     else:
-        return calc_one_way_pd(
+        return _calc_one_way_pd(
             predict,
             data,
             data_copy,
             feature,
             md,
-            iqr,
         )
 
 
-def calc_one_way_pd(
+def _calc_one_way_pd(
     predict,
     data,
     data_copy,
     feature,
     md,
-    iqr,
 ):
     feat_info = md.feature_info[feature]
 
@@ -313,19 +317,8 @@ def calc_one_way_pd(
     }
 
     if feat_info["ordered"]:
-        # This code is adapted from
-        # https://scikit-learn.org/stable/auto_examples/linear_model/plot_polynomial_interpolation.html
-        # Author: Mathieu Blondel
-        #         Jake Vanderplas
-        #         Christian Lorentzen
-        #         Malte Londschien
-        # License: BSD 3 clause
-
-        X = np.array(feat_info["values"]).reshape((-1, 1))
-        y = np.array(mean_predictions)
-
         # shape
-
+        y = np.array(mean_predictions)
         diff = np.diff(y)
         pos = diff[diff > 0].sum()
         neg = np.abs(diff[diff < 0].sum())
@@ -341,7 +334,7 @@ def calc_one_way_pd(
     return par_dep, pairs
 
 
-def calc_two_way_pd(
+def _calc_two_way_pd(
     predict,
     data,
     data_copy,
@@ -432,6 +425,8 @@ def calc_two_way_pd(
         "interactions": interactions,
         "interaction_min": -interaction_abs_max,
         "interaction_max": interaction_abs_max,
+        "no_interactions": no_interactions,
+        "mean": np.mean(mean_predictions).item(),
         "pdp_min": pdp_min,
         "pdp_max": pdp_max,
         "H": h_statistic,
@@ -464,7 +459,7 @@ def _reset_feature(
         data[feature] = data_copy[feature]
 
 
-def get_feature_to_pd(one_way_pds):
+def _get_feature_to_pd(one_way_pds):
     return {par_dep["x_feature"]: par_dep for par_dep in one_way_pds}
 
 
@@ -479,13 +474,16 @@ def _calculate_ice(ice_lines, data, feature, md):
 
     timeseries_dataset = to_time_series_dataset(centered_ice_lines)
 
-    best_labels = []
     best_score = -math.inf
     best_n_clusters = -1
 
-    for n in range(2, 5):
+    clusters = {}
+
+    centered_pdp = centered_ice_lines.mean(axis=0)
+
+    for n_clusters in range(2, 6):
         cluster_model = TimeSeriesKMeans(
-            n_clusters=n, metric="euclidean", max_iter=50, n_init=1, n_jobs=1
+            n_clusters=n_clusters, metric="euclidean", max_iter=50, n_init=1, n_jobs=1
         )
         cluster_model.fit(timeseries_dataset)
         labels = cluster_model.predict(timeseries_dataset)
@@ -495,45 +493,43 @@ def _calculate_ice(ice_lines, data, feature, md):
             # this can happen if the feature is not used by the model, causing
             # all of the centered ice lines to be the same
             best_n_clusters = 1
-            best_labels = np.array([])
             break
 
         score = ts_silhouette_score(timeseries_dataset, labels, metric="euclidean")
 
         if score > best_score:
             best_score = score
-            best_n_clusters = n
-            best_labels = labels
+            best_n_clusters = n_clusters
 
-    clusters = []
+        cluster_distance = np.float64(0)
 
-    mean_min = math.inf
-    mean_max = -math.inf
+        local_clusters = []
 
-    p10_min = math.inf
-    p90_max = -math.inf
+        interacting_features = defaultdict(int)
 
-    centered_mean_min = math.inf
-    centered_mean_max = -math.inf
+        centered_mean_min = math.inf
+        centered_mean_max = -math.inf
 
-    interacting_features = defaultdict(int)
-
-    if best_n_clusters == 1:
-        mean_min = ice_lines[0].min()
-        mean_max = ice_lines[0].max()
-
-        centered_mean_min = centered_ice_lines[0].min()
-        centered_mean_max = centered_ice_lines[0].max()
-
-        p10_min = centered_mean_min
-        p90_max = centered_mean_max
-    else:
-        for n in range(best_n_clusters):
-            mask = best_labels == n
+        for i in range(n_clusters):
+            mask = labels == i
             # get the indices of the ICE lines in this cluster
             indices = mask.nonzero()[0]
-            lines = ice_lines[mask]
             centered_lines = centered_ice_lines[mask]
+
+            centered_mean = centered_lines.mean(axis=0)
+
+            cluster_distance += np.mean(np.absolute(centered_mean - centered_pdp))
+
+            local_clusters.append(
+                {
+                    "id": i,
+                    "indices": indices.tolist(),
+                    "centered_mean": centered_mean.tolist(),
+                }
+            )
+
+            centered_mean_min = min(centered_mean_min, centered_mean.min())
+            centered_mean_max = max(centered_mean_max, centered_mean.max())
 
             y = mask.astype(int)
 
@@ -541,76 +537,43 @@ def _calculate_ice(ice_lines, data, feature, md):
             for feat, imp in importances.items():
                 interacting_features[feat] += imp
 
-            mean = lines.mean(axis=0)
-            centered_mean = centered_lines.mean(axis=0)
+            sorted_interacting_features = [
+                f
+                for f, _ in sorted(
+                    interacting_features.items(), key=itemgetter(1), reverse=True
+                )
+            ]
 
-            p10 = np.percentile(centered_lines, 10, axis=0)
-            p25 = np.percentile(centered_lines, 25, axis=0)
-            p75 = np.percentile(centered_lines, 75, axis=0)
-            p90 = np.percentile(centered_lines, 90, axis=0)
+        clusters[n_clusters] = {
+            "clusters": local_clusters,
+            "cluster_labels": labels.tolist(),
+            "cluster_distance": cluster_distance.item(),
+            "centered_mean_min": centered_mean_min.item(),
+            "centered_mean_max": centered_mean_max.item(),
+            "interacting_features": sorted_interacting_features,
+        }
 
-            clusters.append(
-                {
-                    "id": n,
-                    "indices": indices.tolist(),
-                    "mean": mean.tolist(),
-                    "p10": p10.tolist(),
-                    "p25": p25.tolist(),
-                    "p75": p75.tolist(),
-                    "p90": p90.tolist(),
-                    "centered_mean": centered_mean.tolist(),
-                }
-            )
+    interacting_features = defaultdict(int)
 
-            p10_min = min(p10_min, p10.min())
-            p90_max = max(p90_max, p90.max())
-
-            mean_min = min(mean_min, mean.min())
-            mean_max = max(mean_max, mean.max())
-
-            centered_mean_min = min(centered_mean_min, centered_mean.min())
-            centered_mean_max = max(centered_mean_max, centered_mean.max())
-
-    pairs = {
-        (min(feature, other), max(feature, other))
-        for other in interacting_features.keys()
-        if feature != other
-    }
-
-    sorted_interacting_features = [
-        f
-        for f, _ in sorted(
-            interacting_features.items(), key=itemgetter(1), reverse=True
-        )
-    ]
-
-    centered_pdp = centered_ice_lines.mean(axis=0)
-
-    cluster_distance = np.float64(0)
-
-    for cluster in clusters:
-        cluster_distance += np.mean(
-            np.absolute(cluster["centered_mean"] - centered_pdp)
-        )
+    if best_n_clusters == 1:
+        pairs = set()
+    else:
+        pairs = {
+            (min(feature, other), max(feature, other))
+            for other in clusters[best_n_clusters]["interacting_features"]
+            if feature != other
+        }
 
     ice = {
         "ice_min": ice_lines.min().item(),
         "ice_max": ice_lines.max().item(),
         "centered_ice_min": centered_ice_lines.min().item(),
         "centered_ice_max": centered_ice_lines.max().item(),
-        "mean_min": mean_min.item(),
-        "mean_max": mean_max.item(),
-        "centered_mean_min": centered_mean_min.item(),
-        "centered_mean_max": centered_mean_max.item(),
-        "p10_min": p10_min.item(),
-        "p90_max": p90_max.item(),
         "ice_lines": ice_lines.tolist(),
         "centered_ice_lines": centered_ice_lines.tolist(),
-        "clusters": clusters,
         "centered_pdp": centered_pdp.tolist(),
-        "cluster_distance": cluster_distance.item(),
-        "interacting_features": sorted_interacting_features,
-        "cluster_labels": best_labels.tolist(),
+        "clusters": clusters,
+        "num_clusters": best_n_clusters,
     }
 
     return ice, pairs

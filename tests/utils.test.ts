@@ -1,9 +1,6 @@
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import {
-  isNumeric,
-  areArraysEqual
-} from '../src/utils';
+import { isNumeric, areArraysEqual } from '../src/utils';
 
 test('is numeric', () => {
   assert.ok(isNumeric('0'));
@@ -15,10 +12,10 @@ test('is numeric', () => {
   assert.ok(isNumeric('-123.123'));
   assert.ok(isNumeric(0));
   assert.ok(isNumeric(1));
-  assert.ok(isNumeric(0.00));
+  assert.ok(isNumeric(0.0));
   assert.ok(isNumeric(-1));
   assert.ok(isNumeric(-0));
-  assert.ok(isNumeric(-.5));
+  assert.ok(isNumeric(-0.5));
   assert.ok(isNumeric(-123.123));
 
   assert.not(isNumeric('abc'));
@@ -44,16 +41,34 @@ test('are arrays equal', () => {
   assert.ok(areArraysEqual([1, 2, 3, 4], [1, 2, 3, 4]));
 
   // custom equality function
-  assert.ok(areArraysEqual<{k: string, v: number}>(
-    [{ k: 'a', v: 1 }, { k: 'b', v: 2 }, { k: 'c', v: 3 }],
-    [{ k: 'a', v: 1 }, { k: 'b', v: 2 }, { k: 'c', v: 3 }],
-    (a, b) => a.k === b.k && a.v === b.v
-  ));
-  assert.ok(areArraysEqual(
-    [[1, 2, 3], [4, 5, 6]],
-    [[1, 2, 3], [4, 5, 6]],
-    areArraysEqual
-  ));
+  assert.ok(
+    areArraysEqual<{ k: string; v: number }>(
+      [
+        { k: 'a', v: 1 },
+        { k: 'b', v: 2 },
+        { k: 'c', v: 3 },
+      ],
+      [
+        { k: 'a', v: 1 },
+        { k: 'b', v: 2 },
+        { k: 'c', v: 3 },
+      ],
+      (a, b) => a.k === b.k && a.v === b.v
+    )
+  );
+  assert.ok(
+    areArraysEqual(
+      [
+        [1, 2, 3],
+        [4, 5, 6],
+      ],
+      [
+        [1, 2, 3],
+        [4, 5, 6],
+      ],
+      areArraysEqual
+    )
+  );
 
   // false
 
@@ -65,17 +80,34 @@ test('are arrays equal', () => {
   assert.not.ok(areArraysEqual([1, 2, 3, 4], [1, 2, 3]));
 
   // custom equality function
-  assert.not.ok(areArraysEqual<{k: string, v: number}>(
-    [{ k: 'a', v: 1 }, { k: 'b', v: 2 }, { k: 'c', v: 3 }],
-    [{ k: 'a', v: 1 }, { k: 'b', v: 9 }, { k: 'c', v: 3 }],
-    (a, b) => a.k === b.k && a.v === b.v
-  ));
-  assert.not.ok(areArraysEqual(
-    [[1, 2, 3], [4, 5, 7]],
-    [[1, 2, 3], [4, 5, 6]],
-    areArraysEqual
-  ));
+  assert.not.ok(
+    areArraysEqual<{ k: string; v: number }>(
+      [
+        { k: 'a', v: 1 },
+        { k: 'b', v: 2 },
+        { k: 'c', v: 3 },
+      ],
+      [
+        { k: 'a', v: 1 },
+        { k: 'b', v: 9 },
+        { k: 'c', v: 3 },
+      ],
+      (a, b) => a.k === b.k && a.v === b.v
+    )
+  );
+  assert.not.ok(
+    areArraysEqual(
+      [
+        [1, 2, 3],
+        [4, 5, 7],
+      ],
+      [
+        [1, 2, 3],
+        [4, 5, 6],
+      ],
+      areArraysEqual
+    )
+  );
 });
-
 
 test.run();

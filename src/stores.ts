@@ -81,8 +81,7 @@ export let two_way_interaction_extent: Writable<[number, number]>;
 
 export let ice_line_extent: Writable<[number, number]>;
 export let ice_cluster_center_extent: Writable<[number, number]>;
-export let ice_cluster_band_extent: Writable<[number, number]>;
-export let ice_cluster_line_extent: Writable<[number, number]>;
+export let centered_ice_line_extent: Writable<[number, number]>;
 
 export let height: Writable<number>;
 
@@ -99,6 +98,7 @@ export let detailedFeature2: Writable<string>;
 
 // is a brush currently being moved over a plot
 export let brushingInProgress: Writable<boolean>;
+export let brushedFeature: Writable<string>;
 
 export let globalColorTwoWayPdp: Readable<ScaleSequential<string, string>>;
 
@@ -155,13 +155,8 @@ export function setStores(model: DOMWidgetModel): void {
     [0, 0],
     model
   );
-  ice_cluster_band_extent = createSyncedWidget<[number, number]>(
-    'ice_cluster_band_extent',
-    [0, 0],
-    model
-  );
-  ice_cluster_line_extent = createSyncedWidget<[number, number]>(
-    'ice_cluster_line_extent',
+  centered_ice_line_extent = createSyncedWidget<[number, number]>(
+    'centered_ice_line_extent',
     [0, 0],
     model
   );
@@ -191,6 +186,7 @@ export function setStores(model: DOMWidgetModel): void {
   detailedFeature2 = writable('');
 
   brushingInProgress = writable(false);
+  brushedFeature = writable('');
 
   globalColorTwoWayPdp = derived(two_way_pdp_extent, ($two_way_pdp_extent) =>
     scaleSequential()

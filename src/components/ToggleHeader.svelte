@@ -32,7 +32,7 @@
     </svg>
   </button>
 
-  <div class="group-title">{title}</div>
+  <div class="pdpilot-bold">{title}</div>
 </div>
 
 <style>

@@ -77,12 +77,15 @@
 
   // one-way PDPs
 
-  let xPdp: OneWayPD | null = null;
-  let yPdp: OneWayPD | null = null;
+  let oneWayPD1: OneWayPD | null = null;
+  let oneWayPD2: OneWayPD | null = null;
 
   $: if (pd && pd.num_features === 2) {
-    xPdp = $featureToPd.get(pd.x_feature) ?? null;
-    yPdp = $featureToPd.get(pd.y_feature) ?? null;
+    // sort alphabetically so that they don't change positions when flipping axis
+    let feature1 = pd.x_feature < pd.y_feature ? pd.x_feature : pd.y_feature;
+    let feature2 = pd.x_feature > pd.y_feature ? pd.x_feature : pd.y_feature;
+    oneWayPD1 = $featureToPd.get(feature1) ?? null;
+    oneWayPD2 = $featureToPd.get(feature2) ?? null;
   }
 
   let showClusterDescriptions = false;
@@ -111,7 +114,6 @@
   let gridHeight: number;
 
   $: halfWidth = gridWidth / 2;
-  // $: halfHeight = gridHeight / 2;
 
   $: thirdHeight = gridHeight / 3;
   $: twoThirdHeight = (2 * gridHeight) / 3;
@@ -156,6 +158,24 @@
 
   $: if (!showClusterDescriptions) {
     indices = null;
+  }
+
+  // flip two-way plot
+  function flip() {
+    if (!pd || pd.num_features === 1) {
+      return;
+    }
+
+    Object.assign(pd, {
+      x_feature: pd.y_feature,
+      x_axis: pd.y_axis,
+      x_values: pd.y_values,
+      y_feature: pd.x_feature,
+      y_axis: pd.x_axis,
+      y_values: pd.x_values,
+    });
+    pd = pd;
+    $two_way_pds = $two_way_pds;
   }
 </script>
 
@@ -206,6 +226,8 @@
             <option value="predictions">predictions</option>
           </select>
         </label>
+
+        <button on:click={flip} title="Swap x and y axes">Flip</button>
       {:else}
         <label class="label-and-input">
           ICE:
@@ -252,7 +274,7 @@
       </div>
     {:else if pd.num_features === 1}
       <div class="one-way-pdp-grid">
-        {#if iceLevel === 'cluster-lines' && pd.ice.clusters.length === 0}
+        {#if iceLevel === 'cluster-lines' && pd.ice.num_clusters === 1}
           <div class="pdpilot-no-clusters-message">
             This feature does not have any distinct clusters of ICE lines.
           </div>
@@ -281,7 +303,8 @@
                 {pd}
                 width={halfWidth}
                 height={gridHeight}
-                features={pd.ice.interacting_features}
+                features={pd.ice.clusters[pd.ice.num_clusters]
+                  .interacting_features}
               />
             </div>
           {/if}
@@ -289,14 +312,14 @@
       </div>
     {:else}
       <div
-        class="two-way-pdp-grid showOneWay-{xPdp !== null &&
-          yPdp !== null &&
+        class="two-way-pdp-grid showOneWay-{oneWayPD1 !== null &&
+          oneWayPD2 !== null &&
           showOneWay}-color-{colorShows}"
       >
-        {#if xPdp !== null && yPdp !== null && showOneWay}
+        {#if oneWayPD1 !== null && oneWayPD2 !== null && showOneWay}
           <div style:grid-area="one-way-left">
             <PDP
-              pd={xPdp}
+              pd={oneWayPD1}
               width={halfWidth}
               height={thirdHeight}
               {scaleLocally}
@@ -311,7 +334,7 @@
 
           <div style:grid-area="one-way-right">
             <PDP
-              pd={yPdp}
+              pd={oneWayPD2}
               width={halfWidth}
               height={thirdHeight}
               {scaleLocally}
@@ -330,7 +353,7 @@
             <PDP
               {pd}
               width={colorShows === 'both' ? halfWidth : gridWidth}
-              height={xPdp !== null && yPdp !== null && showOneWay
+              height={oneWayPD1 !== null && oneWayPD2 !== null && showOneWay
                 ? twoThirdHeight
                 : gridHeight}
               {scaleLocally}
@@ -352,7 +375,7 @@
             <PDP
               {pd}
               width={colorShows === 'both' ? halfWidth : gridWidth}
-              height={xPdp !== null && yPdp !== null && showOneWay
+              height={oneWayPD1 !== null && oneWayPD2 !== null && showOneWay
                 ? twoThirdHeight
                 : gridHeight}
               {scaleLocally}

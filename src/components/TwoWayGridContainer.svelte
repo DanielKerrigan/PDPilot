@@ -5,15 +5,21 @@
   import { doublePDPSortingOptions } from '../sorting';
 
   let selectedFeatures: string[] = $feature_names;
+  let op: 'and' | 'or' = 'and';
 
-  function onChangeFilters(event: CustomEvent<string[]>) {
-    selectedFeatures = event.detail;
+  function onChangeFilters(
+    event: CustomEvent<{ features: string[]; op: 'and' | 'or' }>
+  ) {
+    selectedFeatures = event.detail.features;
+    op = event.detail.op;
   }
 
-  $: filteredTwoWayPds = $two_way_pds.filter(
-    (p) =>
-      selectedFeatures.includes(p.x_feature) &&
-      selectedFeatures.includes(p.y_feature)
+  $: filteredTwoWayPds = $two_way_pds.filter((p) =>
+    op === 'and'
+      ? selectedFeatures.includes(p.x_feature) &&
+        selectedFeatures.includes(p.y_feature)
+      : selectedFeatures.includes(p.x_feature) ||
+        selectedFeatures.includes(p.y_feature)
   );
 </script>
 
