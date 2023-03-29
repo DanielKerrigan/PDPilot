@@ -45,8 +45,8 @@ const singlePDPSortingOptions: PDSortingOption[] = [
 
       return data.sort((a, b) =>
         descending(
-          a.ice.clusters[a.ice.num_clusters].cluster_distance,
-          b.ice.clusters[b.ice.num_clusters].cluster_distance
+          a.ice.clusters[a.ice.num_clusters]?.cluster_distance ?? -Infinity,
+          b.ice.clusters[b.ice.num_clusters]?.cluster_distance ?? -Infinity
         )
       );
     },
