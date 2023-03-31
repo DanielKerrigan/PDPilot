@@ -401,7 +401,7 @@
       {filteredI.length === 1 ? 'instance' : 'instances'} selected
     </div>
   </div>
-  <div style:height="{visViewHeight}px" style:overflow="scroll">
+  <div style:height="{visViewHeight}px" style:overflow-y="auto">
     <svg {width} height={visTotalHeight}>
       <g bind:this={group}>
         {#each distributions as d}

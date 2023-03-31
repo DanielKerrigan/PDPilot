@@ -144,7 +144,7 @@
 
   .individual-features {
     flex: 0 1 auto;
-    overflow-y: scroll;
+    overflow-y: auto;
     min-height: 0;
   }
 
