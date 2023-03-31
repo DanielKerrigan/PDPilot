@@ -43,8 +43,8 @@
       class="filter-content feature-selector-wrapper-inner"
       class:pdp-hide={!showFeatureName}
     >
-      <div>
-        Plots must contain
+      <div class="two-way-filter-radio">
+        <div>Plots must contain</div>
         <label>
           <input
             type="radio"
@@ -118,5 +118,10 @@
     border: 0;
     height: 1px;
     background: var(--gray-2);
+  }
+
+  .two-way-filter-radio {
+    display: flex;
+    flex-direction: column;
   }
 </style>
