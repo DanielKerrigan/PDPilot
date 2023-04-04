@@ -138,6 +138,17 @@
     setPage(1);
   }
 
+  // show marginal distributions when highlighted distribution metric is chosen.
+  // this is in separate function so that the reactive if statement doesn't run
+  // when showMarginalDistribution is updated.
+  function setShowDistributionToTrue() {
+    showMarginalDistribution = true;
+  }
+
+  $: if (sortingOption.name === 'Highlighted distribution') {
+    setShowDistributionToTrue();
+  }
+
   // we don't want changes to highlights to trigger this
   function sortByBrushing(data: OneWayPD[] | TwoWayPD[]) {
     brushingSinceSorting = false;
