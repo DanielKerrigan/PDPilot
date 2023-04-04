@@ -148,9 +148,12 @@ class Metadata:
             )
             percents = counts / np.sum(counts)
 
-            if np.issubdtype(df[feature].dtype, np.integer):
+            # https://stackoverflow.com/a/49249910/5016634
+            if np.issubdtype(df[feature].dtype, np.integer) or np.array_equal(
+                df[feature], df[feature].astype(int)
+            ):
                 if resolution < n_unique:
-                    min_val, max_val = unique_vals[0], unique_vals[-1]
+                    min_val, max_val = int(unique_vals[0]), int(unique_vals[-1])
                     n_points = (max_val - min_val) + 1
                     values = np.arange(
                         min_val, max_val + 1, round(n_points / resolution)

@@ -45,7 +45,7 @@
     width: number,
     integerOnly: boolean
   ) {
-    const ticks = scale.ticks(width / 80);
+    const ticks = scale.ticks(Math.min(width / 50, 10));
 
     if (integerOnly) {
       return ticks.filter(Number.isInteger);
