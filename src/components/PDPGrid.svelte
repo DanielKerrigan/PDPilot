@@ -247,7 +247,7 @@
 
     <div class="dont-shrink label-and-input">
       <label class="label-and-input">
-        Sort:
+        Sort
         <select bind:value={sortingOption}>
           {#each sortingOptions as option}
             <option value={option}>{option.name}</option>
@@ -329,7 +329,7 @@
 
     {#if ways === 1}
       <label class="label-and-input dont-shrink">
-        ICE:
+        Plot
         <select bind:value={iceLevel}>
           {#each iceLevels as { value, title }}
             <option {value}>{title}</option>

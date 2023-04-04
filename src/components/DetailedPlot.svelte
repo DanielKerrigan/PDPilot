@@ -230,7 +230,7 @@
         <button on:click={flip} title="Swap x and y axes">Flip</button>
       {:else}
         <label class="label-and-input">
-          ICE:
+          Plot
           <select bind:value={iceLevel}>
             {#each iceLevels as { value, title }}
               <option {value}>{title}</option>
