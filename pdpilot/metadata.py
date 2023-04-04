@@ -90,16 +90,24 @@ class Metadata:
                 bins.append(i)
                 counts.append(df[col].sum().item())
 
-            percents = np.array(counts) / np.sum(counts)
+            bins = np.array(bins)
+            counts = np.array(counts)
+
+            # get the order of the indices for sorting the counts in descending order
+            order = np.argsort(-counts)
+            bins = bins[order]
+            counts = counts[order]
+
+            percents = counts / np.sum(counts)
 
             self.feature_info[feature] = {
                 "kind": "categorical",
                 "subkind": "one_hot",
                 "ordered": False,
-                "values": unique_feature_vals[feature],
+                "values": bins.tolist(),
                 "distribution": {
-                    "bins": bins,
-                    "counts": counts,
+                    "bins": bins.tolist(),
+                    "counts": counts.tolist(),
                     "percents": percents.tolist(),
                 },
                 "columns_and_values": one_hot_info,
@@ -109,12 +117,18 @@ class Metadata:
 
         for feature in nominal_features:
             bins, counts = np.unique(df[feature], return_counts=True)
+
+            order = np.argsort(-counts)
+            bins = bins[order]
+            counts = counts[order]
+
             percents = counts / np.sum(counts)
+
             self.feature_info[feature] = {
                 "kind": "categorical",
                 "subkind": "nominal",
                 "ordered": False,
-                "values": unique_feature_vals[feature],
+                "values": bins.tolist(),
                 "distribution": {
                     "bins": bins.tolist(),
                     "counts": counts.tolist(),
