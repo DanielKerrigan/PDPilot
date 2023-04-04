@@ -33,6 +33,7 @@
   export let marginTop: number;
   export let distributionHeight: number;
   export let allowBrushing = false;
+  export let showBrushedBorder = false;
   export let iceLineWidth: number;
   export let center = false;
 
@@ -355,7 +356,7 @@
               height={distributionHeight}
               direction="horizontal"
               translate={[0, margin.top - distributionHeight]}
-              unit={'percent'}
+              unit="percent"
               maxValue={maxPercent}
             />
           {:else}
@@ -366,7 +367,7 @@
               height={distributionHeight}
               direction="horizontal"
               translate={[0, margin.top - distributionHeight]}
-              unit={'percent'}
+              unit="percent"
               maxValue={maxPercent}
             />
           {/if}
@@ -380,7 +381,7 @@
             height={distributionHeight}
             direction="horizontal"
             translate={[0, margin.top - distributionHeight]}
-            unit={'percent'}
+            unit="percent"
             maxValue={maxPercent}
           />
         {:else}
@@ -392,21 +393,22 @@
             height={distributionHeight}
             direction="horizontal"
             translate={[0, margin.top - distributionHeight]}
-            unit={'percent'}
+            unit="percent"
             maxValue={maxPercent}
           />
         {/if}
       {/if}
 
       <!-- border around brushed plot -->
-      {#if $brushedFeature === pd.x_feature}
+      {#if showBrushedBorder && $brushedFeature === pd.x_feature}
         <rect
           x={margin.left}
           y={margin.top}
           width={width - margin.left - margin.right}
           height={height - margin.top - margin.bottom}
-          stroke={'var(--gray-2)'}
-          pointer-events={'none'}
+          stroke="var(--gray-2)"
+          fill="none"
+          pointer-events="none"
         />
       {/if}
     </g>

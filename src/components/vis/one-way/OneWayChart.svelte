@@ -14,6 +14,7 @@
   export let distributionHeight: number;
   export let indices: number[] | null;
   export let allowBrushing: boolean;
+  export let showBrushedBorder: boolean;
   export let iceLineWidth: number;
 </script>
 
@@ -27,6 +28,7 @@
     {marginTop}
     {distributionHeight}
     {allowBrushing}
+    {showBrushedBorder}
     {iceLineWidth}
     center={iceLevel === 'centered-lines'}
   />

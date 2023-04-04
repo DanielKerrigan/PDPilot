@@ -461,6 +461,7 @@
             showColorLegend={scaleLocally}
             {iceLevel}
             allowBrushing={ways === 1}
+            showBrushedBorder={ways === 1}
             iceLineWidth={0.5}
           />
           <button class="expand-pdp-button" on:click={() => onClickPdp(pd)}>

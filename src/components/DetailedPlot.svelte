@@ -292,6 +292,7 @@
                 : 0}
               {iceLevel}
               {indices}
+              allowBrushing={true}
               showColorLegend={false}
             />
           </div>

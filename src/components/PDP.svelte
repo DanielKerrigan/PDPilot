@@ -16,6 +16,7 @@
   export let marginRight = 0;
   export let distributionHeight = 0;
   export let allowBrushing = false;
+  export let showBrushedBorder = false;
   export let iceLineWidth = 1;
 </script>
 
@@ -32,6 +33,7 @@
       {distributionHeight}
       {indices}
       {allowBrushing}
+      {showBrushedBorder}
       {iceLineWidth}
     />
   {:else if pd.num_features === 2}
