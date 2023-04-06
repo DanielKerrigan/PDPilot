@@ -10,7 +10,7 @@
     featureToPd,
   } from '../stores';
   import PDP from './PDP.svelte';
-  import ViolinPlot from './vis/ice-clusters/ViolinPlot.svelte';
+  import ClusterDescriptions from './vis/ice-clusters/ClusterDescriptions.svelte';
 
   let pd: OneWayPD | TwoWayPD | null = null;
 
@@ -294,16 +294,16 @@
               {indices}
               allowBrushing={true}
               showColorLegend={false}
+              showTitle={showClusterDescriptions &&
+                iceLevel === 'cluster-lines'}
             />
           </div>
 
           {#if showClusterDescriptions}
             <div style:flex="1">
-              <ViolinPlot
+              <ClusterDescriptions
                 on:filter={onFilterIndices}
                 {pd}
-                width={halfWidth}
-                height={gridHeight}
                 features={pd.ice.clusters[pd.ice.num_clusters]
                   .interacting_features}
               />
@@ -454,6 +454,8 @@
   .zoomed-pdp-content {
     flex: 1;
     padding: 0.5em;
+    /* this is needed to allow scrolling in cluster descriptions */
+    min-height: 0px;
   }
 
   .one-way-pdp-grid {

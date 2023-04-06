@@ -30,11 +30,9 @@
   import type { Selection } from 'd3-selection';
   import type { D3BrushEvent } from 'd3-brush';
   import { kernelDensityEstimation } from 'simple-statistics';
-  import { createEventDispatcher, tick } from 'svelte';
+  import { createEventDispatcher, onMount, tick } from 'svelte';
 
   export let pd: OneWayPD;
-  export let width: number;
-  export let height: number;
   export let features: string[];
 
   const margin = {
@@ -44,13 +42,46 @@
     left: 50,
   };
 
-  const toolbarHeight = 30;
+  let div: HTMLDivElement;
+  // we don't pass width and height to this component, primarily so that
+  // we can take into account the width of the scroll bar on windows.
+  let visWidth = 0;
+  let visViewHeight = 0;
+
+  onMount(() => {
+    // Adapted from https://blog.sethcorker.com/question/how-do-you-use-the-resize-observer-api-in-svelte/
+    // and https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver
+    const resizeObserver = new ResizeObserver(
+      (entries: ResizeObserverEntry[]) => {
+        if (entries.length !== 1) {
+          return;
+        }
+
+        const entry: ResizeObserverEntry = entries[0];
+
+        if (entry.contentBoxSize) {
+          const contentBoxSize = Array.isArray(entry.contentBoxSize)
+            ? entry.contentBoxSize[0]
+            : entry.contentBoxSize;
+
+          visWidth = contentBoxSize.inlineSize;
+          visViewHeight = contentBoxSize.blockSize;
+        } else {
+          visWidth = entry.contentRect.width;
+          visViewHeight = entry.contentRect.height;
+        }
+      }
+    );
+
+    resizeObserver.observe(div);
+
+    return () => resizeObserver.unobserve(div);
+  });
+
   let normalize = false;
 
   // size of the box plot inside of the violin
   const boxWidth = 5;
-
-  $: visViewHeight = height - toolbarHeight;
 
   $: visTotalHeight = Math.max(
     visViewHeight,
@@ -97,10 +128,10 @@
         info.kind === 'quantitative'
           ? scaleLinear()
               .domain([info.values[0], info.values[info.values.length - 1]])
-              .range([margin.left, width - margin.right])
+              .range([margin.left, visWidth - margin.right])
           : scaleBand<number>()
               .domain(info.values)
-              .range([margin.left, width - margin.right]);
+              .range([margin.left, visWidth - margin.right]);
 
       return [f, scale];
     })
@@ -368,7 +399,10 @@
   $: brush = d3brushX<undefined>()
     .extent([
       [margin.left, -brushHeight / 2 + fy.bandwidth() - margin.bottom],
-      [width - margin.right, brushHeight / 2 + fy.bandwidth() - margin.bottom],
+      [
+        visWidth - margin.right,
+        brushHeight / 2 + fy.bandwidth() - margin.bottom,
+      ],
     ])
     .on('start brush end', brushed);
 
@@ -389,20 +423,23 @@
   }
 </script>
 
-<div>
-  <div style:height="{toolbarHeight}px" class="controls-container">
-    {#if categoricalFeatures.length > 0}
-      <label class="label-and-input">
-        <input type="checkbox" bind:checked={normalize} />Normalize bar charts
-      </label>
-    {/if}
-    <div>
-      {filteredI.length}
-      {filteredI.length === 1 ? 'instance' : 'instances'} selected
+<div class="distributions-container">
+  <div class="distributions-header">
+    <div class="pdpilot-bold">Feature Distributions</div>
+    <div class="distributions-settings">
+      {#if categoricalFeatures.length > 0}
+        <label class="label-and-input">
+          <input type="checkbox" bind:checked={normalize} />Normalize bar charts
+        </label>
+      {/if}
+      <div>
+        {filteredI.length}
+        {filteredI.length === 1 ? 'instance' : 'instances'} selected
+      </div>
     </div>
   </div>
-  <div style:height="{visViewHeight}px" style:overflow-y="auto">
-    <svg {width} height={visTotalHeight}>
+  <div class="distribution-plots" bind:this={div}>
+    <svg width={visWidth} height={visTotalHeight}>
       <g bind:this={group}>
         {#each distributions as d}
           <g transform="translate(0,{fy(d.feature)})">
@@ -497,15 +534,31 @@
 </div>
 
 <style>
+  .distributions-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .distributions-header {
+    margin-bottom: 0.5em;
+  }
+
+  .distributions-settings {
+    display: flex;
+    align-items: center;
+    gap: 1em;
+  }
+
+  .distribution-plots {
+    flex: 1;
+    overflow-y: auto;
+  }
+
   .label-and-input {
     display: flex;
     align-items: center;
     gap: 0.25em;
-  }
-
-  .controls-container {
-    display: flex;
-    align-items: center;
-    gap: 1em;
   }
 </style>

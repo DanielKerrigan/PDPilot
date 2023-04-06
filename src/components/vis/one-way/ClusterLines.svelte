@@ -32,11 +32,39 @@
   export let indices: number[] | null;
   export let marginTop: number;
   export let distributionHeight: number;
+  export let showTitle: boolean;
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
+  let div: HTMLDivElement;
 
-  const toolbarHeight = 30;
+  onMount(() => {
+    // Adapted from https://blog.sethcorker.com/question/how-do-you-use-the-resize-observer-api-in-svelte/
+    // and https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver
+    const resizeObserver = new ResizeObserver(
+      (entries: ResizeObserverEntry[]) => {
+        if (entries.length !== 1) {
+          return;
+        }
+
+        const entry: ResizeObserverEntry = entries[0];
+
+        if (entry.contentBoxSize) {
+          const contentBoxSize = Array.isArray(entry.contentBoxSize)
+            ? entry.contentBoxSize[0]
+            : entry.contentBoxSize;
+
+          chartHeight = contentBoxSize.blockSize;
+        } else {
+          chartHeight = entry.contentRect.height;
+        }
+      }
+    );
+
+    resizeObserver.observe(div);
+
+    return () => resizeObserver.unobserve(div);
+  });
 
   $: feature = $feature_info[pd.x_feature];
 
@@ -48,7 +76,7 @@
     left: 50,
   };
 
-  $: chartHeight = height - marginTop - toolbarHeight;
+  $: chartHeight = height - marginTop;
 
   $: clusterIds = range(pd.ice.num_clusters);
 
@@ -221,55 +249,60 @@
 </script>
 
 <div class="cluster-lines-container">
-  <div class="cluster-lines-toolbar" style:height="{toolbarHeight}px">
-    <div>Number of clusters:</div>
-    <div class="num-cluster-change">
-      <button
-        disabled={pd.ice.num_clusters <= 2}
-        on:click={() => setNumClusters(pd.ice.num_clusters - 1)}
-        title="Decrement number of clusters"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="pdpilot-icon icon-tabler icon-tabler-minus"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          stroke-width="2"
-          stroke="currentColor"
-          fill="none"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+  <div class="cluster-lines-header">
+    {#if showTitle}
+      <div class="cluster-lines-title pdpilot-bold">ICE Clusters</div>
+    {/if}
+    <div class="cluster-lines-settings">
+      <div>Number of clusters:</div>
+      <div class="num-cluster-change">
+        <button
+          disabled={pd.ice.num_clusters <= 2}
+          on:click={() => setNumClusters(pd.ice.num_clusters - 1)}
+          title="Decrement number of clusters"
         >
-          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-          <path d="M5 12l14 0" />
-        </svg>
-      </button>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="pdpilot-icon icon-tabler icon-tabler-minus"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke="currentColor"
+            fill="none"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M5 12l14 0" />
+          </svg>
+        </button>
 
-      <div class="current-num-clusters">{pd.ice.num_clusters}</div>
+        <div class="current-num-clusters">{pd.ice.num_clusters}</div>
 
-      <button
-        disabled={pd.ice.num_clusters === 1 || pd.ice.num_clusters >= 5}
-        on:click={() => setNumClusters(pd.ice.num_clusters + 1)}
-        title="Increment number of clusters"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="pdpilot-icon icon-tabler icon-tabler-plus"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          stroke-width="2"
-          stroke="currentColor"
-          fill="none"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+        <button
+          disabled={pd.ice.num_clusters === 1 || pd.ice.num_clusters >= 5}
+          on:click={() => setNumClusters(pd.ice.num_clusters + 1)}
+          title="Increment number of clusters"
         >
-          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-          <path d="M12 5l0 14" />
-          <path d="M5 12l14 0" />
-        </svg>
-      </button>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="pdpilot-icon icon-tabler icon-tabler-plus"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke="currentColor"
+            fill="none"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M12 5l0 14" />
+            <path d="M5 12l14 0" />
+          </svg>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -294,10 +327,8 @@
       {/if}
     </svg>
   {/if}
-
-  <div class="cluster-lines-chart">
+  <div class="cluster-lines-chart" bind:this={div}>
     <canvas bind:this={canvas} />
-
     <svg class="svg-for-clusters" height={chartHeight} {width}>
       {#each clusters as cluster}
         <g transform="translate(0,{fy(cluster.id) ?? 0})">
@@ -325,7 +356,11 @@
     flex-direction: column;
   }
 
-  .cluster-lines-toolbar {
+  .cluster-lines-header {
+    margin-bottom: 0.5em;
+  }
+
+  .cluster-lines-settings {
     display: flex;
     align-items: center;
     gap: 0.5em;

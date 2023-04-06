@@ -16,6 +16,7 @@
   export let allowBrushing: boolean;
   export let showBrushedBorder: boolean;
   export let iceLineWidth: number;
+  export let showTitle = false;
 </script>
 
 {#if iceLevel === 'lines' || iceLevel === 'centered-lines'}
@@ -52,6 +53,7 @@
     {marginTop}
     {distributionHeight}
     {indices}
+    {showTitle}
   />
 {/if}
 
