@@ -14,6 +14,9 @@
     brushingInProgress,
     highlightedDistributions,
     feature_info,
+    detailedShowDistributions,
+    detailedScaleLocally,
+    detailedICELevel,
   } from '../stores';
   import InfoTooltip from './InfoTooltip.svelte';
 
@@ -199,6 +202,15 @@
   function onClickPdp(pd: OneWayPD | TwoWayPD) {
     $detailedFeature1 = pd.x_feature;
     $detailedFeature2 = pd.num_features === 2 ? pd.y_feature : '';
+
+    $detailedShowDistributions = showMarginalDistribution;
+    $detailedScaleLocally = scaleLocally;
+
+    if (pd.num_features === 1) {
+      $detailedICELevel =
+        iceLevel === 'cluster-centers' ? 'cluster-lines' : iceLevel;
+    }
+
     $selectedTab = 'detailed-plot';
   }
 </script>

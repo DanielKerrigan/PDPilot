@@ -9,6 +9,7 @@ import type {
   FeatureInfo,
   Tab,
   Distribution,
+  ICELevel,
 } from './types';
 
 import { scaleSequential, scaleDiverging } from 'd3-scale';
@@ -93,22 +94,32 @@ export let two_way_to_calculate: Writable<string[]>;
 
 export let selectedTab: Writable<Tab>;
 
+export let featureToPd: Readable<Map<string, OneWayPD>>;
+
+// detailed plot
+
 export let detailedFeature1: Writable<string>;
 export let detailedFeature2: Writable<string>;
+
+export let detailedICELevel: Writable<ICELevel>;
+export let detailedShowDistributions: Writable<boolean>;
+export let detailedScaleLocally: Writable<boolean>;
+
+// brushing
 
 // is a brush currently being moved over a plot
 export let brushingInProgress: Writable<boolean>;
 export let brushedFeature: Writable<string>;
+
+export let highlightedDistributions: Readable<Map<string, Distribution>>;
+
+// color
 
 export let globalColorTwoWayPdp: Readable<ScaleSequential<string, string>>;
 
 export let globalColorTwoWayInteraction: Readable<
   ScaleDiverging<string, string>
 >;
-
-export let featureToPd: Readable<Map<string, OneWayPD>>;
-
-export let highlightedDistributions: Readable<Map<string, Distribution>>;
 
 /**
  * Note that when the cell containing the widget is re-run, a new model is
@@ -179,14 +190,43 @@ export function setStores(model: DOMWidgetModel): void {
 
   selectedTab = writable('one-way-plots');
 
+  featureToPd = derived(
+    one_way_pds,
+    ($one_way_pds) => new Map($one_way_pds.map((d) => [d.x_feature, d]))
+  );
+
+  // detailed plot
+
   const one_ways = model.get('one_way_pds') as OneWayPD[] | undefined;
   const detailedFeature1Default =
     one_ways && one_ways.length > 0 ? one_ways[0].x_feature : '';
   detailedFeature1 = writable(detailedFeature1Default);
   detailedFeature2 = writable('');
 
+  detailedICELevel = writable('lines');
+  detailedShowDistributions = writable(false);
+  detailedScaleLocally = writable(false);
+
+  // brushing
+
   brushingInProgress = writable(false);
   brushedFeature = writable('');
+
+  highlightedDistributions = derived(
+    [feature_info, dataset, highlighted_indices],
+    ([$feature_info, $dataset, $highlighted_indices]) =>
+      new Map(
+        Object.entries($feature_info).map(([featureName, info]) => {
+          const values = $dataset[featureName];
+          return [
+            featureName,
+            getHighlightedBins(info, values, $highlighted_indices),
+          ];
+        })
+      )
+  );
+
+  // color
 
   globalColorTwoWayPdp = derived(two_way_pdp_extent, ($two_way_pdp_extent) =>
     scaleSequential()
@@ -206,24 +246,5 @@ export function setStores(model: DOMWidgetModel): void {
         ])
         .interpolator(interpolateBrBG)
         .unknown('black')
-  );
-
-  featureToPd = derived(
-    one_way_pds,
-    ($one_way_pds) => new Map($one_way_pds.map((d) => [d.x_feature, d]))
-  );
-
-  highlightedDistributions = derived(
-    [feature_info, dataset, highlighted_indices],
-    ([$feature_info, $dataset, $highlighted_indices]) =>
-      new Map(
-        Object.entries($feature_info).map(([featureName, info]) => {
-          const values = $dataset[featureName];
-          return [
-            featureName,
-            getHighlightedBins(info, values, $highlighted_indices),
-          ];
-        })
-      )
   );
 }

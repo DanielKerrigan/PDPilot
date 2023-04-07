@@ -7,14 +7,15 @@
     two_way_to_calculate,
     detailedFeature1,
     detailedFeature2,
+    detailedScaleLocally,
+    detailedICELevel,
+    detailedShowDistributions,
     featureToPd,
   } from '../stores';
   import PDP from './PDP.svelte';
   import ClusterDescriptions from './vis/ice-clusters/ClusterDescriptions.svelte';
 
   let pd: OneWayPD | TwoWayPD | null = null;
-
-  let scaleLocally = false;
 
   const marginalChartHeight = 50;
 
@@ -96,13 +97,10 @@
     { value: 'cluster-lines', title: 'Clusters' },
   ];
 
-  let iceLevel: ICELevel = 'lines';
-
-  $: if (iceLevel !== 'cluster-lines') {
+  $: if ($detailedICELevel !== 'cluster-lines') {
     showClusterDescriptions = false;
   }
 
-  let showMarginalDistribution = false;
   let showOneWay = true;
   let colorShows: 'both' | 'interactions' | 'predictions' = 'both';
 
@@ -205,12 +203,13 @@
 
     {#if pd}
       <label class="label-and-input">
-        <input type="checkbox" bind:checked={showMarginalDistribution} />
+        <input type="checkbox" bind:checked={$detailedShowDistributions} />
         {pd.num_features === 1 ? 'Distribution' : 'Distributions'}
       </label>
 
       <label class="label-and-input">
-        <input type="checkbox" bind:checked={scaleLocally} />Scale locally
+        <input type="checkbox" bind:checked={$detailedScaleLocally} />Scale
+        locally
       </label>
 
       {#if pd.num_features === 2}
@@ -231,13 +230,13 @@
       {:else}
         <label class="label-and-input">
           Plot
-          <select bind:value={iceLevel}>
+          <select bind:value={$detailedICELevel}>
             {#each iceLevels as { value, title }}
               <option {value}>{title}</option>
             {/each}
           </select>
         </label>
-        {#if iceLevel === 'cluster-lines'}
+        {#if $detailedICELevel === 'cluster-lines'}
           <label class="label-and-input">
             <input
               type="checkbox"
@@ -274,7 +273,7 @@
       </div>
     {:else if pd.num_features === 1}
       <div class="one-way-pdp-grid">
-        {#if iceLevel === 'cluster-lines' && pd.ice.num_clusters === 1}
+        {#if $detailedICELevel === 'cluster-lines' && pd.ice.num_clusters === 1}
           <div class="pdpilot-no-clusters-message">
             This feature does not have any distinct clusters of ICE lines.
           </div>
@@ -284,18 +283,18 @@
               {pd}
               width={showClusterDescriptions ? halfWidth : gridWidth}
               height={gridHeight}
-              {scaleLocally}
-              {showMarginalDistribution}
-              marginTop={showMarginalDistribution ? marginalChartHeight : 10}
-              distributionHeight={showMarginalDistribution
+              scaleLocally={$detailedScaleLocally}
+              showMarginalDistribution={$detailedShowDistributions}
+              marginTop={$detailedShowDistributions ? marginalChartHeight : 10}
+              distributionHeight={$detailedShowDistributions
                 ? marginalChartHeight
                 : 0}
-              {iceLevel}
+              iceLevel={$detailedICELevel}
               {indices}
               allowBrushing={true}
               showColorLegend={false}
               showTitle={showClusterDescriptions &&
-                iceLevel === 'cluster-lines'}
+                $detailedICELevel === 'cluster-lines'}
             />
           </div>
 
@@ -323,10 +322,10 @@
               pd={oneWayPD1}
               width={halfWidth}
               height={thirdHeight}
-              {scaleLocally}
-              {showMarginalDistribution}
-              marginTop={showMarginalDistribution ? marginalChartHeight : 10}
-              distributionHeight={showMarginalDistribution
+              scaleLocally={$detailedScaleLocally}
+              showMarginalDistribution={$detailedShowDistributions}
+              marginTop={$detailedShowDistributions ? marginalChartHeight : 10}
+              distributionHeight={$detailedShowDistributions
                 ? marginalChartHeight
                 : 0}
               iceLevel="lines"
@@ -338,10 +337,10 @@
               pd={oneWayPD2}
               width={halfWidth}
               height={thirdHeight}
-              {scaleLocally}
-              {showMarginalDistribution}
-              marginTop={showMarginalDistribution ? marginalChartHeight : 10}
-              distributionHeight={showMarginalDistribution
+              scaleLocally={$detailedScaleLocally}
+              showMarginalDistribution={$detailedShowDistributions}
+              marginTop={$detailedShowDistributions ? marginalChartHeight : 10}
+              distributionHeight={$detailedShowDistributions
                 ? marginalChartHeight
                 : 0}
               iceLevel="lines"
@@ -357,11 +356,13 @@
               height={oneWayPD1 !== null && oneWayPD2 !== null && showOneWay
                 ? twoThirdHeight
                 : gridHeight}
-              {scaleLocally}
-              {showMarginalDistribution}
-              marginTop={showMarginalDistribution ? marginalChartHeight : 10}
-              marginRight={showMarginalDistribution ? marginalChartHeight : 10}
-              distributionHeight={showMarginalDistribution
+              scaleLocally={$detailedScaleLocally}
+              showMarginalDistribution={$detailedShowDistributions}
+              marginTop={$detailedShowDistributions ? marginalChartHeight : 10}
+              marginRight={$detailedShowDistributions
+                ? marginalChartHeight
+                : 10}
+              distributionHeight={$detailedShowDistributions
                 ? marginalChartHeight
                 : 0}
               iceLevel="lines"
@@ -379,14 +380,16 @@
               height={oneWayPD1 !== null && oneWayPD2 !== null && showOneWay
                 ? twoThirdHeight
                 : gridHeight}
-              {scaleLocally}
-              {showMarginalDistribution}
-              marginTop={showMarginalDistribution ? marginalChartHeight : 10}
-              marginRight={showMarginalDistribution ? marginalChartHeight : 10}
-              distributionHeight={showMarginalDistribution
+              scaleLocally={$detailedScaleLocally}
+              showMarginalDistribution={$detailedShowDistributions}
+              marginTop={$detailedShowDistributions ? marginalChartHeight : 10}
+              marginRight={$detailedShowDistributions
+                ? marginalChartHeight
+                : 10}
+              distributionHeight={$detailedShowDistributions
                 ? marginalChartHeight
                 : 0}
-              {iceLevel}
+              iceLevel={$detailedICELevel}
               showColorLegend={true}
             />
           </div>
