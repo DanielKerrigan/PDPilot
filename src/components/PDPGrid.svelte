@@ -19,6 +19,7 @@
 
   export let data: OneWayPD[] | TwoWayPD[];
   export let sortingOptions: PDSortingOption[];
+  export let noPlotsMessage: string;
 
   $: ways = isOneWayPdArray(data) ? 1 : 2;
 
@@ -448,55 +449,63 @@
         https://stackoverflow.com/questions/43311943/prevent-content-from-expanding-grid-items
         https://stackoverflow.com/questions/52861086/why-does-minmax0-1fr-work-for-long-elements-while-1fr-doesnt
        -->
-    <div
-      class="pdp-grid"
-      style:grid-template-columns="repeat({numCols}, minmax(0,{pdpWidth}px))"
-      style:grid-template-rows="repeat({numRows}, minmax(0,{pdpHeight}px))"
-    >
-      {#each pageCharts as pd (pd.id)}
-        <div
-          class="pdp-grid-element"
-          style:max-width="{pdpWidth}px"
-          style:max-height="{pdpHeight}px"
-        >
-          <PDP
-            {pd}
-            width={pdpWidth}
-            height={pdpHeight}
-            {scaleLocally}
-            {colorShows}
-            {showMarginalDistribution}
-            marginTop={11}
-            marginRight={10}
-            distributionHeight={10}
-            showColorLegend={scaleLocally}
-            {iceLevel}
-            allowBrushing={ways === 1}
-            showBrushedBorder={ways === 1}
-            iceLineWidth={0.5}
-          />
-          <button class="expand-pdp-button" on:click={() => onClickPdp(pd)}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="pdpilot-icon icon-tabler icon-tabler-arrows-maximize"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              stroke-width="2"
-              stroke="currentColor"
-              fill="none"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-              <path
-                d="M16 4l4 0l0 4m-6 2l6 -6m-12 16l-4 0l0 -4m0 4l6 -6m6 6l4 0l0 -4m-6 -2l6 6m-12 -16l-4 0l0 4m0 -4l6 6"
-              />
-            </svg>
-          </button>
+    {#if pageCharts.length === 0}
+      <div class="pdpilot-no-plots-container">
+        <div class="pdpilot-no-plots-message">
+          {noPlotsMessage}
         </div>
-      {/each}
-    </div>
+      </div>
+    {:else}
+      <div
+        class="pdp-grid"
+        style:grid-template-columns="repeat({numCols}, minmax(0,{pdpWidth}px))"
+        style:grid-template-rows="repeat({numRows}, minmax(0,{pdpHeight}px))"
+      >
+        {#each pageCharts as pd (pd.id)}
+          <div
+            class="pdp-grid-element"
+            style:max-width="{pdpWidth}px"
+            style:max-height="{pdpHeight}px"
+          >
+            <PDP
+              {pd}
+              width={pdpWidth}
+              height={pdpHeight}
+              {scaleLocally}
+              {colorShows}
+              {showMarginalDistribution}
+              marginTop={11}
+              marginRight={10}
+              distributionHeight={10}
+              showColorLegend={scaleLocally}
+              {iceLevel}
+              allowBrushing={ways === 1}
+              showBrushedBorder={ways === 1}
+              iceLineWidth={0.5}
+            />
+            <button class="expand-pdp-button" on:click={() => onClickPdp(pd)}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="pdpilot-icon icon-tabler icon-tabler-arrows-maximize"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                stroke-width="2"
+                stroke="currentColor"
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M16 4l4 0l0 4m-6 2l6 -6m-12 16l-4 0l0 -4m0 4l6 -6m6 6l4 0l0 -4m-6 -2l6 6m-12 -16l-4 0l0 4m0 -4l6 6"
+                />
+              </svg>
+            </button>
+          </div>
+        {/each}
+      </div>
+    {/if}
   </div>
 </div>
 
@@ -514,6 +523,18 @@
   .pdp-grid-container {
     flex: 1;
     min-height: 0;
+  }
+
+  .pdpilot-no-plots-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pdpilot-no-plots-message {
+    max-width: 28em;
   }
 
   .pdp-grid {

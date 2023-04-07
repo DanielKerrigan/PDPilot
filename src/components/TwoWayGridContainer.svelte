@@ -31,6 +31,10 @@
     <PDPGrid
       data={filteredTwoWayPds}
       sortingOptions={doublePDPSortingOptions}
+      noPlotsMessage={selectedFeatures.length === 0 ||
+      (selectedFeatures.length === 1 && op === 'and')
+        ? 'No plots to show.'
+        : 'No plots to show. PDPilot only pre-computes two-way PDPs when it detects likely interaction between the pair of features.'}
     />
   </div>
 </div>

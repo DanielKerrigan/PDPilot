@@ -23,6 +23,7 @@
     <PDPGrid
       data={filteredOneWayPds}
       sortingOptions={singlePDPSortingOptions}
+      noPlotsMessage={'No plots to show.'}
     />
   </div>
 </div>
