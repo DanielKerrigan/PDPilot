@@ -74,9 +74,15 @@ function getYScale(
         .nice()
         .range([height - margin.bottom, margin.top]);
     } else if (iceLevel === 'cluster-centers') {
+      /*
+        if all the ice lines are the same, then there are no clusters.
+        in this case, use the centered ice min and max for the scale.
+      */
       const cluster = pdp.ice.clusters[pdp.ice.num_clusters];
+      const min = cluster?.centered_mean_min ?? pdp.ice.centered_ice_min;
+      const max = cluster?.centered_mean_max ?? pdp.ice.centered_ice_max;
       return scaleLinear()
-        .domain([cluster.centered_mean_min, cluster.centered_mean_max])
+        .domain([min, max])
         .nice()
         .range([height - margin.bottom, margin.top]);
     } else {

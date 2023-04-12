@@ -70,29 +70,31 @@
 
 <svg {width} {height}>
   <!-- cluster means -->
-  <g>
-    {#each pd.ice.clusters[pd.ice.num_clusters].clusters as cluster}
-      <path
-        d={line(cluster.centered_mean)}
-        stroke={'var(--gray-2)'}
-        stroke-width="2"
-        fill="none"
-      />
+  {#if pd.ice.num_clusters !== 1}
+    <g>
+      {#each pd.ice.clusters[pd.ice.num_clusters].clusters as cluster}
+        <path
+          d={line(cluster.centered_mean)}
+          stroke={'var(--gray-2)'}
+          stroke-width="2"
+          fill="none"
+        />
 
-      {#if feature.kind === 'categorical'}
-        <g>
-          {#each I as i}
-            <circle
-              cx={x(pd.x_values[i])}
-              cy={y(cluster.centered_mean[i])}
-              r={radius}
-              fill={'var(--gray-2)'}
-            />
-          {/each}
-        </g>
-      {/if}
-    {/each}
-  </g>
+        {#if feature.kind === 'categorical'}
+          <g>
+            {#each I as i}
+              <circle
+                cx={x(pd.x_values[i])}
+                cy={y(cluster.centered_mean[i])}
+                r={radius}
+                fill={'var(--gray-2)'}
+              />
+            {/each}
+          </g>
+        {/if}
+      {/each}
+    </g>
+  {/if}
 
   <!-- PDP -->
   <path
