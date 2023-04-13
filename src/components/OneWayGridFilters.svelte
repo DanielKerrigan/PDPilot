@@ -8,6 +8,9 @@
 
   const dispatch = createEventDispatcher<{ changeFilters: string[] }>();
 
+  let featureKindFilter: FeatureKindFilter;
+  let featureNameFilter: FeatureNameFilter;
+
   let showFeatureType = true;
   let showFeatureName = true;
 
@@ -35,17 +38,34 @@
       return shapeSelections.nominal.checked;
     }
   });
+
+  function clearFilters() {
+    if (featureKindFilter) {
+      featureKindFilter.clear();
+    }
+
+    if (featureNameFilter) {
+      featureNameFilter.clear();
+    }
+  }
 </script>
 
 <div class="controls-container">
   <div class="pdpilot-bold">Feature Filters</div>
+
+  <button style:align-self="start" on:click={clearFilters}>
+    Clear Filters
+  </button>
 
   <div>
     <div class="filter-header">
       <ToggleHeader bind:expanded={showFeatureType} title={'Type'} />
     </div>
     <div class="filter-content" class:pdp-hide={!showFeatureType}>
-      <FeatureKindFilter on:changeKindFilters={onChangeKindFilters} />
+      <FeatureKindFilter
+        bind:this={featureKindFilter}
+        on:changeKindFilters={onChangeKindFilters}
+      />
     </div>
   </div>
 
@@ -58,6 +78,7 @@
       class:pdp-hide={!showFeatureName}
     >
       <FeatureNameFilter
+        bind:this={featureNameFilter}
         enabledFeatures={filteredByKind}
         on:changeNameFilters={onChangeNameFilters}
         idPrefix={'pdpilot-one'}

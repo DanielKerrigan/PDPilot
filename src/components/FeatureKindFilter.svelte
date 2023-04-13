@@ -4,7 +4,7 @@
 
   let allShapes: Shape[] = ['increasing', 'decreasing', 'mixed'];
 
-  let selections: ShapeSelections = {
+  const allSelected: ShapeSelections = {
     ordered: {
       checked: true,
       shapes: allShapes,
@@ -13,6 +13,33 @@
       checked: true,
     },
   };
+
+  function getNoneSelected(): ShapeSelections {
+    return {
+      ordered: {
+        checked: false,
+        shapes: [],
+      },
+      nominal: {
+        checked: false,
+      },
+    };
+  }
+
+  let selections: ShapeSelections = getNoneSelected();
+
+  export function clear() {
+    selections = getNoneSelected();
+  }
+
+  // if all of the checkboxes are checked, then uncheck all of them
+  $: if (
+    selections.nominal.checked &&
+    selections.ordered.checked &&
+    selections.ordered.shapes.length === allShapes.length
+  ) {
+    selections = getNoneSelected();
+  }
 
   function orderedChange() {
     if (selections.ordered.checked) {
@@ -30,11 +57,24 @@
     changeKindFilters: ShapeSelections;
   }>();
 
+  function dispatchSelections(shapeSelections: ShapeSelections) {
+    // if nothing is selected, then the default is that all are selected
+    if (
+      !shapeSelections.nominal.checked &&
+      !shapeSelections.ordered.checked &&
+      shapeSelections.ordered.shapes.length === 0
+    ) {
+      dispatch('changeKindFilters', allSelected);
+    } else {
+      dispatch('changeKindFilters', shapeSelections);
+    }
+  }
+
   onMount(() => {
-    dispatch('changeKindFilters', selections);
+    dispatchSelections(selections);
   });
 
-  $: dispatch('changeKindFilters', selections);
+  $: dispatchSelections(selections);
 </script>
 
 <div>

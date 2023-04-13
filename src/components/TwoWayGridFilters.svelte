@@ -11,6 +11,8 @@
     };
   }>();
 
+  let featureNameFilter: FeatureNameFilter;
+
   let showFeatureName = true;
 
   let op: 'and' | 'or' = 'and';
@@ -30,17 +32,27 @@
       op: op,
     });
   }
+
+  function clearFilters() {
+    if (featureNameFilter) {
+      featureNameFilter.clear();
+    }
+  }
 </script>
 
 <div class="controls-container">
   <div class="pdpilot-bold">Feature Filters</div>
+
+  <button style:align-self="start" on:click={clearFilters}>
+    Clear Filters
+  </button>
 
   <div class="filter-container feature-selector-wrapper-outer">
     <div class="filter-header">
       <ToggleHeader bind:expanded={showFeatureName} title={'Name'} />
     </div>
     <div
-      class="filter-content feature-selector-wrapper-inner"
+      class="filter-content feature-selector-wrapper-middle"
       class:pdp-hide={!showFeatureName}
     >
       <div class="two-way-filter-radio">
@@ -69,11 +81,14 @@
 
       <hr />
 
-      <FeatureNameFilter
-        enabledFeatures={$feature_names}
-        on:changeNameFilters={onChangeNameFilters}
-        idPrefix={'pdpilot-two'}
-      />
+      <div class="feature-selector-wrapper-inner">
+        <FeatureNameFilter
+          bind:this={featureNameFilter}
+          enabledFeatures={$feature_names}
+          on:changeNameFilters={onChangeNameFilters}
+          idPrefix={'pdpilot-two'}
+        />
+      </div>
     </div>
   </div>
 </div>
@@ -94,6 +109,14 @@
 
   .feature-selector-wrapper-outer {
     flex: 0 1 auto;
+    min-height: 0;
+
+    display: flex;
+    flex-direction: column;
+  }
+
+  .feature-selector-wrapper-middle {
+    flex: 1;
     min-height: 0;
 
     display: flex;

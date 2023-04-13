@@ -8,24 +8,21 @@
 
   const dispatch = createEventDispatcher<{ changeNameFilters: string[] }>();
 
-  let featuresChecked = true;
-  let featuresCheckboxIndeterminate = false;
   let search = '';
-  let selectedFeatures = $feature_names;
-  let manuallyUnselected = new Set();
+  let selectedFeatures: string[] = [];
+
+  export function clear() {
+    selectedFeatures = [];
+  }
 
   function onEnabledFeaturesChange(enabledFeatures: string[]) {
-    selectedFeatures = $feature_names.filter(
-      (f) => enabledFeatures.includes(f) && !manuallyUnselected.has(f)
-    );
+    selectedFeatures =
+      enabledFeatures.length === $feature_names.length ? [] : enabledFeatures;
 
-    updateAllFeaturesCheckbox();
-    dispatch('changeNameFilters', selectedFeatures);
+    dispatchSelections(selectedFeatures);
   }
 
   $: onEnabledFeaturesChange(enabledFeatures);
-
-  $: allFeaturesEnabled = enabledFeatures.length === $feature_names.length;
 
   $: featureCheckboxes = $feature_names.map((feature) => ({
     feature,
@@ -33,62 +30,24 @@
     disabled: !enabledFeatures.includes(feature),
   }));
 
-  $: {
-    updateAllFeaturesCheckbox();
-    dispatch('changeNameFilters', selectedFeatures);
+  // if all of the features are checked, then uncheck all of them
+  $: if (selectedFeatures.length === $feature_names.length) {
+    selectedFeatures = [];
   }
 
-  function onAllFeaturesChange() {
-    if (featuresChecked) {
-      selectedFeatures = $feature_names;
-      featuresCheckboxIndeterminate = false;
+  $: dispatchSelections(selectedFeatures);
+
+  function dispatchSelections(feats: string[]) {
+    // if nothing is selected, then the default is that all are selected
+    if (feats.length === 0) {
+      dispatch('changeNameFilters', $feature_names);
     } else {
-      selectedFeatures = [];
-      featuresCheckboxIndeterminate = false;
-    }
-    manuallyUnselected = new Set();
-  }
-
-  function updateAllFeaturesCheckbox() {
-    if (selectedFeatures.length === 0) {
-      featuresChecked = false;
-      featuresCheckboxIndeterminate = false;
-    } else if (selectedFeatures.length === $feature_names.length) {
-      featuresChecked = true;
-      featuresCheckboxIndeterminate = false;
-    } else if (
-      selectedFeatures.length > 0 &&
-      selectedFeatures.length < $feature_names.length
-    ) {
-      featuresChecked = true;
-      featuresCheckboxIndeterminate = true;
-    }
-  }
-
-  function onFeatureManuallyChanged(feature: string) {
-    if (!selectedFeatures.includes(feature)) {
-      manuallyUnselected.add(feature);
-    } else {
-      manuallyUnselected.delete(feature);
+      dispatch('changeNameFilters', feats);
     }
   }
 </script>
 
 <div class="controls-features">
-  <ul>
-    <li class="fs-row">
-      <input
-        id="{idPrefix}-features-checkbox"
-        type="checkbox"
-        bind:checked={featuresChecked}
-        indeterminate={featuresCheckboxIndeterminate}
-        on:change={onAllFeaturesChange}
-        disabled={search !== '' || !allFeaturesEnabled}
-      />
-      <label for="{idPrefix}-features-checkbox">All features</label>
-    </li>
-  </ul>
-
   <label class="fs-row">
     Search
     <input bind:value={search} />
@@ -104,7 +63,6 @@
           name="features"
           value={feature}
           {disabled}
-          on:change={() => onFeatureManuallyChanged(feature)}
         />
         <label
           class="pdpilot-cutoff"
