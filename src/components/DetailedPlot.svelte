@@ -111,10 +111,12 @@
   let gridWidth: number;
   let gridHeight: number;
 
+  const dividerSize = 20;
+
   $: halfWidth = gridWidth / 2;
 
-  $: thirdHeight = gridHeight / 3;
-  $: twoThirdHeight = (2 * gridHeight) / 3;
+  $: thirdHeight = (gridHeight - dividerSize) / 3;
+  $: twoThirdHeight = (2 * (gridHeight - dividerSize)) / 3;
 
   onMount(() => {
     // Adapted from https://blog.sethcorker.com/question/how-do-you-use-the-resize-observer-api-in-svelte/
@@ -220,9 +222,9 @@
         <label class="label-and-input">
           Color
           <select bind:value={colorShows}>
-            <option value="both">both</option>
-            <option value="interactions">interactions</option>
-            <option value="predictions">predictions</option>
+            <option value="both">Both</option>
+            <option value="interactions">Interactions</option>
+            <option value="predictions">Predictions</option>
           </select>
         </label>
 
@@ -285,7 +287,9 @@
               height={gridHeight}
               scaleLocally={$detailedScaleLocally}
               showMarginalDistribution={$detailedShowDistributions}
-              marginTop={$detailedShowDistributions ? marginalChartHeight : 10}
+              marginTop={$detailedShowDistributions
+                ? marginalChartHeight + 1
+                : 10}
               distributionHeight={$detailedShowDistributions
                 ? marginalChartHeight
                 : 0}
@@ -315,6 +319,7 @@
         class="two-way-pdp-grid showOneWay-{oneWayPD1 !== null &&
           oneWayPD2 !== null &&
           showOneWay}-color-{colorShows}"
+        style:--divider-size="{dividerSize}px"
       >
         {#if oneWayPD1 !== null && oneWayPD2 !== null && showOneWay}
           <div style:grid-area="one-way-left">
@@ -346,6 +351,10 @@
               iceLevel="lines"
             />
           </div>
+
+          <div style:grid-area="divider" class="pdpilot-divider">
+            <hr />
+          </div>
         {/if}
 
         {#if colorShows === 'both' || colorShows === 'interactions'}
@@ -368,6 +377,7 @@
               iceLevel="lines"
               colorShows="interactions"
               showColorLegend={true}
+              colorLegendTitle="Interactions"
             />
           </div>
         {/if}
@@ -391,6 +401,7 @@
                 : 0}
               iceLevel={$detailedICELevel}
               showColorLegend={true}
+              colorLegendTitle="Predictions"
             />
           </div>
         {/if}
@@ -481,27 +492,42 @@
     gap: 0.25em;
   }
 
+  .pdpilot-divider {
+    display: flex;
+    align-items: center;
+  }
+
+  .pdpilot-divider > hr {
+    width: 100%;
+    border: 0;
+    height: 1px;
+    background: var(--gray-3);
+  }
+
   .showOneWay-true-color-both {
-    grid-template-rows: 1fr 2fr;
+    grid-template-rows: 1fr var(--divider-size) 2fr;
     grid-template-columns: 1fr 1fr;
     grid-template-areas:
       'one-way-left one-way-right'
+      'divider divider'
       'two-way-interaction two-way-pdp';
   }
 
   .showOneWay-true-color-interactions {
-    grid-template-rows: 1fr 2fr;
+    grid-template-rows: 1fr var(--divider-size) 2fr;
     grid-template-columns: 1fr 1fr;
     grid-template-areas:
       'one-way-left one-way-right'
+      'divider divider'
       'two-way-interaction two-way-interaction';
   }
 
   .showOneWay-true-color-predictions {
-    grid-template-rows: 1fr 2fr;
+    grid-template-rows: 1fr var(--divider-size) 2fr;
     grid-template-columns: 1fr 1fr;
     grid-template-areas:
       'one-way-left one-way-right'
+      'divider divider'
       'two-way-pdp two-way-pdp';
   }
 

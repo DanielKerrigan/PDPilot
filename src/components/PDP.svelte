@@ -9,6 +9,7 @@
   export let scaleLocally: boolean;
   export let colorShows: 'predictions' | 'interactions' = 'predictions';
   export let showColorLegend = false;
+  export let colorLegendTitle = '';
   export let iceLevel: ICELevel;
   export let indices: number[] | null = null;
   export let showMarginalDistribution = false;
@@ -19,6 +20,7 @@
   export let showBrushedBorder = false;
   export let iceLineWidth = 1;
   export let showTitle = false;
+  export let twoWayKind: 'lines' | 'heatmap' = 'heatmap';
 </script>
 
 {#if width > 0 && height > 0}
@@ -50,6 +52,8 @@
       {marginRight}
       {distributionHeight}
       {showMarginalDistribution}
+      {twoWayKind}
+      {colorLegendTitle}
     />
   {/if}
 {/if}

@@ -486,9 +486,9 @@
               {scaleLocally}
               {colorShows}
               {showMarginalDistribution}
-              marginTop={11}
+              marginTop={ways === 1 ? 11 : 5}
               marginRight={10}
-              distributionHeight={10}
+              distributionHeight={ways === 1 ? 10 : 0}
               showColorLegend={scaleLocally}
               {iceLevel}
               allowBrushing={ways === 1}
@@ -535,6 +535,7 @@
   .pdp-grid-container {
     flex: 1;
     min-height: 0;
+    padding: 1px;
   }
 
   .pdpilot-no-plots-container {

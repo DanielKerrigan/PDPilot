@@ -1,3 +1,5 @@
+<svelte:options namespace="svg" />
+
 <script lang="ts">
   import { scaleLinear } from 'd3-scale';
   import { range } from 'd3-array';

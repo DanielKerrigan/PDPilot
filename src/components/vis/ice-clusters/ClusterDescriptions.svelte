@@ -439,97 +439,99 @@
     </div>
   </div>
   <div class="distribution-plots" bind:this={div}>
-    <svg width={visWidth} height={visTotalHeight}>
-      <g bind:this={group}>
-        {#each distributions as d}
-          <g transform="translate(0,{fy(d.feature)})">
-            {#if d.kind === 'categorical'}
-              <g>
-                {#each d.data as series, i}
-                  <g fill={color(i)}>
-                    {#each series as point}
-                      {#if point[0] !== point[1]}
-                        <rect
-                          x={getBarX(point.data[0], x[d.feature]) + 1}
-                          width={getBarWidth(x[d.feature]) - 2}
-                          y={yBar(point[1])}
-                          height={yBar(point[0]) - yBar(point[1])}
-                        />
-                      {/if}
-                    {/each}
-                  </g>
-                {/each}
+    {#if visWidth > 0}
+      <svg width={visWidth} height={visTotalHeight}>
+        <g bind:this={group}>
+          {#each distributions as d}
+            <g transform="translate(0,{fy(d.feature)})">
+              {#if d.kind === 'categorical'}
+                <g>
+                  {#each d.data as series, i}
+                    <g fill={color(i)}>
+                      {#each series as point}
+                        {#if point[0] !== point[1]}
+                          <rect
+                            x={getBarX(point.data[0], x[d.feature]) + 1}
+                            width={getBarWidth(x[d.feature]) - 2}
+                            y={yBar(point[1])}
+                            height={yBar(point[0]) - yBar(point[1])}
+                          />
+                        {/if}
+                      {/each}
+                    </g>
+                  {/each}
+                </g>
+                <YAxis
+                  scale={yBar}
+                  x={margin.left}
+                  label={normalize ? 'percent' : 'count'}
+                  format={normalize ? format('~%') : defaultFormat}
+                />
+              {:else}
+                <g>
+                  {#each d.data as { cluster, box }}
+                    <g
+                      transform="translate(0,{(yBox(cluster) ?? 0) +
+                        yBox.bandwidth() / 2})"
+                    >
+                      <!-- KDE -->
+                      <path
+                        d={getViolinPath(x[d.feature], box.densities)}
+                        fill={color(cluster)}
+                      />
+                      <!-- IQR -->
+                      <rect
+                        x={x[d.feature](box.q1) ?? 0}
+                        width={(x[d.feature](box.q3) ?? 0) -
+                          (x[d.feature](box.q1) ?? 0)}
+                        y={-boxWidth / 2}
+                        height={boxWidth}
+                        fill="var(--gray-1)"
+                      />
+                      <!-- median -->
+                      <line
+                        x1={x[d.feature](box.median) ?? 0}
+                        x2={x[d.feature](box.median) ?? 0}
+                        stroke-width={2}
+                        y1={-boxWidth / 2}
+                        y2={boxWidth / 2}
+                        stroke={'black'}
+                      />
+                      <!-- whiskers -->
+                      <line
+                        x1={x[d.feature](box.low) ?? 0}
+                        x2={x[d.feature](box.q1) ?? 0}
+                        stroke-width={1}
+                        stroke="var(--gray-1)"
+                      />
+                      <line
+                        x1={x[d.feature](box.q3) ?? 0}
+                        x2={x[d.feature](box.high) ?? 0}
+                        stroke-width={1}
+                        stroke="var(--gray-1)"
+                      />
+                    </g>
+                  {/each}
+                </g>
+              {/if}
+              <!-- we need the id so that we can determine which feature the brush is for -->
+              <g class="x-axis" id="axis-{d.feature}">
+                <XAxis
+                  scale={x[d.feature]}
+                  y={fy.bandwidth() - margin.bottom}
+                  showBaseline={true}
+                  baselineColor={'var(--gray-6)'}
+                  tickColor={'var(--gray-6)'}
+                  integerOnly={$feature_info[d.feature].subkind === 'discrete'}
+                  value_map={getValueMap($feature_info[d.feature])}
+                  label={d.feature}
+                />
               </g>
-              <YAxis
-                scale={yBar}
-                x={margin.left}
-                label={normalize ? 'percent' : 'count'}
-                format={normalize ? format('~%') : defaultFormat}
-              />
-            {:else}
-              <g>
-                {#each d.data as { cluster, box }}
-                  <g
-                    transform="translate(0,{(yBox(cluster) ?? 0) +
-                      yBox.bandwidth() / 2})"
-                  >
-                    <!-- KDE -->
-                    <path
-                      d={getViolinPath(x[d.feature], box.densities)}
-                      fill={color(cluster)}
-                    />
-                    <!-- IQR -->
-                    <rect
-                      x={x[d.feature](box.q1) ?? 0}
-                      width={(x[d.feature](box.q3) ?? 0) -
-                        (x[d.feature](box.q1) ?? 0)}
-                      y={-boxWidth / 2}
-                      height={boxWidth}
-                      fill="var(--gray-1)"
-                    />
-                    <!-- median -->
-                    <line
-                      x1={x[d.feature](box.median) ?? 0}
-                      x2={x[d.feature](box.median) ?? 0}
-                      stroke-width={2}
-                      y1={-boxWidth / 2}
-                      y2={boxWidth / 2}
-                      stroke={'black'}
-                    />
-                    <!-- whiskers -->
-                    <line
-                      x1={x[d.feature](box.low) ?? 0}
-                      x2={x[d.feature](box.q1) ?? 0}
-                      stroke-width={1}
-                      stroke="var(--gray-1)"
-                    />
-                    <line
-                      x1={x[d.feature](box.q3) ?? 0}
-                      x2={x[d.feature](box.high) ?? 0}
-                      stroke-width={1}
-                      stroke="var(--gray-1)"
-                    />
-                  </g>
-                {/each}
-              </g>
-            {/if}
-            <!-- we need the id so that we can determine which feature the brush is for -->
-            <g class="x-axis" id="axis-{d.feature}">
-              <XAxis
-                scale={x[d.feature]}
-                y={fy.bandwidth() - margin.bottom}
-                showBaseline={true}
-                baselineColor={'var(--gray-6)'}
-                tickColor={'var(--gray-6)'}
-                integerOnly={$feature_info[d.feature].subkind === 'discrete'}
-                value_map={getValueMap($feature_info[d.feature])}
-                label={d.feature}
-              />
             </g>
-          </g>
-        {/each}
-      </g>
-    </svg>
+          {/each}
+        </g>
+      </svg>
+    {/if}
   </div>
 </div>
 

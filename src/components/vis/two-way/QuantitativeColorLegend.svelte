@@ -14,32 +14,52 @@
   export let color:
     | ScaleSequential<string, string>
     | ScaleDiverging<string, string>;
-
-  export let marginTop = 0;
   export let marginRight = 0;
-  export let marginBottom = 0;
   export let marginLeft = 0;
+  export let title = '';
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
+  let div: HTMLDivElement;
 
   // dimensions
+
+  let nonTitleWidth = 0;
+  $: colorWidth = nonTitleWidth - marginLeft - marginRight;
 
   const spaceBetweenColorAndTickLabel = 2;
   const tickLabelHeight = 10;
 
-  $: colorWidth = width - marginLeft - marginRight;
-  $: colorHeight =
-    height -
-    marginTop -
-    marginBottom -
-    tickLabelHeight -
-    spaceBetweenColorAndTickLabel;
+  $: colorHeight = height - tickLabelHeight - spaceBetweenColorAndTickLabel;
 
   // set up
 
   onMount(() => {
     ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+
+    const resizeObserver = new ResizeObserver(
+      (entries: ResizeObserverEntry[]) => {
+        if (entries.length !== 1) {
+          return;
+        }
+
+        const entry: ResizeObserverEntry = entries[0];
+
+        if (entry.contentBoxSize) {
+          const contentBoxSize = Array.isArray(entry.contentBoxSize)
+            ? entry.contentBoxSize[0]
+            : entry.contentBoxSize;
+
+          nonTitleWidth = contentBoxSize.inlineSize;
+        } else {
+          nonTitleWidth = entry.contentRect.width;
+        }
+      }
+    );
+
+    resizeObserver.observe(div);
+
+    return () => resizeObserver.unobserve(div);
   });
 
   // drawing
@@ -51,13 +71,12 @@
     totalHeight: number,
     colorWidth: number,
     colorHeight: number,
-    marginLeft: number,
-    marginTop: number
+    marginLeft: number
   ) {
     ctx.clearRect(0, 0, totalWidth, totalHeight);
     for (let i = 0; i < colorWidth; i++) {
       ctx.fillStyle = interpolator(i / colorWidth);
-      ctx.fillRect(i + marginLeft, marginTop, 1, colorHeight);
+      ctx.fillRect(i + marginLeft, 0, 1, colorHeight);
     }
   }
 
@@ -72,42 +91,57 @@
       height,
       colorWidth,
       colorHeight,
-      marginLeft,
-      marginTop
+      marginLeft
     );
   }
 
   $: x = scaleLinear()
     .domain([color.domain()[0], color.domain()[color.domain().length - 1]])
-    .range([marginLeft, width - marginRight]);
+    .range([marginLeft, nonTitleWidth - marginRight]);
 
   $: minDesiredTicks = color.domain().length;
 
   $: ticks = x.ticks(Math.max(colorWidth / 50, minDesiredTicks));
 </script>
 
-<div class="color-container" style="height: {height}px;">
-  <canvas bind:this={canvas} />
-  <svg {width} {height}>
-    {#each ticks as tick}
-      <g transform="translate({x(tick)},{marginTop})">
-        <line y1={0} y2={colorHeight} stroke="black" />
-        <text
-          y={colorHeight + spaceBetweenColorAndTickLabel}
-          dominant-baseline="hanging"
-          text-anchor="middle"
-          font-size={tickLabelHeight}
-        >
-          {defaultFormat(tick)}
-        </text>
-      </g>
-    {/each}
-  </svg>
+<div
+  class="color-container"
+  style:height="{height}px"
+  style:max-width="{width}px"
+>
+  {#if title !== ''}
+    <div class="pdpilot-small pdpilot-bold">{title}:</div>
+  {/if}
+  <div class="color-ramp" bind:this={div}>
+    <canvas bind:this={canvas} />
+    <svg width={nonTitleWidth} {height}>
+      {#each ticks as tick}
+        <g transform="translate({x(tick)})">
+          <line y1={0} y2={colorHeight} stroke="black" />
+          <text
+            y={colorHeight + spaceBetweenColorAndTickLabel}
+            dominant-baseline="hanging"
+            text-anchor="middle"
+            font-size={tickLabelHeight}
+          >
+            {defaultFormat(tick)}
+          </text>
+        </g>
+      {/each}
+    </svg>
+  </div>
 </div>
 
 <style>
   .color-container {
+    display: flex;
+    align-items: center;
+  }
+
+  .color-ramp {
     position: relative;
+    flex: 1;
+    min-width: 0;
   }
 
   svg {
