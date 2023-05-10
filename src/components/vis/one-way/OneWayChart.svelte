@@ -11,7 +11,7 @@
   export let iceLevel: ICELevel;
   export let showMarginalDistribution: boolean;
   export let marginTop: number;
-  export let distributionHeight: number;
+  export let marginalPlotHeight: number;
   export let indices: number[] | null;
   export let allowBrushing: boolean;
   export let showBrushedBorder: boolean;
@@ -27,7 +27,7 @@
     {scaleLocally}
     {showMarginalDistribution}
     {marginTop}
-    {distributionHeight}
+    {marginalPlotHeight}
     {allowBrushing}
     {showBrushedBorder}
     {iceLineWidth}
@@ -41,7 +41,7 @@
     {scaleLocally}
     {showMarginalDistribution}
     {marginTop}
-    {distributionHeight}
+    {marginalPlotHeight}
   />
 {:else}
   <ClusterLines
@@ -51,7 +51,7 @@
     {scaleLocally}
     {showMarginalDistribution}
     {marginTop}
-    {distributionHeight}
+    {marginalPlotHeight}
     {indices}
     {showTitle}
   />

@@ -10,12 +10,13 @@ import type {
   Tab,
   Distribution,
   ICELevel,
+  OneWayDetailedContextKind,
 } from './types';
 
 import { scaleSequential, scaleDiverging } from 'd3-scale';
 import type { ScaleSequential, ScaleDiverging } from 'd3-scale';
 import { interpolateYlGnBu, interpolateBrBG } from 'd3-scale-chromatic';
-import { getHighlightedBins } from './vis-utils';
+import { getHighlightedBins, getNiceDomain } from './vis-utils';
 
 /**
  *
@@ -65,12 +66,14 @@ function createSyncedWidget<T>(
   };
 }
 
-// Stores that are synced with traitlets
+// ==== Stores that are synced with traitlets ====
 
 export let feature_names: Writable<string[]>;
 export let feature_info: Writable<Record<string, FeatureInfo>>;
 
 export let dataset: Writable<Dataset>;
+
+export let labels: Writable<number[]>;
 
 export let num_instances: Writable<number>;
 
@@ -80,6 +83,7 @@ export let two_way_pds: Writable<TwoWayPD[]>;
 export let two_way_pdp_extent: Writable<[number, number]>;
 export let two_way_interaction_extent: Writable<[number, number]>;
 
+export let one_way_pdp_extent: Writable<[number, number]>;
 export let ice_line_extent: Writable<[number, number]>;
 export let ice_cluster_center_extent: Writable<[number, number]>;
 export let centered_ice_line_extent: Writable<[number, number]>;
@@ -90,11 +94,14 @@ export let highlighted_indices: Writable<number[]>;
 
 export let two_way_to_calculate: Writable<string[]>;
 
-// Stores that are not synced with traitlets
+// ==== Stores that are not synced with traitlets ====
 
 export let selectedTab: Writable<Tab>;
 
 export let featureToPd: Readable<Map<string, OneWayPD>>;
+
+export let isClassification: Readable<boolean>;
+export let labelExtent: Readable<[number, number]>;
 
 // detailed plot
 
@@ -103,7 +110,12 @@ export let detailedFeature2: Writable<string>;
 
 export let detailedICELevel: Writable<ICELevel>;
 export let detailedShowDistributions: Writable<boolean>;
+export let detailedContextKind: Writable<OneWayDetailedContextKind>;
 export let detailedScaleLocally: Writable<boolean>;
+
+// quasi-random data
+
+export let quasiRandomPoints: Readable<{ x: number; y: number }[]>;
 
 // brushing
 
@@ -129,7 +141,7 @@ export let globalColorTwoWayInteraction: Readable<
  * @param model backbone model that contains state synced between Python and JS
  */
 export function setStores(model: DOMWidgetModel): void {
-  // stores synced with Python
+  // ==== stores synced with Python ====
 
   feature_names = createSyncedWidget<string[]>('feature_names', [], model);
   feature_info = createSyncedWidget<Record<string, FeatureInfo>>(
@@ -139,6 +151,8 @@ export function setStores(model: DOMWidgetModel): void {
   );
 
   dataset = createSyncedWidget<Dataset>('dataset', {}, model);
+
+  labels = createSyncedWidget<number[]>('labels', [], model);
 
   num_instances = createSyncedWidget<number>('num_instances', 0, model);
 
@@ -156,6 +170,11 @@ export function setStores(model: DOMWidgetModel): void {
     model
   );
 
+  one_way_pdp_extent = createSyncedWidget<[number, number]>(
+    'one_way_pdp_extent',
+    [0, 0],
+    model
+  );
   ice_line_extent = createSyncedWidget<[number, number]>(
     'ice_line_extent',
     [0, 0],
@@ -186,13 +205,21 @@ export function setStores(model: DOMWidgetModel): void {
     model
   );
 
-  // stores not synced with Python
+  // ==== stores not synced with Python ====
 
   selectedTab = writable('one-way-plots');
 
   featureToPd = derived(
     one_way_pds,
     ($one_way_pds) => new Map($one_way_pds.map((d) => [d.x_feature, d]))
+  );
+
+  isClassification = derived(labels, ($labels) => new Set($labels).size === 2);
+
+  labelExtent = derived(
+    labels,
+    ($labels) =>
+      [Math.min(...$labels), Math.max(...$labels)] as [number, number]
   );
 
   // detailed plot
@@ -206,6 +233,19 @@ export function setStores(model: DOMWidgetModel): void {
   detailedICELevel = writable('lines');
   detailedShowDistributions = writable(false);
   detailedScaleLocally = writable(false);
+  detailedContextKind = writable('scatterplot');
+
+  // quasi-random coordinates
+
+  quasiRandomPoints = derived(num_instances, ($num_instances) => {
+    const g = 1.324717957244746;
+    const a1 = 1.0 / g;
+    const a2 = 1.0 / (g * g);
+    return Array.from({ length: $num_instances }, (_, i) => ({
+      x: (0.5 + a1 * i) % 1,
+      y: (0.5 + a2 * i) % 1,
+    }));
+  });
 
   // brushing
 
@@ -228,23 +268,21 @@ export function setStores(model: DOMWidgetModel): void {
 
   // color
 
-  globalColorTwoWayPdp = derived(two_way_pdp_extent, ($two_way_pdp_extent) =>
-    scaleSequential()
-      .domain($two_way_pdp_extent)
+  globalColorTwoWayPdp = derived(two_way_pdp_extent, ($two_way_pdp_extent) => {
+    return scaleSequential()
+      .domain(getNiceDomain($two_way_pdp_extent))
       .interpolator(interpolateYlGnBu)
-      .unknown('black')
-  );
+      .unknown('black');
+  });
 
   globalColorTwoWayInteraction = derived(
     two_way_interaction_extent,
-    ($two_way_interaction_extent) =>
-      scaleDiverging<string, string>()
-        .domain([
-          $two_way_interaction_extent[0],
-          0,
-          $two_way_interaction_extent[1],
-        ])
+    ($two_way_interaction_extent) => {
+      const niceValue = getNiceDomain([0, $two_way_interaction_extent[1]])[1];
+      return scaleDiverging<string, string>()
+        .domain([-niceValue, 0, niceValue])
         .interpolator(interpolateBrBG)
-        .unknown('black')
+        .unknown('black');
+    }
   );
 }

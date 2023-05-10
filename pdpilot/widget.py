@@ -12,10 +12,12 @@ from typing import Callable, Union, List
 from ipywidgets import DOMWidget
 from traitlets import Dict, Int, List as ListTraitlet, Unicode, observe
 import pandas as pd
+import numpy as np
 
 from pdpilot.pdp import _calc_two_way_pd, _get_feature_to_pd
 
 from pdpilot._frontend import module_name, module_version
+from pdpilot.utils import convert_keys_to_ints
 
 
 class PDPilotWidget(DOMWidget):
@@ -26,6 +28,8 @@ class PDPilotWidget(DOMWidget):
     :type predict: Callable[[pd.DataFrame], list[float]]
     :param df: Instances to use to compute the PDPs and ICE plots.
     :type df: pd.DataFrame
+    :param labels: Ground truth labels for the instances in ``df``.
+    :type labels: list[float] | list[int] | np.ndarray | pd.Series
     :param pd_data: The dictionary returned by :func:`pdpilot.pdp.partial_dependence`
         or a path to the file containing that data.
     :type pd_data: dict | str | Path
@@ -48,6 +52,8 @@ class PDPilotWidget(DOMWidget):
 
     dataset = Dict({}).tag(sync=True)
 
+    labels = ListTraitlet([]).tag(sync=True)
+
     num_instances = Int(0).tag(sync=True)
 
     one_way_pds = ListTraitlet([]).tag(sync=True)
@@ -56,6 +62,7 @@ class PDPilotWidget(DOMWidget):
     two_way_pdp_extent = ListTraitlet([0, 0]).tag(sync=True)
     two_way_interaction_extent = ListTraitlet([0, 0]).tag(sync=True)
 
+    one_way_pdp_extent = ListTraitlet([0, 0]).tag(sync=True)
     ice_line_extent = ListTraitlet([0, 0]).tag(sync=True)
     ice_cluster_center_extent = ListTraitlet([0, 0]).tag(sync=True)
     centered_ice_line_extent = ListTraitlet([0, 0]).tag(sync=True)
@@ -70,6 +77,7 @@ class PDPilotWidget(DOMWidget):
         self,
         predict: Callable[[pd.DataFrame], List[float]],
         df: pd.DataFrame,
+        labels: Union[List[float], List[int], np.ndarray, pd.Series],
         pd_data: Union[str, Path, dict],
         height: int = 600,
         **kwargs,
@@ -86,6 +94,15 @@ class PDPilotWidget(DOMWidget):
             json_data = path.read_text(encoding="utf-8")
             pd_data = json.loads(json_data)
 
+            # In JSON, object keys are all strings. Here, we convert
+            # ints back to ints.
+            for info in pd_data["feature_info"].values():
+                if "value_map" in info:
+                    info["value_map"] = convert_keys_to_ints(info["value_map"])
+
+            for owp in pd_data["one_way_pds"]:
+                owp["ice"]["clusters"] = convert_keys_to_ints(owp["ice"]["clusters"])
+
         # synced widget state
 
         self.feature_names = sorted([p["x_feature"] for p in pd_data["one_way_pds"]])
@@ -101,11 +118,16 @@ class PDPilotWidget(DOMWidget):
         self.two_way_pdp_extent = pd_data["two_way_pdp_extent"]
         self.two_way_interaction_extent = pd_data["two_way_interaction_extent"]
 
+        self.one_way_pdp_extent = pd_data["one_way_pdp_extent"]
         self.ice_line_extent = pd_data["ice_line_extent"]
         self.ice_cluster_center_extent = pd_data["ice_cluster_center_extent"]
         self.centered_ice_line_extent = pd_data["centered_ice_line_extent"]
 
         self.height = height
+
+        self.labels = (
+            labels.tolist() if isinstance(labels, (np.ndarray, pd.Series)) else labels
+        )
 
         # not synced
         self.df = df

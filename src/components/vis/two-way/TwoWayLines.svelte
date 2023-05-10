@@ -28,7 +28,7 @@
   export let showColorLegend: boolean;
   export let marginTop = 0;
   export let marginRight = 0;
-  export let distributionHeight: number;
+  export let marginalPlotHeight: number;
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;

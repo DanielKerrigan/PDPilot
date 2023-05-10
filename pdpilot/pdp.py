@@ -17,9 +17,10 @@ import pandas as pd
 from joblib import Parallel, delayed
 from sklearn.tree import DecisionTreeClassifier
 from tqdm import tqdm
-from tslearn.clustering import TimeSeriesKMeans
-from tslearn.clustering import silhouette_score as ts_silhouette_score
-from tslearn.utils import to_time_series_dataset
+
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+from sklearn.metrics.pairwise import euclidean_distances
 
 from pdpilot.metadata import Metadata
 from pdpilot.tqdm_joblib import tqdm_joblib
@@ -170,7 +171,16 @@ def partial_dependence(
     ice_cluster_center_min = math.inf
     ice_cluster_center_max = -math.inf
 
+    one_way_pdp_min = math.inf
+    one_way_pdp_max = -math.inf
+
     for owp in one_way_pds:
+        if owp["pdp_min"] < one_way_pdp_min:
+            one_way_pdp_min = owp["pdp_min"]
+
+        if owp["pdp_max"] > one_way_pdp_max:
+            one_way_pdp_max = owp["pdp_max"]
+
         ice = owp["ice"]
 
         # ice line min and max
@@ -230,6 +240,7 @@ def partial_dependence(
             -two_way_interaction_max,
             two_way_interaction_max,
         ],
+        "one_way_pdp_extent": [one_way_pdp_min, one_way_pdp_max],
         "ice_line_extent": [ice_line_min, ice_line_max],
         "ice_cluster_center_extent": [ice_cluster_center_min, ice_cluster_center_max],
         "centered_ice_line_extent": [centered_ice_line_min, centered_ice_line_max],
@@ -464,29 +475,28 @@ def _get_feature_to_pd(one_way_pds):
 
 
 def _calculate_ice(ice_lines, data, feature, md):
-    centered_ice_lines = []
+    centered_ice_lines = ice_lines - ice_lines[:, 0].reshape(-1, 1)
+    centered_pdp = centered_ice_lines.mean(axis=0)
 
-    # todo - vectorize
-    for instance in ice_lines:
-        centered_ice_lines.append(instance - instance[0])
+    slopes = np.diff(ice_lines)
 
-    centered_ice_lines = np.array(centered_ice_lines)
-
-    timeseries_dataset = to_time_series_dataset(centered_ice_lines)
+    distances = euclidean_distances(slopes, slopes)
 
     best_score = -math.inf
     best_n_clusters = -1
 
     clusters = {}
 
-    centered_pdp = centered_ice_lines.mean(axis=0)
-
     for n_clusters in range(2, 6):
-        cluster_model = TimeSeriesKMeans(
-            n_clusters=n_clusters, metric="euclidean", max_iter=50, n_init=1, n_jobs=1
+        cluster_model = KMeans(
+            n_clusters=n_clusters,
+            init="k-means++",
+            n_init=5,
+            max_iter=300,
+            algorithm="lloyd",
         )
-        cluster_model.fit(timeseries_dataset)
-        labels = cluster_model.predict(timeseries_dataset)
+        cluster_model.fit(slopes)
+        labels = cluster_model.labels_
 
         if len(np.unique(labels)) == 1:
             # all of the lines were assigned to the same cluster.
@@ -495,7 +505,7 @@ def _calculate_ice(ice_lines, data, feature, md):
             best_n_clusters = 1
             break
 
-        score = ts_silhouette_score(timeseries_dataset, labels, metric="euclidean")
+        score = silhouette_score(distances, cluster_model.labels_, metric="precomputed")
 
         if score > best_score:
             best_score = score

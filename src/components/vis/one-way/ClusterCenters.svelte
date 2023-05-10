@@ -21,7 +21,7 @@
   export let scaleLocally: boolean;
   export let showMarginalDistribution: boolean;
   export let marginTop: number;
-  export let distributionHeight: number;
+  export let marginalPlotHeight: number;
 
   $: feature = $feature_info[pd.x_feature];
 
@@ -130,17 +130,17 @@
       <MarginalBarChart
         data={$feature_info[pd.x_feature].distribution}
         {x}
-        height={distributionHeight}
+        height={marginalPlotHeight}
         direction="horizontal"
-        translate={[0, margin.top - distributionHeight]}
+        translate={[0, margin.top - marginalPlotHeight]}
       />
     {:else}
       <MarginalHistogram
         data={$feature_info[pd.x_feature].distribution}
         {x}
-        height={distributionHeight}
+        height={marginalPlotHeight}
         direction="horizontal"
-        translate={[0, margin.top - distributionHeight]}
+        translate={[0, margin.top - marginalPlotHeight]}
       />
     {/if}
   {/if}

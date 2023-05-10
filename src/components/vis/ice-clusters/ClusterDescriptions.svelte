@@ -362,8 +362,8 @@
         const categories = scale.domain().filter((d) => {
           // get the min and max x values for the category
           const minX = scale(d) ?? 0;
-          const maxY = minX + scale.bandwidth();
-          return x1 <= maxY && x2 >= minX;
+          const maxX = minX + scale.bandwidth();
+          return x1 <= maxX && x2 >= minX;
         });
         selectedRanges.set(feature, { kind: 'categorical', categories });
       } else {

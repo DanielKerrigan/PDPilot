@@ -8,12 +8,13 @@
   export let height: number;
   export let scaleLocally: boolean;
   export let showMarginalDistribution: boolean;
+  export let showMarginalPdp: boolean;
   export let colorShows: 'predictions' | 'interactions';
   export let showColorLegend: boolean;
   export let colorLegendTitle = '';
   export let marginTop = 0;
   export let marginRight = 0;
-  export let distributionHeight: number;
+  export let marginalPlotHeight: number;
   export let twoWayKind: 'heatmap' | 'lines' = 'heatmap';
 </script>
 
@@ -24,11 +25,12 @@
     {height}
     {scaleLocally}
     {showMarginalDistribution}
+    {showMarginalPdp}
     {colorShows}
     {showColorLegend}
     {marginTop}
     {marginRight}
-    {distributionHeight}
+    {marginalPlotHeight}
     {colorLegendTitle}
   />
 {:else}
@@ -42,7 +44,7 @@
     {showColorLegend}
     {marginTop}
     {marginRight}
-    {distributionHeight}
+    {marginalPlotHeight}
   />
 {/if}
 

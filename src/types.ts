@@ -203,3 +203,10 @@ export type ShapeSelections = {
     checked: boolean;
   };
 };
+
+// Detailed Plots
+
+export type OneWayDetailedContextKind =
+  | 'none'
+  | 'cluster-descriptions'
+  | 'scatterplot';

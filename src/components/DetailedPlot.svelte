@@ -9,15 +9,17 @@
     detailedFeature2,
     detailedScaleLocally,
     detailedICELevel,
-    detailedShowDistributions,
     featureToPd,
+    detailedContextKind,
   } from '../stores';
   import PDP from './PDP.svelte';
   import ClusterDescriptions from './vis/ice-clusters/ClusterDescriptions.svelte';
+  import FeatureVsFeature from './vis/two-way/FeatureVsFeature.svelte';
+  import FeatureVsLabels from './vis/one-way/FeatureVsLabels.svelte';
 
   let pd: OneWayPD | TwoWayPD | null = null;
 
-  const marginalChartHeight = 50;
+  const marginalPlotHeight = 50;
 
   // changing features
 
@@ -89,20 +91,11 @@
     oneWayPD2 = $featureToPd.get(feature2) ?? null;
   }
 
-  let showClusterDescriptions = false;
-
   const iceLevels: { value: ICELevel; title: string }[] = [
     { value: 'lines', title: 'Standard' },
     { value: 'centered-lines', title: 'Centered' },
     { value: 'cluster-lines', title: 'Clusters' },
   ];
-
-  $: if ($detailedICELevel !== 'cluster-lines') {
-    showClusterDescriptions = false;
-  }
-
-  let showOneWay = true;
-  let colorShows: 'both' | 'interactions' | 'predictions' = 'both';
 
   // sizes
 
@@ -111,12 +104,8 @@
   let gridWidth: number;
   let gridHeight: number;
 
-  const dividerSize = 20;
-
   $: halfWidth = gridWidth / 2;
-
-  $: thirdHeight = (gridHeight - dividerSize) / 3;
-  $: twoThirdHeight = (2 * (gridHeight - dividerSize)) / 3;
+  $: thirdWidth = gridWidth / 3;
 
   onMount(() => {
     // Adapted from https://blog.sethcorker.com/question/how-do-you-use-the-resize-observer-api-in-svelte/
@@ -156,12 +145,20 @@
     indices = event.detail;
   }
 
-  $: if (!showClusterDescriptions) {
+  $: if ($detailedContextKind !== 'cluster-descriptions') {
     indices = null;
   }
 
-  // flip two-way plot
-  function flip() {
+  $: if (
+    $detailedICELevel !== 'cluster-lines' &&
+    $detailedContextKind === 'cluster-descriptions'
+  ) {
+    $detailedContextKind = 'scatterplot';
+  }
+
+  // swap x and y axes in two-way plot
+
+  function swapAxes() {
     if (!pd || pd.num_features === 1) {
       return;
     }
@@ -204,32 +201,11 @@
     </div>
 
     {#if pd}
-      <label class="label-and-input">
-        <input type="checkbox" bind:checked={$detailedShowDistributions} />
-        {pd.num_features === 1 ? 'Distribution' : 'Distributions'}
-      </label>
-
-      <label class="label-and-input">
-        <input type="checkbox" bind:checked={$detailedScaleLocally} />Scale
-        locally
-      </label>
-
-      {#if pd.num_features === 2}
-        <label class="label-and-input">
-          <input type="checkbox" bind:checked={showOneWay} />One-way plots
-        </label>
-
-        <label class="label-and-input">
-          Color
-          <select bind:value={colorShows}>
-            <option value="both">Both</option>
-            <option value="interactions">Interactions</option>
-            <option value="predictions">Predictions</option>
-          </select>
-        </label>
-
-        <button on:click={flip} title="Swap x and y axes">Flip</button>
-      {:else}
+      {#if pd.num_features === 1}
+        <!-- <label class="label-and-input">
+          <input type="checkbox" bind:checked={$detailedShowDistributions} />
+          {pd.num_features === 1 ? 'Distribution' : 'Distributions'}
+        </label> -->
         <label class="label-and-input">
           Plot
           <select bind:value={$detailedICELevel}>
@@ -238,14 +214,58 @@
             {/each}
           </select>
         </label>
-        {#if $detailedICELevel === 'cluster-lines'}
+
+        <label class="label-and-input">
+          <input type="checkbox" bind:checked={$detailedScaleLocally} />Scale
+          locally
+        </label>
+
+        <!-- {#if $detailedICELevel === 'cluster-lines'}
           <label class="label-and-input">
             <input
               type="checkbox"
               bind:checked={showClusterDescriptions}
             />Describe clusters
           </label>
-        {/if}
+        {/if} -->
+        <div class="context-container">
+          <div>Context:</div>
+          <label class="label-and-input">
+            <input
+              type="radio"
+              bind:group={$detailedContextKind}
+              name="context"
+              value={'scatterplot'}
+            />
+            Scatterplot
+          </label>
+          {#if $detailedICELevel === 'cluster-lines'}
+            <label class="label-and-input">
+              <input
+                type="radio"
+                bind:group={$detailedContextKind}
+                name="context"
+                value={'cluster-descriptions'}
+              />
+              Cluster Descriptions
+            </label>
+          {/if}
+          <label class="label-and-input">
+            <input
+              type="radio"
+              bind:group={$detailedContextKind}
+              name="context"
+              value={'none'}
+            />
+            None
+          </label>
+        </div>
+      {:else}
+        <label class="label-and-input">
+          <input type="checkbox" bind:checked={$detailedScaleLocally} />Scale
+          locally
+        </label>
+        <button on:click={swapAxes} title="Swap x and y axes">Swap Axes</button>
       {/if}
     {/if}
   </div>
@@ -283,26 +303,22 @@
           <div style:flex="1">
             <PDP
               {pd}
-              width={showClusterDescriptions ? halfWidth : gridWidth}
+              width={$detailedContextKind === 'none' ? gridWidth : halfWidth}
               height={gridHeight}
               scaleLocally={$detailedScaleLocally}
-              showMarginalDistribution={$detailedShowDistributions}
-              marginTop={$detailedShowDistributions
-                ? marginalChartHeight + 1
-                : 10}
-              distributionHeight={$detailedShowDistributions
-                ? marginalChartHeight
-                : 0}
+              showMarginalDistribution={false}
+              marginTop={10}
+              marginalPlotHeight={0}
               iceLevel={$detailedICELevel}
               {indices}
               allowBrushing={true}
               showColorLegend={false}
-              showTitle={showClusterDescriptions &&
+              showTitle={$detailedContextKind !== 'none' &&
                 $detailedICELevel === 'cluster-lines'}
             />
           </div>
 
-          {#if showClusterDescriptions}
+          {#if $detailedContextKind === 'cluster-descriptions'}
             <div style:flex="1">
               <ClusterDescriptions
                 on:filter={onFilterIndices}
@@ -311,100 +327,68 @@
                   .interacting_features}
               />
             </div>
+          {:else if $detailedContextKind === 'scatterplot'}
+            <div style:flex="1">
+              <FeatureVsLabels
+                {pd}
+                width={halfWidth}
+                height={gridHeight}
+                showMarginalDistribution={true}
+                marginTop={marginalPlotHeight + 3}
+                marginRight={marginalPlotHeight + 3}
+                {marginalPlotHeight}
+              />
+            </div>
           {/if}
         {/if}
       </div>
     {:else}
-      <div
-        class="two-way-pdp-grid showOneWay-{oneWayPD1 !== null &&
-          oneWayPD2 !== null &&
-          showOneWay}-color-{colorShows}"
-        style:--divider-size="{dividerSize}px"
-      >
-        {#if oneWayPD1 !== null && oneWayPD2 !== null && showOneWay}
-          <div style:grid-area="one-way-left">
-            <PDP
-              pd={oneWayPD1}
-              width={halfWidth}
-              height={thirdHeight}
-              scaleLocally={$detailedScaleLocally}
-              showMarginalDistribution={$detailedShowDistributions}
-              marginTop={$detailedShowDistributions ? marginalChartHeight : 10}
-              distributionHeight={$detailedShowDistributions
-                ? marginalChartHeight
-                : 0}
-              iceLevel="lines"
-            />
-          </div>
+      <div class="two-way-pdp-grid interactions-predictions-scatter">
+        <div style:grid-area="two-way-interaction">
+          <PDP
+            {pd}
+            width={thirdWidth}
+            height={gridHeight}
+            scaleLocally={$detailedScaleLocally}
+            showMarginalPdp={true}
+            marginTop={marginalPlotHeight + 1}
+            marginRight={marginalPlotHeight + 1}
+            {marginalPlotHeight}
+            iceLevel="lines"
+            colorShows="interactions"
+            showColorLegend={true}
+            colorLegendTitle="Interactions"
+          />
+        </div>
 
-          <div style:grid-area="one-way-right">
-            <PDP
-              pd={oneWayPD2}
-              width={halfWidth}
-              height={thirdHeight}
-              scaleLocally={$detailedScaleLocally}
-              showMarginalDistribution={$detailedShowDistributions}
-              marginTop={$detailedShowDistributions ? marginalChartHeight : 10}
-              distributionHeight={$detailedShowDistributions
-                ? marginalChartHeight
-                : 0}
-              iceLevel="lines"
-            />
-          </div>
+        <div style:grid-area="two-way-pdp">
+          <PDP
+            {pd}
+            width={thirdWidth}
+            height={gridHeight}
+            scaleLocally={$detailedScaleLocally}
+            showMarginalPdp={true}
+            marginTop={marginalPlotHeight + 1}
+            marginRight={marginalPlotHeight + 1}
+            {marginalPlotHeight}
+            iceLevel={$detailedICELevel}
+            showColorLegend={true}
+            colorLegendTitle="Predictions"
+          />
+        </div>
 
-          <div style:grid-area="divider" class="pdpilot-divider">
-            <hr />
-          </div>
-        {/if}
-
-        {#if colorShows === 'both' || colorShows === 'interactions'}
-          <div style:grid-area="two-way-interaction">
-            <PDP
-              {pd}
-              width={colorShows === 'both' ? halfWidth : gridWidth}
-              height={oneWayPD1 !== null && oneWayPD2 !== null && showOneWay
-                ? twoThirdHeight
-                : gridHeight}
-              scaleLocally={$detailedScaleLocally}
-              showMarginalDistribution={$detailedShowDistributions}
-              marginTop={$detailedShowDistributions ? marginalChartHeight : 10}
-              marginRight={$detailedShowDistributions
-                ? marginalChartHeight
-                : 10}
-              distributionHeight={$detailedShowDistributions
-                ? marginalChartHeight
-                : 0}
-              iceLevel="lines"
-              colorShows="interactions"
-              showColorLegend={true}
-              colorLegendTitle="Interactions"
-            />
-          </div>
-        {/if}
-
-        {#if colorShows === 'both' || colorShows === 'predictions'}
-          <div style:grid-area="two-way-pdp">
-            <PDP
-              {pd}
-              width={colorShows === 'both' ? halfWidth : gridWidth}
-              height={oneWayPD1 !== null && oneWayPD2 !== null && showOneWay
-                ? twoThirdHeight
-                : gridHeight}
-              scaleLocally={$detailedScaleLocally}
-              showMarginalDistribution={$detailedShowDistributions}
-              marginTop={$detailedShowDistributions ? marginalChartHeight : 10}
-              marginRight={$detailedShowDistributions
-                ? marginalChartHeight
-                : 10}
-              distributionHeight={$detailedShowDistributions
-                ? marginalChartHeight
-                : 0}
-              iceLevel={$detailedICELevel}
-              showColorLegend={true}
-              colorLegendTitle="Predictions"
-            />
-          </div>
-        {/if}
+        <div style:grid-area="scatter">
+          <FeatureVsFeature
+            {pd}
+            width={thirdWidth}
+            height={gridHeight}
+            showMarginalDistribution={true}
+            marginTop={marginalPlotHeight + 3}
+            marginRight={marginalPlotHeight + 3}
+            {marginalPlotHeight}
+            colorLegendTitle="Ground Truth"
+          />
+        </div>
       </div>
     {/if}
   </div>
@@ -492,67 +476,9 @@
     gap: 0.25em;
   }
 
-  .pdpilot-divider {
-    display: flex;
-    align-items: center;
-  }
-
-  .pdpilot-divider > hr {
-    width: 100%;
-    border: 0;
-    height: 1px;
-    background: var(--gray-3);
-  }
-
-  .showOneWay-true-color-both {
-    grid-template-rows: 1fr var(--divider-size) 2fr;
-    grid-template-columns: 1fr 1fr;
-    grid-template-areas:
-      'one-way-left one-way-right'
-      'divider divider'
-      'two-way-interaction two-way-pdp';
-  }
-
-  .showOneWay-true-color-interactions {
-    grid-template-rows: 1fr var(--divider-size) 2fr;
-    grid-template-columns: 1fr 1fr;
-    grid-template-areas:
-      'one-way-left one-way-right'
-      'divider divider'
-      'two-way-interaction two-way-interaction';
-  }
-
-  .showOneWay-true-color-predictions {
-    grid-template-rows: 1fr var(--divider-size) 2fr;
-    grid-template-columns: 1fr 1fr;
-    grid-template-areas:
-      'one-way-left one-way-right'
-      'divider divider'
-      'two-way-pdp two-way-pdp';
-  }
-
-  .showOneWay-false-color-both {
-    grid-template-rows: 1fr 1fr;
-    grid-template-columns: 1fr 1fr;
-    grid-template-areas:
-      'two-way-interaction two-way-pdp'
-      'two-way-interaction two-way-pdp';
-  }
-
-  .showOneWay-false-color-interactions {
-    grid-template-rows: 1fr 1fr;
-    grid-template-columns: 1fr 1fr;
-    grid-template-areas:
-      'two-way-interaction two-way-interaction'
-      'two-way-interaction two-way-interaction';
-  }
-
-  .showOneWay-false-color-predictions {
-    grid-template-rows: 1fr 1fr;
-    grid-template-columns: 1fr 1fr;
-    grid-template-areas:
-      'two-way-pdp two-way-pdp'
-      'two-way-pdp two-way-pdp';
+  .interactions-predictions-scatter {
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-areas: 'two-way-interaction two-way-pdp scatter';
   }
 
   .detailed-plot-message-container {
@@ -584,5 +510,17 @@
     flex: 1;
     text-align: center;
     align-self: center;
+  }
+
+  .context-container {
+    /* don't grow and don't shrink */
+    flex: 0 0 auto;
+
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+  }
+
+  .context-container > div:first-child {
   }
 </style>

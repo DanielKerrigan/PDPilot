@@ -81,7 +81,7 @@
   }
 
   $: if (ctx) {
-    scaleCanvas(canvas, ctx, width, height);
+    scaleCanvas(canvas, ctx, nonTitleWidth, height);
   }
   $: if (ctx) {
     drawRegressionColorScale(
@@ -101,7 +101,7 @@
 
   $: minDesiredTicks = color.domain().length;
 
-  $: ticks = x.ticks(Math.max(colorWidth / 50, minDesiredTicks));
+  $: ticks = x.ticks(Math.max(Math.min(colorWidth / 50, 10), minDesiredTicks));
 </script>
 
 <div

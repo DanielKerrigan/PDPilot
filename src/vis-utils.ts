@@ -16,6 +16,9 @@ export {
   getYScale,
   categoricalColors,
   getHighlightedBins,
+  getNiceDomain,
+  highlightColor,
+  getMaxPercent,
 };
 
 // Adapted from https://www.html5rocks.com/en/tutorials/canvas/hidpi/
@@ -170,6 +173,28 @@ function getHighlightedBins(
     };
   }
 }
+
+function getMaxPercent(
+  overall: Distribution,
+  highlighted: Distribution | undefined
+) {
+  const maxOverall = Math.max(...overall.percents);
+
+  if (!highlighted) {
+    return maxOverall;
+  }
+
+  const maxHighlighted = Math.max(...highlighted.percents);
+
+  return Math.max(maxOverall, maxHighlighted);
+}
+
+function getNiceDomain(x: [number, number]): [number, number] {
+  const niceExtent = scaleLinear().domain(x).nice().domain();
+  return [niceExtent[0], niceExtent[1]];
+}
+
+const highlightColor = '#4EBA72';
 
 const categoricalColors = {
   light: ['#a6cee3', '#fdbf6f', '#b2df8a', '#fb9a99', '#cab2d6'],

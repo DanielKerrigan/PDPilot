@@ -21,7 +21,12 @@
   import type { D3BrushEvent } from 'd3-brush';
   import { brush as d3brush } from 'd3-brush';
   import MarginalHistogram from '../marginal/MarginalHistogram.svelte';
-  import { getYScale, scaleCanvas } from '../../../vis-utils';
+  import {
+    getMaxPercent,
+    getYScale,
+    highlightColor,
+    scaleCanvas,
+  } from '../../../vis-utils';
   import MarginalBarChart from '../marginal/MarginalBarChart.svelte';
   import { onMount } from 'svelte';
 
@@ -31,14 +36,11 @@
   export let scaleLocally: boolean;
   export let showMarginalDistribution: boolean;
   export let marginTop: number;
-  export let distributionHeight: number;
+  export let marginalPlotHeight: number;
   export let allowBrushing = false;
   export let showBrushedBorder = false;
   export let iceLineWidth: number;
   export let center = false;
-
-  const highlightColorLines = '#4EBA72';
-  const highlightColorBars = '#4EBA72';
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
@@ -139,7 +141,7 @@
     // highlighted ice lines
 
     if (showHighlights) {
-      ctx.strokeStyle = highlightColorLines;
+      ctx.strokeStyle = highlightColor;
       ctx.globalAlpha = 0.3;
 
       highlight.forEach((i) => {
@@ -249,12 +251,13 @@
       [number, number]
     ];
 
+    // pixel coordinates of the x values
     const xs = pd.x_values.map((v) => x(v) ?? 0);
 
     const iceLines = center ? pd.ice.centered_ice_lines : pd.ice.ice_lines;
 
     $highlighted_indices = iceLines
-      .map((il, i) => ({ lines: il, index: i }))
+      .map((lines, index) => ({ lines, index }))
       .filter(({ lines }) => {
         return lines.some((point, i) => {
           const yy = y(point);
@@ -309,21 +312,6 @@
   $: showHighlightedDistribution =
     allowBrushing && highlightedDistribution && $highlighted_indices.length > 0;
 
-  function getMaxPercent(
-    overall: Distribution,
-    highlighted: Distribution | undefined
-  ) {
-    const maxOverall = Math.max(...overall.percents);
-
-    if (!highlighted) {
-      return maxOverall;
-    }
-
-    const maxHighlighted = Math.max(...highlighted.percents);
-
-    return Math.max(maxOverall, maxHighlighted);
-  }
-
   $: maxPercent = getMaxPercent(feature.distribution, highlightedDistribution);
 </script>
 
@@ -351,22 +339,22 @@
           {#if 'bandwidth' in x}
             <MarginalBarChart
               data={highlightedDistribution}
-              fill={highlightColorBars}
+              fill={highlightColor}
               {x}
-              height={distributionHeight}
+              height={marginalPlotHeight}
               direction="horizontal"
-              translate={[0, margin.top - distributionHeight]}
+              translate={[0, margin.top - marginalPlotHeight]}
               unit="percent"
               maxValue={maxPercent}
             />
           {:else}
             <MarginalHistogram
               data={highlightedDistribution}
-              fill={highlightColorBars}
+              fill={highlightColor}
               {x}
-              height={distributionHeight}
+              height={marginalPlotHeight}
               direction="horizontal"
-              translate={[0, margin.top - distributionHeight]}
+              translate={[0, margin.top - marginalPlotHeight]}
               unit="percent"
               maxValue={maxPercent}
             />
@@ -378,9 +366,9 @@
             fill={showHighlightedDistribution ? 'none' : 'var(--gray-3)'}
             stroke={showHighlightedDistribution ? 'var(--black)' : 'none'}
             {x}
-            height={distributionHeight}
+            height={marginalPlotHeight}
             direction="horizontal"
-            translate={[0, margin.top - distributionHeight]}
+            translate={[0, margin.top - marginalPlotHeight]}
             unit="percent"
             maxValue={maxPercent}
           />
@@ -390,9 +378,9 @@
             fill={showHighlightedDistribution ? 'none' : 'var(--gray-3)'}
             stroke={showHighlightedDistribution ? 'var(--black)' : 'none'}
             {x}
-            height={distributionHeight}
+            height={marginalPlotHeight}
             direction="horizontal"
-            translate={[0, margin.top - distributionHeight]}
+            translate={[0, margin.top - marginalPlotHeight]}
             unit="percent"
             maxValue={maxPercent}
           />

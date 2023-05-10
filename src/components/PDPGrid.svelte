@@ -17,6 +17,7 @@
     detailedShowDistributions,
     detailedScaleLocally,
     detailedICELevel,
+    detailedContextKind,
   } from '../stores';
   import InfoTooltip from './InfoTooltip.svelte';
 
@@ -203,12 +204,16 @@
     $detailedFeature1 = pd.x_feature;
     $detailedFeature2 = pd.num_features === 2 ? pd.y_feature : '';
 
-    $detailedShowDistributions = showMarginalDistribution;
     $detailedScaleLocally = scaleLocally;
 
     if (pd.num_features === 1) {
+      $detailedShowDistributions = showMarginalDistribution;
+
       $detailedICELevel =
         iceLevel === 'cluster-centers' ? 'cluster-lines' : iceLevel;
+
+      $detailedContextKind =
+        iceLevel === 'cluster-centers' ? 'cluster-descriptions' : 'scatterplot';
     }
 
     $selectedTab = 'detailed-plot';
@@ -488,7 +493,7 @@
               {showMarginalDistribution}
               marginTop={ways === 1 ? 11 : 5}
               marginRight={10}
-              distributionHeight={ways === 1 ? 10 : 0}
+              marginalPlotHeight={ways === 1 ? 10 : 0}
               showColorLegend={scaleLocally}
               {iceLevel}
               allowBrushing={ways === 1}

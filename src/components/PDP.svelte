@@ -13,9 +13,10 @@
   export let iceLevel: ICELevel;
   export let indices: number[] | null = null;
   export let showMarginalDistribution = false;
+  export let showMarginalPdp = false;
   export let marginTop = 0;
   export let marginRight = 0;
-  export let distributionHeight = 0;
+  export let marginalPlotHeight = 0;
   export let allowBrushing = false;
   export let showBrushedBorder = false;
   export let iceLineWidth = 1;
@@ -33,7 +34,7 @@
       {iceLevel}
       {showMarginalDistribution}
       {marginTop}
-      {distributionHeight}
+      {marginalPlotHeight}
       {indices}
       {allowBrushing}
       {showBrushedBorder}
@@ -50,8 +51,9 @@
       {showColorLegend}
       {marginTop}
       {marginRight}
-      {distributionHeight}
+      {marginalPlotHeight}
       {showMarginalDistribution}
+      {showMarginalPdp}
       {twoWayKind}
       {colorLegendTitle}
     />

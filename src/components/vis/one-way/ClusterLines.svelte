@@ -31,7 +31,7 @@
   export let showMarginalDistribution: boolean;
   export let indices: number[] | null;
   export let marginTop: number;
-  export let distributionHeight: number;
+  export let marginalPlotHeight: number;
   export let showTitle: boolean;
 
   let canvas: HTMLCanvasElement;
@@ -312,17 +312,17 @@
         <MarginalBarChart
           data={$feature_info[pd.x_feature].distribution}
           {x}
-          height={distributionHeight}
+          height={marginalPlotHeight}
           direction="horizontal"
-          translate={[0, marginTop - distributionHeight]}
+          translate={[0, marginTop - marginalPlotHeight]}
         />
       {:else}
         <MarginalHistogram
           data={$feature_info[pd.x_feature].distribution}
           {x}
-          height={distributionHeight}
+          height={marginalPlotHeight}
           direction="horizontal"
-          translate={[0, marginTop - distributionHeight]}
+          translate={[0, marginTop - marginalPlotHeight]}
         />
       {/if}
     </svg>

@@ -13,23 +13,25 @@
     feature_info,
     globalColorTwoWayInteraction,
     globalColorTwoWayPdp,
+    featureToPd,
   } from '../../../stores';
   import MarginalBarChart from '../marginal/MarginalBarChart.svelte';
+  import MarginalPDP from '../marginal/MarginalPDP.svelte';
 
   export let pd: TwoWayPD;
   export let width: number;
   export let height: number;
   export let scaleLocally: boolean;
   export let showMarginalDistribution: boolean;
+  export let showMarginalPdp: boolean;
   export let colorShows: 'predictions' | 'interactions';
   export let colorLegendTitle = '';
   export let showColorLegend: boolean;
   export let marginTop = 0;
   export let marginRight = 0;
-  export let distributionHeight: number;
+  export let marginalPlotHeight: number;
 
   $: legendHeight = showColorLegend ? 24 : 0;
-  $: heightExcludingLegend = height - legendHeight;
 
   $: minMargin = {
     top: marginTop,
@@ -40,34 +42,28 @@
 
   $: sideLength = Math.min(
     width - minMargin.left - minMargin.right,
-    heightExcludingLegend - minMargin.top - minMargin.bottom
+    height - legendHeight - minMargin.top - minMargin.bottom
   );
 
   $: extraLeftRightMargin =
     (width - sideLength - minMargin.left - minMargin.right) / 2;
 
   $: extraTopBottomMargin =
-    (heightExcludingLegend - sideLength - minMargin.top - minMargin.bottom) / 2;
+    (height - legendHeight - sideLength - minMargin.top - minMargin.bottom) / 2;
 
   // if there is extra top bottom margin and we are showing the color legend,
-  // then the extra margin will be split between above the chart and above the legend
+  // then the extra margin will be above the legend
 
-  $: extraLegendTopMargin = showColorLegend
-    ? extraTopBottomMargin >= minMargin.top // want to make sure there is still min margin above the chart
-      ? (minMargin.top + extraTopBottomMargin) / 2
-      : extraTopBottomMargin / 2
-    : 0;
+  $: aboveLegendMargin = showColorLegend ? extraTopBottomMargin : 0;
 
   $: margin = {
-    top: minMargin.top + extraTopBottomMargin - extraLegendTopMargin,
+    top: minMargin.top + extraTopBottomMargin - aboveLegendMargin,
     right: minMargin.right + extraLeftRightMargin,
     bottom: minMargin.bottom + extraTopBottomMargin,
     left: minMargin.left + extraLeftRightMargin,
   };
 
-  $: console.log(
-    `extraLegendTopMargin = ${extraLegendTopMargin}\nminMargin.top = ${minMargin.top}\nmargin.top = ${margin.top}\nmargin.bottom = ${margin.bottom}`
-  );
+  $: heightExcludingLegend = height - legendHeight - aboveLegendMargin;
 
   $: xFeature = $feature_info[pd.x_feature];
   $: yFeature = $feature_info[pd.y_feature];
@@ -184,17 +180,22 @@
   $: legendMarginOffset = colorLegendTitle === '' ? legendMargin : 0;
   $: legendWidthOffset =
     colorLegendTitle === '' ? legendMargin * 2 : legendMargin;
+
+  // one way pds
+
+  $: xPdp = $featureToPd.get(pd.x_feature);
+  $: yPdp = $featureToPd.get(pd.y_feature);
 </script>
 
 <div
   class="two-way-container"
-  style:--top="{legendHeight + extraLegendTopMargin}px"
+  style:--top="{legendHeight + aboveLegendMargin}px"
 >
   {#if showColorLegend}
     <!-- using padding instead of margin to avoid margin collapse -->
     <div
       style:margin-left="{margin.left - legendMarginOffset}px"
-      style:padding-top="{extraLegendTopMargin}px"
+      style:padding-top="{aboveLegendMargin}px"
     >
       <QuantitativeColorLegend
         width={sideLength + legendWidthOffset}
@@ -231,17 +232,17 @@
         <MarginalBarChart
           data={xFeature.distribution}
           {x}
-          height={distributionHeight}
+          height={marginalPlotHeight}
           direction="horizontal"
-          translate={[0, margin.top - distributionHeight]}
+          translate={[0, margin.top - marginalPlotHeight]}
         />
       {:else}
         <MarginalHistogram
           data={xFeature.distribution}
           {x}
-          height={distributionHeight}
+          height={marginalPlotHeight}
           direction="horizontal"
-          translate={[0, margin.top - distributionHeight]}
+          translate={[0, margin.top - marginalPlotHeight]}
         />
       {/if}
 
@@ -249,7 +250,7 @@
         <MarginalBarChart
           data={yFeature.distribution}
           x={y}
-          height={distributionHeight}
+          height={marginalPlotHeight}
           direction="vertical"
           translate={[width - margin.right, 0]}
         />
@@ -257,11 +258,27 @@
         <MarginalHistogram
           data={yFeature.distribution}
           x={y}
-          height={distributionHeight}
+          height={marginalPlotHeight}
           direction="vertical"
           translate={[width - margin.right, 0]}
         />
       {/if}
+    {:else if showMarginalPdp && xPdp && yPdp}
+      <MarginalPDP
+        pd={xPdp}
+        height={marginalPlotHeight}
+        direction="horizontal"
+        {x}
+        translate={[0, margin.top - marginalPlotHeight]}
+      />
+
+      <MarginalPDP
+        pd={yPdp}
+        height={marginalPlotHeight}
+        direction="vertical"
+        x={y}
+        translate={[width - margin.right, 0]}
+      />
     {/if}
   </svg>
 </div>
