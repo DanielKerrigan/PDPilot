@@ -95,8 +95,10 @@ class Metadata:
 
             # get the order of the indices for sorting the counts in descending order
             order = np.argsort(-counts)
+            # sort the bins (values), counts, and one_hot_info in that order
             bins = bins[order]
             counts = counts[order]
+            one_hot_info = [one_hot_info[i] for i in order]
 
             percents = counts / np.sum(counts)
 
