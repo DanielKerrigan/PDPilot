@@ -3,7 +3,6 @@
   import { isOneWayPdArray } from '../types';
   import PDP from './PDP.svelte';
   import QuantitativeColorLegend from './vis/two-way/QuantitativeColorLegend.svelte';
-  import { onMount } from 'svelte';
   import {
     globalColorTwoWayPdp,
     globalColorTwoWayInteraction,
@@ -40,69 +39,17 @@
   let colorShows: 'predictions' | 'interactions' = 'interactions';
   let showMarginalDistribution = false;
 
-  let div: HTMLDivElement;
-  let legendDiv: HTMLDivElement;
+  let gridContentRect: DOMRectReadOnly | undefined | null;
+  let legendContentRect: DOMRectReadOnly | undefined | null;
 
-  let gridWidth: number;
-  let gridHeight: number;
+  $: gridWidth = gridContentRect ? gridContentRect.width : 0;
+  $: gridHeight = gridContentRect ? gridContentRect.height : 0;
+
+  const legendHeight = 24;
+  $: legendWidth = legendContentRect ? legendContentRect.width : 140;
 
   let pdpWidth: number;
   let pdpHeight: number;
-
-  onMount(() => {
-    // Adapted from https://blog.sethcorker.com/question/how-do-you-use-the-resize-observer-api-in-svelte/
-    // and https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver
-    const gridResizeObserver = new ResizeObserver(
-      (entries: ResizeObserverEntry[]) => {
-        if (entries.length !== 1) {
-          return;
-        }
-
-        const entry: ResizeObserverEntry = entries[0];
-
-        if (entry.contentBoxSize) {
-          const contentBoxSize = Array.isArray(entry.contentBoxSize)
-            ? entry.contentBoxSize[0]
-            : entry.contentBoxSize;
-
-          gridWidth = contentBoxSize.inlineSize;
-          gridHeight = contentBoxSize.blockSize;
-        } else {
-          gridWidth = entry.contentRect.width;
-          gridHeight = entry.contentRect.height;
-        }
-      }
-    );
-
-    gridResizeObserver.observe(div);
-
-    const legendResizeObserver = new ResizeObserver(
-      (entries: ResizeObserverEntry[]) => {
-        if (entries.length !== 1) {
-          return;
-        }
-
-        const entry: ResizeObserverEntry = entries[0];
-
-        if (entry.contentBoxSize) {
-          const contentBoxSize = Array.isArray(entry.contentBoxSize)
-            ? entry.contentBoxSize[0]
-            : entry.contentBoxSize;
-
-          legendWidth = contentBoxSize.inlineSize;
-        } else {
-          legendWidth = entry.contentRect.width;
-        }
-      }
-    );
-
-    legendResizeObserver.observe(legendDiv);
-
-    return () => {
-      gridResizeObserver.unobserve(div);
-      legendResizeObserver.unobserve(div);
-    };
-  });
 
   // number of rows and columns
 
@@ -127,11 +74,6 @@
   // brushing
 
   let brushingSinceSorting = false;
-
-  // header
-
-  const legendHeight = 24;
-  let legendWidth = 140;
 
   // sorting
 
@@ -438,7 +380,7 @@
       <div
         class="two-way-color-legend"
         class:dont-show={ways === 1 || scaleLocally}
-        bind:this={legendDiv}
+        bind:contentRect={legendContentRect}
       >
         <QuantitativeColorLegend
           width={legendWidth}
@@ -453,7 +395,7 @@
     </div>
   </div>
 
-  <div class="pdp-grid-container" bind:this={div}>
+  <div class="pdp-grid-container" bind:contentRect={gridContentRect}>
     <!--
         Using repeat({numCols}, minmax(0,{pdpWidth}px)) was causing the charts to infinitely
         expand when selecting "Scale locally" in Jupyter Lab.

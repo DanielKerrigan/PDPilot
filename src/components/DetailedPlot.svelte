@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { OneWayPD, ICELevel, TwoWayPD } from '../types';
-  import { onMount } from 'svelte';
   import {
     two_way_pds,
     feature_names,
@@ -99,43 +98,12 @@
 
   // sizes
 
-  let div: HTMLDivElement;
-
-  let gridWidth: number;
-  let gridHeight: number;
+  let contentRect: DOMRectReadOnly | undefined | null;
+  $: gridWidth = contentRect ? contentRect.width : 0;
+  $: gridHeight = contentRect ? contentRect.height : 0;
 
   $: halfWidth = gridWidth / 2;
   $: thirdWidth = gridWidth / 3;
-
-  onMount(() => {
-    // Adapted from https://blog.sethcorker.com/question/how-do-you-use-the-resize-observer-api-in-svelte/
-    // and https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver
-    const resizeObserver = new ResizeObserver(
-      (entries: ResizeObserverEntry[]) => {
-        if (entries.length !== 1) {
-          return;
-        }
-
-        const entry: ResizeObserverEntry = entries[0];
-
-        if (entry.contentBoxSize) {
-          const contentBoxSize = Array.isArray(entry.contentBoxSize)
-            ? entry.contentBoxSize[0]
-            : entry.contentBoxSize;
-
-          gridWidth = contentBoxSize.inlineSize;
-          gridHeight = contentBoxSize.blockSize;
-        } else {
-          gridWidth = entry.contentRect.width;
-          gridHeight = entry.contentRect.height;
-        }
-      }
-    );
-
-    resizeObserver.observe(div);
-
-    return () => resizeObserver.unobserve(div);
-  });
 
   // cluster description interaction
 
@@ -202,10 +170,6 @@
 
     {#if pd}
       {#if pd.num_features === 1}
-        <!-- <label class="label-and-input">
-          <input type="checkbox" bind:checked={$detailedShowDistributions} />
-          {pd.num_features === 1 ? 'Distribution' : 'Distributions'}
-        </label> -->
         <label class="label-and-input">
           Plot
           <select bind:value={$detailedICELevel}>
@@ -220,14 +184,6 @@
           locally
         </label>
 
-        <!-- {#if $detailedICELevel === 'cluster-lines'}
-          <label class="label-and-input">
-            <input
-              type="checkbox"
-              bind:checked={showClusterDescriptions}
-            />Describe clusters
-          </label>
-        {/if} -->
         <div class="context-container">
           <div>Context:</div>
           <label class="label-and-input">
@@ -269,7 +225,7 @@
       {/if}
     {/if}
   </div>
-  <div class="zoomed-pdp-content" bind:this={div}>
+  <div class="zoomed-pdp-content" bind:contentRect>
     {#if pd === null}
       <div class="detailed-plot-message-container">
         <div class="detailed-plot-message-content">
@@ -519,8 +475,5 @@
     display: flex;
     align-items: center;
     gap: 0.5em;
-  }
-
-  .context-container > div:first-child {
   }
 </style>

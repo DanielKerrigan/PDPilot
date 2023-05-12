@@ -30,7 +30,7 @@
   import type { Selection } from 'd3-selection';
   import type { D3BrushEvent } from 'd3-brush';
   import { kernelDensityEstimation } from 'simple-statistics';
-  import { createEventDispatcher, onMount, tick } from 'svelte';
+  import { createEventDispatcher, tick } from 'svelte';
 
   export let pd: OneWayPD;
   export let features: string[];
@@ -42,41 +42,14 @@
     left: 50,
   };
 
-  let div: HTMLDivElement;
   // we don't pass width and height to this component, primarily so that
-  // we can take into account the width of the scroll bar on windows.
+  // we can take into account the width of the scroll bar on Windows.
   let visWidth = 0;
   let visViewHeight = 0;
 
-  onMount(() => {
-    // Adapted from https://blog.sethcorker.com/question/how-do-you-use-the-resize-observer-api-in-svelte/
-    // and https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver
-    const resizeObserver = new ResizeObserver(
-      (entries: ResizeObserverEntry[]) => {
-        if (entries.length !== 1) {
-          return;
-        }
-
-        const entry: ResizeObserverEntry = entries[0];
-
-        if (entry.contentBoxSize) {
-          const contentBoxSize = Array.isArray(entry.contentBoxSize)
-            ? entry.contentBoxSize[0]
-            : entry.contentBoxSize;
-
-          visWidth = contentBoxSize.inlineSize;
-          visViewHeight = contentBoxSize.blockSize;
-        } else {
-          visWidth = entry.contentRect.width;
-          visViewHeight = entry.contentRect.height;
-        }
-      }
-    );
-
-    resizeObserver.observe(div);
-
-    return () => resizeObserver.unobserve(div);
-  });
+  let contentRect: DOMRectReadOnly | undefined | null;
+  $: visWidth = contentRect ? contentRect.width : 0;
+  $: visViewHeight = contentRect ? contentRect.height : 0;
 
   let normalize = false;
 
@@ -438,7 +411,8 @@
       </div>
     </div>
   </div>
-  <div class="distribution-plots" bind:this={div}>
+  <!-- TODO: switch to bind:contentBoxSize when it is working -->
+  <div class="distribution-plots" bind:contentRect>
     {#if visWidth > 0}
       <svg width={visWidth} height={visTotalHeight}>
         <g bind:this={group}>

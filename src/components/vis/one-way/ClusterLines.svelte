@@ -30,53 +30,28 @@
   export let scaleLocally: boolean;
   export let showMarginalDistribution: boolean;
   export let indices: number[] | null;
+  // marginTop is space above all plots / beneath header
   export let marginTop: number;
   export let marginalPlotHeight: number;
   export let showTitle: boolean;
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
-  let div: HTMLDivElement;
-
-  onMount(() => {
-    // Adapted from https://blog.sethcorker.com/question/how-do-you-use-the-resize-observer-api-in-svelte/
-    // and https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver
-    const resizeObserver = new ResizeObserver(
-      (entries: ResizeObserverEntry[]) => {
-        if (entries.length !== 1) {
-          return;
-        }
-
-        const entry: ResizeObserverEntry = entries[0];
-
-        if (entry.contentBoxSize) {
-          const contentBoxSize = Array.isArray(entry.contentBoxSize)
-            ? entry.contentBoxSize[0]
-            : entry.contentBoxSize;
-
-          chartHeight = contentBoxSize.blockSize;
-        } else {
-          chartHeight = entry.contentRect.height;
-        }
-      }
-    );
-
-    resizeObserver.observe(div);
-
-    return () => resizeObserver.unobserve(div);
-  });
 
   $: feature = $feature_info[pd.x_feature];
 
-  // TODO: better handle marginTop vs. margin.top
-  $: margin = {
+  // margin.top is space above each individual plot
+  const margin = {
     top: 5,
     right: 10,
     bottom: 35,
     left: 50,
   };
 
-  $: chartHeight = height - marginTop;
+  let borderBoxSize: ResizeObserverSize[] | undefined | null;
+
+  $: chartHeight =
+    (borderBoxSize ? borderBoxSize[0].blockSize : height) - marginTop;
 
   $: clusterIds = range(pd.ice.num_clusters);
 
@@ -327,7 +302,11 @@
       {/if}
     </svg>
   {/if}
-  <div class="cluster-lines-chart" bind:this={div}>
+  <div
+    class="cluster-lines-chart"
+    style:margin-top="{showMarginalDistribution ? 0 : marginTop}px"
+    bind:borderBoxSize
+  >
     <canvas bind:this={canvas} />
     <svg class="svg-for-clusters" height={chartHeight} {width}>
       {#each clusters as cluster}

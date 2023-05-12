@@ -5,7 +5,6 @@
  -->
 <script lang="ts">
   import type { ScaleOrdinal } from 'd3-scale';
-  import { onMount } from 'svelte';
 
   export let width: number;
   export let height: number;
@@ -15,34 +14,10 @@
   export let title = '';
   export let value_map: Record<number, string> = {};
 
-  let div: HTMLDivElement;
   let legendWidth = 0;
 
-  onMount(() => {
-    const resizeObserver = new ResizeObserver(
-      (entries: ResizeObserverEntry[]) => {
-        if (entries.length !== 1) {
-          return;
-        }
-
-        const entry: ResizeObserverEntry = entries[0];
-
-        if (entry.contentBoxSize) {
-          const contentBoxSize = Array.isArray(entry.contentBoxSize)
-            ? entry.contentBoxSize[0]
-            : entry.contentBoxSize;
-
-          legendWidth = contentBoxSize.inlineSize;
-        } else {
-          legendWidth = entry.contentRect.width;
-        }
-      }
-    );
-
-    resizeObserver.observe(div);
-
-    return () => resizeObserver.unobserve(div);
-  });
+  let borderBoxSize: ResizeObserverSize[] | undefined | null;
+  $: legendWidth = borderBoxSize ? borderBoxSize[0].inlineSize : 0;
 
   const squareSize = 12;
 </script>
@@ -57,7 +32,7 @@
   {#if title !== ''}
     <div class="pdpilot-small pdpilot-bold">{title}:</div>
   {/if}
-  <div class="swatches" style:max-width="{legendWidth}px" bind:this={div}>
+  <div class="swatches" style:max-width="{legendWidth}px" bind:borderBoxSize>
     {#each color.domain() as d}
       <div class="swatch-cell">
         <div

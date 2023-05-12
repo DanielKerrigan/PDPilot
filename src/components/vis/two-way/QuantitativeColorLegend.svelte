@@ -20,11 +20,14 @@
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
-  let div: HTMLDivElement;
 
   // dimensions
 
   let nonTitleWidth = 0;
+
+  let borderBoxSize: ResizeObserverSize[] | undefined | null;
+  $: nonTitleWidth = borderBoxSize ? borderBoxSize[0].inlineSize : 0;
+
   $: colorWidth = nonTitleWidth - marginLeft - marginRight;
 
   const spaceBetweenColorAndTickLabel = 2;
@@ -36,30 +39,6 @@
 
   onMount(() => {
     ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
-
-    const resizeObserver = new ResizeObserver(
-      (entries: ResizeObserverEntry[]) => {
-        if (entries.length !== 1) {
-          return;
-        }
-
-        const entry: ResizeObserverEntry = entries[0];
-
-        if (entry.contentBoxSize) {
-          const contentBoxSize = Array.isArray(entry.contentBoxSize)
-            ? entry.contentBoxSize[0]
-            : entry.contentBoxSize;
-
-          nonTitleWidth = contentBoxSize.inlineSize;
-        } else {
-          nonTitleWidth = entry.contentRect.width;
-        }
-      }
-    );
-
-    resizeObserver.observe(div);
-
-    return () => resizeObserver.unobserve(div);
   });
 
   // drawing
@@ -112,7 +91,7 @@
   {#if title !== ''}
     <div class="pdpilot-small pdpilot-bold">{title}:</div>
   {/if}
-  <div class="color-ramp" bind:this={div}>
+  <div class="color-ramp" bind:borderBoxSize>
     <canvas bind:this={canvas} />
     <svg width={nonTitleWidth} {height}>
       {#each ticks as tick}
