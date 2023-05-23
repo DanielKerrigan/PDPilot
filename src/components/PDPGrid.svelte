@@ -13,7 +13,6 @@
     brushingInProgress,
     highlightedDistributions,
     feature_info,
-    detailedShowDistributions,
     detailedScaleLocally,
     detailedICELevel,
     detailedContextKind,
@@ -37,7 +36,6 @@
   let iceLevel: ICELevel = 'lines';
 
   let colorShows: 'predictions' | 'interactions' = 'interactions';
-  let showMarginalDistribution = false;
 
   let gridContentRect: DOMRectReadOnly | undefined | null;
   let legendContentRect: DOMRectReadOnly | undefined | null;
@@ -83,17 +81,6 @@
     sortedData = sortingOption.sort(data);
     // when the sorting or data changes, go to the first page
     setPage(1);
-  }
-
-  // show marginal distributions when highlighted distribution metric is chosen.
-  // this is in separate function so that the reactive if statement doesn't run
-  // when showMarginalDistribution is updated.
-  function setShowDistributionToTrue() {
-    showMarginalDistribution = true;
-  }
-
-  $: if (sortingOption.name === 'Highlighted distribution') {
-    setShowDistributionToTrue();
   }
 
   // we don't want changes to highlights to trigger this
@@ -149,8 +136,6 @@
     $detailedScaleLocally = scaleLocally;
 
     if (pd.num_features === 1) {
-      $detailedShowDistributions = showMarginalDistribution;
-
       $detailedICELevel =
         iceLevel === 'cluster-centers' ? 'cluster-lines' : iceLevel;
 
@@ -315,14 +300,6 @@
       >
     </label>
 
-    {#if ways === 1}
-      <label class="label-and-input">
-        <input type="checkbox" bind:checked={showMarginalDistribution} /><span
-          >Distributions</span
-        >
-      </label>
-    {/if}
-
     <div class="two-way-color-container">
       {#if ways === 2}
         <div class="label-and-input dont-shrink">
@@ -432,10 +409,10 @@
               height={pdpHeight}
               {scaleLocally}
               {colorShows}
-              {showMarginalDistribution}
-              marginTop={ways === 1 ? 11 : 5}
-              marginRight={10}
-              marginalPlotHeight={ways === 1 ? 10 : 0}
+              showMarginalDistribution={true}
+              marginTop={11}
+              marginRight={11}
+              marginalPlotHeight={10}
               showColorLegend={scaleLocally}
               {iceLevel}
               allowBrushing={ways === 1}

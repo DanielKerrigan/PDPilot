@@ -112,7 +112,6 @@ export let detailedFeature1: Writable<string>;
 export let detailedFeature2: Writable<string>;
 
 export let detailedICELevel: Writable<ICELevel>;
-export let detailedShowDistributions: Writable<boolean>;
 export let detailedContextKind: Writable<OneWayDetailedContextKind>;
 export let detailedScaleLocally: Writable<boolean>;
 
@@ -243,7 +242,6 @@ export function setStores(model: DOMWidgetModel): void {
   detailedFeature2 = writable('');
 
   detailedICELevel = writable('lines');
-  detailedShowDistributions = writable(false);
   detailedScaleLocally = writable(false);
   detailedContextKind = writable('scatterplot');
 
