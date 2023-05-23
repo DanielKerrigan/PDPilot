@@ -88,19 +88,6 @@
   $: yFeatureInfo =
     pd && pd.num_features === 2 ? $feature_info[pd.y_feature] : null;
 
-  // one-way PDPs
-
-  let oneWayPD1: OneWayPD | null = null;
-  let oneWayPD2: OneWayPD | null = null;
-
-  $: if (pd && pd.num_features === 2) {
-    // sort alphabetically so that they don't change positions when flipping axis
-    let feature1 = pd.x_feature < pd.y_feature ? pd.x_feature : pd.y_feature;
-    let feature2 = pd.x_feature > pd.y_feature ? pd.x_feature : pd.y_feature;
-    oneWayPD1 = $featureToPd.get(feature1) ?? null;
-    oneWayPD2 = $featureToPd.get(feature2) ?? null;
-  }
-
   const iceLevels: { value: ICELevel; title: string }[] = [
     { value: 'lines', title: 'Standard' },
     { value: 'centered-lines', title: 'Centered' },
