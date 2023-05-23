@@ -1,26 +1,22 @@
 <script lang="ts">
   import { scaleBand, scaleLinear, scaleOrdinal } from 'd3-scale';
-  import type { ScaleBand, ScaleLinear } from 'd3-scale';
-  import {
-    range,
-    rollup,
-    min,
-    max,
-    quantileSorted,
-    ascending,
-    ticks,
-  } from 'd3-array';
+  import type { ScaleBand, ScaleLinear, ScaleOrdinal } from 'd3-scale';
+  import { range, rollup } from 'd3-array';
   import { format } from 'd3-format';
   import {
     stack,
     stackOffsetExpand,
     stackOffsetNone,
     stackOrderReverse,
-    area,
   } from 'd3-shape';
   import { dataset, feature_info, num_instances } from '../../../stores';
-  import type { FeatureInfo, OneWayPD } from '../../../types';
-  import { categoricalColors, defaultFormat } from '../../../vis-utils';
+  import type { FeatureInfo, OneWayPD, RaincloudData } from '../../../types';
+  import {
+    categoricalColors,
+    defaultFormat,
+    getRaincloudData,
+    scaleCanvas,
+  } from '../../../vis-utils';
   import YAxis from '../axis/YAxis.svelte';
   import XAxis from '../axis/XAxis.svelte';
   import { select } from 'd3-selection';
@@ -28,16 +24,17 @@
   import type { InternMap } from 'd3-array';
   import type { Series } from 'd3-shape';
   import type { Selection } from 'd3-selection';
-  import type { D3BrushEvent } from 'd3-brush';
-  import { kernelDensityEstimation } from 'simple-statistics';
-  import { createEventDispatcher, tick } from 'svelte';
+  import type { D3BrushEvent, BrushBehavior } from 'd3-brush';
+  import { createEventDispatcher, onMount, tick } from 'svelte';
+  import { getClustering } from '../../../utils';
+  import { drawHorizontalRaincloudPlot } from '../../../drawing';
 
   export let pd: OneWayPD;
   export let features: string[];
 
   const margin = {
     top: 10,
-    right: 5,
+    right: 10,
     bottom: 40,
     left: 50,
   };
@@ -54,15 +51,15 @@
   let normalize = false;
 
   // size of the box plot inside of the violin
-  const boxWidth = 5;
+  const raincloudMinHeight = 30;
 
   $: visTotalHeight = Math.max(
     visViewHeight,
     features.length *
-      (pd.ice.num_clusters * boxWidth * 4 + margin.top + margin.bottom)
+      (pd.ice.num_clusters * raincloudMinHeight + margin.top + margin.bottom)
   );
 
-  $: cluster_labels = pd.ice.clusters[pd.ice.num_clusters].cluster_labels;
+  $: cluster_labels = getClustering(pd).cluster_labels;
 
   $: clusterIds = range(pd.ice.num_clusters);
 
@@ -121,19 +118,7 @@
     kind: 'quantitative';
     data: {
       cluster: number;
-      box: {
-        // box plot data
-        low: number;
-        q1: number;
-        median: number;
-        q3: number;
-        high: number;
-        // violin data
-        densities: {
-          x: number;
-          density: number;
-        }[];
-      };
+      raincloud: RaincloudData;
     }[];
   };
 
@@ -164,59 +149,8 @@
       const aggregate = rollup(
         filteredI,
         (group) => {
-          const values = group.map((i) => $dataset[f][i]).sort(ascending);
-
-          let densities: { x: number; density: number }[] = [];
-
-          // computing the KDE requires at least two data points
-          if (values.length > 1) {
-            const kde = kernelDensityEstimation(values);
-            const kdeThresholds = ticks(
-              values[0],
-              values[values.length - 1],
-              20
-            );
-            // include the min and max values in calculating the densities
-            if (kdeThresholds[0] !== values[0]) {
-              kdeThresholds.unshift(values[0]);
-            }
-            if (
-              kdeThresholds[kdeThresholds.length - 1] !==
-              values[values.length - 1]
-            ) {
-              kdeThresholds.push(values[values.length - 1]);
-            }
-
-            densities = kdeThresholds.map((x) => ({ x, density: kde(x) }));
-          }
-
-          const median = quantileSorted(values, 0.5) ?? 0;
-          const q1 = quantileSorted(values, 0.25) ?? 0;
-          const q3 = quantileSorted(values, 0.75) ?? 0;
-          const iqr = q3 - q1;
-
-          const lowThreshold = q1 - iqr * 1.5;
-          const highThreshold = q3 + iqr * 1.5;
-
-          // get the smallest value greater than the low threshold
-          const low =
-            min(values, (d) =>
-              d >= lowThreshold ? d : Number.POSITIVE_INFINITY
-            ) ?? 0;
-          // get the largest value less than the high threshold
-          const high =
-            max(values, (d) =>
-              d <= highThreshold ? d : Number.NEGATIVE_INFINITY
-            ) ?? 0;
-
-          return {
-            low,
-            q1,
-            median,
-            q3,
-            high,
-            densities,
-          };
+          const values = group.map((i) => $dataset[f][i]);
+          return getRaincloudData(values);
         },
         // group by cluster
         (i) => cluster_labels[i]
@@ -224,9 +158,9 @@
       return {
         feature: f,
         kind: 'quantitative',
-        data: Array.from(aggregate, ([cluster, box]) => ({
+        data: Array.from(aggregate, ([cluster, raincloud]) => ({
           cluster,
-          box,
+          raincloud,
         })),
       };
     }
@@ -250,37 +184,12 @@
     .domain([0, normalize ? 1 : maxCategoryCount])
     .range([fy.bandwidth() - margin.bottom, margin.top]);
 
-  // y-scale for faceting the violin plots by cluster
-  $: yBox = scaleBand<number>()
+  // y-scale for faceting the raincloud plots by cluster
+  $: yRaincloud = scaleBand<number>()
     .domain(clusterIds)
     .range([margin.top, fy.bandwidth() - margin.bottom])
-    .paddingInner(0.1)
-    .paddingOuter(0.5);
-
-  function getViolinPath(
-    scale: ScaleLinear<number, number, never> | ScaleBand<number>,
-    densities: { x: number; density: number }[]
-  ) {
-    // the densities can be really small values that end up getting respresented
-    // in scientific notation in the path strings. we want to avoid that.
-
-    const violinHeight = scaleLinear()
-      .domain([0, max(densities, (d) => d.density) ?? 0])
-      .range([0, yBox.bandwidth() / 2]);
-
-    const violinArea = area<{ x: number; density: number }>()
-      .x((d) => scale(d.x) ?? 0)
-      .y0((d) => {
-        const yCoord = violinHeight(d.density);
-        return yCoord > 0.01 ? -yCoord : 0;
-      })
-      .y1((d) => {
-        const yCoord = violinHeight(d.density);
-        return yCoord > 0.01 ? yCoord : 0;
-      });
-
-    return violinArea(densities);
-  }
+    .paddingInner(0.2)
+    .paddingOuter(0.1);
 
   function getValueMap(feature: FeatureInfo): Record<number, string> {
     return 'value_map' in feature ? feature.value_map : {};
@@ -309,7 +218,7 @@
 
   // interaction
 
-  const brushHeight = 10;
+  const brushHeight = 8;
   // map from feature to the brush selection for that feature
   const selectedRanges = new Map<
     string,
@@ -379,10 +288,15 @@
     ])
     .on('start brush end', brushed);
 
-  let group: SVGGElement;
-  let selection: Selection<SVGGElement, undefined, SVGElement, undefined>;
+  let group: SVGGElement | undefined;
+  let selection:
+    | Selection<SVGGElement, undefined, SVGElement, undefined>
+    | undefined;
 
-  async function setupBrush() {
+  async function setupBrush(brush: BrushBehavior<undefined>) {
+    if (!group) {
+      return;
+    }
     // this is needed for when the number of clusters is changed.
     // without it, the features variable is updated before the UI.
     await tick();
@@ -392,8 +306,101 @@
   }
 
   $: if (group && features) {
-    setupBrush();
+    setupBrush(brush);
   }
+
+  // canvas
+
+  let canvas: HTMLCanvasElement | undefined;
+  let ctx: CanvasRenderingContext2D | undefined;
+
+  onMount(() => {
+    if (canvas) {
+      ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+    }
+  });
+
+  function drawAllRaincloudPlots(
+    ctx: CanvasRenderingContext2D | undefined,
+    x: Record<string, ScaleLinear<number, number> | ScaleBand<number>>,
+    featureY: ScaleBand<string>,
+    clusterY: ScaleBand<number>,
+    color: ScaleOrdinal<number, string>,
+    featureData: FeatureData[],
+    width: number,
+    height: number
+  ) {
+    if (!ctx) {
+      return;
+    }
+
+    ctx.save();
+    ctx.clearRect(0, 0, width, height);
+
+    featureData.forEach(({ feature, kind, data }) => {
+      if (kind === 'categorical') {
+        return;
+      }
+
+      const xScale = x[feature];
+      if ('bandwidth' in xScale) {
+        return;
+      }
+
+      const featureYCoord = featureY(feature) ?? 0;
+
+      data.forEach(({ cluster, raincloud }) => {
+        const clusterYCoord = clusterY(cluster) ?? 0;
+
+        ctx.translate(0, featureYCoord + clusterYCoord);
+
+        drawHorizontalRaincloudPlot(
+          raincloud,
+          ctx,
+          xScale,
+          width,
+          clusterY.bandwidth(),
+          0.5,
+          color(cluster),
+          'black',
+          color(cluster)
+        );
+
+        ctx.translate(0, -(featureYCoord + clusterYCoord));
+      });
+    });
+
+    ctx.restore();
+  }
+
+  function draw() {
+    drawAllRaincloudPlots(
+      ctx,
+      x,
+      fy,
+      yRaincloud,
+      color,
+      distributions,
+      visWidth,
+      visTotalHeight
+    );
+  }
+
+  $: if (canvas && ctx) {
+    scaleCanvas(canvas, ctx, visWidth, visTotalHeight);
+    draw();
+  }
+
+  $: drawAllRaincloudPlots(
+    ctx,
+    x,
+    fy,
+    yRaincloud,
+    color,
+    distributions,
+    visWidth,
+    visTotalHeight
+  );
 </script>
 
 <div class="distributions-container">
@@ -413,99 +420,53 @@
   </div>
   <!-- TODO: switch to bind:contentBoxSize when it is working -->
   <div class="distribution-plots" bind:contentRect>
-    {#if visWidth > 0}
-      <svg width={visWidth} height={visTotalHeight}>
-        <g bind:this={group}>
-          {#each distributions as d}
-            <g transform="translate(0,{fy(d.feature)})">
-              {#if d.kind === 'categorical'}
-                <g>
-                  {#each d.data as series, i}
-                    <g fill={color(i)}>
-                      {#each series as point}
-                        {#if point[0] !== point[1]}
-                          <rect
-                            x={getBarX(point.data[0], x[d.feature]) + 1}
-                            width={getBarWidth(x[d.feature]) - 2}
-                            y={yBar(point[1])}
-                            height={yBar(point[0]) - yBar(point[1])}
-                          />
-                        {/if}
-                      {/each}
-                    </g>
-                  {/each}
-                </g>
-                <YAxis
-                  scale={yBar}
-                  x={margin.left}
-                  label={normalize ? 'percent' : 'count'}
-                  format={normalize ? format('~%') : defaultFormat}
-                />
-              {:else}
-                <g>
-                  {#each d.data as { cluster, box }}
-                    <g
-                      transform="translate(0,{(yBox(cluster) ?? 0) +
-                        yBox.bandwidth() / 2})"
-                    >
-                      <!-- KDE -->
-                      <path
-                        d={getViolinPath(x[d.feature], box.densities)}
-                        fill={color(cluster)}
-                      />
-                      <!-- IQR -->
-                      <rect
-                        x={x[d.feature](box.q1) ?? 0}
-                        width={(x[d.feature](box.q3) ?? 0) -
-                          (x[d.feature](box.q1) ?? 0)}
-                        y={-boxWidth / 2}
-                        height={boxWidth}
-                        fill="var(--gray-1)"
-                      />
-                      <!-- median -->
-                      <line
-                        x1={x[d.feature](box.median) ?? 0}
-                        x2={x[d.feature](box.median) ?? 0}
-                        stroke-width={2}
-                        y1={-boxWidth / 2}
-                        y2={boxWidth / 2}
-                        stroke={'black'}
-                      />
-                      <!-- whiskers -->
-                      <line
-                        x1={x[d.feature](box.low) ?? 0}
-                        x2={x[d.feature](box.q1) ?? 0}
-                        stroke-width={1}
-                        stroke="var(--gray-1)"
-                      />
-                      <line
-                        x1={x[d.feature](box.q3) ?? 0}
-                        x2={x[d.feature](box.high) ?? 0}
-                        stroke-width={1}
-                        stroke="var(--gray-1)"
-                      />
-                    </g>
-                  {/each}
-                </g>
-              {/if}
-              <!-- we need the id so that we can determine which feature the brush is for -->
-              <g class="x-axis" id="axis-{d.feature}">
-                <XAxis
-                  scale={x[d.feature]}
-                  y={fy.bandwidth() - margin.bottom}
-                  showBaseline={true}
-                  baselineColor={'var(--gray-6)'}
-                  tickColor={'var(--gray-6)'}
-                  integerOnly={$feature_info[d.feature].subkind === 'discrete'}
-                  value_map={getValueMap($feature_info[d.feature])}
-                  label={d.feature}
-                />
+    <canvas bind:this={canvas} />
+
+    <svg width={visWidth} height={visTotalHeight}>
+      <g bind:this={group}>
+        {#each distributions as d}
+          <g transform="translate(0,{fy(d.feature)})">
+            {#if d.kind === 'categorical'}
+              <g>
+                {#each d.data as series, i}
+                  <g fill={color(i)}>
+                    {#each series as point}
+                      {#if point[0] !== point[1]}
+                        <rect
+                          x={getBarX(point.data[0], x[d.feature]) + 1}
+                          width={getBarWidth(x[d.feature]) - 2}
+                          y={yBar(point[1])}
+                          height={yBar(point[0]) - yBar(point[1])}
+                        />
+                      {/if}
+                    {/each}
+                  </g>
+                {/each}
               </g>
+              <YAxis
+                scale={yBar}
+                x={margin.left}
+                label={normalize ? 'percent' : 'count'}
+                format={normalize ? format('~%') : defaultFormat}
+              />
+            {/if}
+            <!-- we need the id so that we can determine which feature the brush is for -->
+            <g class="x-axis" id="axis-{d.feature}">
+              <XAxis
+                scale={x[d.feature]}
+                y={fy.bandwidth() - margin.bottom}
+                showBaseline={true}
+                baselineColor={'var(--gray-6)'}
+                tickColor={'var(--gray-6)'}
+                integerOnly={$feature_info[d.feature].subkind === 'discrete'}
+                value_map={getValueMap($feature_info[d.feature])}
+                label={d.feature}
+              />
             </g>
-          {/each}
-        </g>
-      </svg>
-    {/if}
+          </g>
+        {/each}
+      </g>
+    </svg>
   </div>
 </div>
 
@@ -530,11 +491,18 @@
   .distribution-plots {
     flex: 1;
     overflow-y: auto;
+    position: relative;
   }
 
   .label-and-input {
     display: flex;
     align-items: center;
     gap: 0.25em;
+  }
+
+  svg,
+  canvas {
+    position: absolute;
+    left: 0;
   }
 </style>

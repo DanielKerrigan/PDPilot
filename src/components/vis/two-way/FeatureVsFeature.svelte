@@ -20,8 +20,8 @@
   } from '../../../stores';
   import type { TwoWayPD } from '../../../types';
   import MarginalHistogram from '../marginal/MarginalHistogram.svelte';
-  import QuantitativeColorLegend from './QuantitativeColorLegend.svelte';
-  import CategoricalColorLegend from './CategoricalColorLegend.svelte';
+  import QuantitativeColorLegend from '../legends/QuantitativeColorLegend.svelte';
+  import CategoricalColorLegend from '../legends/CategoricalColorLegend.svelte';
   import { drawScatterplot } from '../../../drawing';
 
   export let pd: TwoWayPD;

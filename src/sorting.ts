@@ -3,6 +3,7 @@ import type { OneWayPD, TwoWayPD, PDSortingOption } from './types';
 import { isOneWayPdArray } from './types';
 
 import { descending, transpose, mean } from 'd3-array';
+import { getClustering } from './utils';
 
 export { singlePDPSortingOptions, doublePDPSortingOptions };
 
@@ -43,12 +44,15 @@ const singlePDPSortingOptions: PDSortingOption[] = [
         return data;
       }
 
-      return data.sort((a, b) =>
-        descending(
-          a.ice.clusters[a.ice.num_clusters]?.cluster_distance ?? -Infinity,
-          b.ice.clusters[b.ice.num_clusters]?.cluster_distance ?? -Infinity
-        )
-      );
+      function getDistance(pd: OneWayPD) {
+        if (pd.ice.num_clusters === 1) {
+          return -Infinity;
+        }
+
+        return getClustering(pd).cluster_distance;
+      }
+
+      return data.sort((a, b) => descending(getDistance(a), getDistance(b)));
     },
   },
   {

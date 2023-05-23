@@ -11,6 +11,7 @@ import type {
   Distribution,
   ICELevel,
   OneWayDetailedContextKind,
+  ClusterUpdate,
 } from './types';
 
 import { scaleSequential, scaleDiverging } from 'd3-scale';
@@ -93,6 +94,8 @@ export let height: Writable<number>;
 export let highlighted_indices: Writable<number[]>;
 
 export let two_way_to_calculate: Writable<string[]>;
+
+export let cluster_update: Writable<ClusterUpdate>;
 
 // ==== Stores that are not synced with traitlets ====
 
@@ -205,21 +208,30 @@ export function setStores(model: DOMWidgetModel): void {
     model
   );
 
+  cluster_update = createSyncedWidget<ClusterUpdate>(
+    'cluster_update',
+    {},
+    model
+  );
+
   // ==== stores not synced with Python ====
 
   selectedTab = writable('one-way-plots');
 
-  featureToPd = derived(
-    one_way_pds,
-    ($one_way_pds) => new Map($one_way_pds.map((d) => [d.x_feature, d]))
-  );
+  featureToPd = derived(one_way_pds, ($one_way_pds) => {
+    return new Map($one_way_pds.map((d) => [d.x_feature, d]));
+  });
 
   isClassification = derived(labels, ($labels) => new Set($labels).size === 2);
 
   labelExtent = derived(
-    labels,
-    ($labels) =>
-      [Math.min(...$labels), Math.max(...$labels)] as [number, number]
+    [labels, isClassification],
+    ([$labels, $isClassification]) => {
+      const minLabel = Math.min(...$labels);
+      const maxLabel = Math.max(...$labels);
+      const extent = [minLabel, maxLabel] as [number, number];
+      return $isClassification ? extent : getNiceDomain(extent);
+    }
   );
 
   // detailed plot

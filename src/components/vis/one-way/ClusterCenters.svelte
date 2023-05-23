@@ -14,6 +14,7 @@
   import MarginalHistogram from '../marginal/MarginalHistogram.svelte';
   import { getYScale } from '../../../vis-utils';
   import MarginalBarChart from '../marginal/MarginalBarChart.svelte';
+  import { getClustering } from '../../../utils';
 
   export let pd: OneWayPD;
   export let width: number;
@@ -72,7 +73,7 @@
   <!-- cluster means -->
   {#if pd.ice.num_clusters !== 1}
     <g>
-      {#each pd.ice.clusters[pd.ice.num_clusters].clusters as cluster}
+      {#each getClustering(pd).clusters as cluster}
         <path
           d={line(cluster.centered_mean)}
           stroke={'var(--gray-2)'}

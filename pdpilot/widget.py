@@ -5,6 +5,8 @@
 PDPilot widget module.
 """
 
+import copy
+import math
 import json
 from pathlib import Path
 from typing import Callable, Union, List
@@ -14,7 +16,7 @@ from traitlets import Dict, Int, List as ListTraitlet, Unicode, observe
 import pandas as pd
 import numpy as np
 
-from pdpilot.pdp import _calc_two_way_pd, _get_feature_to_pd
+from pdpilot.pdp import _calc_two_way_pd, _get_feature_to_pd, _get_clusters_info
 
 from pdpilot._frontend import module_name, module_version
 from pdpilot.utils import convert_keys_to_ints
@@ -73,6 +75,8 @@ class PDPilotWidget(DOMWidget):
 
     two_way_to_calculate = ListTraitlet([]).tag(sync=True)
 
+    cluster_update = Dict({}).tag(sync=True)
+
     def __init__(
         self,
         predict: Callable[[pd.DataFrame], List[float]],
@@ -99,9 +103,6 @@ class PDPilotWidget(DOMWidget):
             for info in pd_data["feature_info"].values():
                 if "value_map" in info:
                     info["value_map"] = convert_keys_to_ints(info["value_map"])
-
-            for owp in pd_data["one_way_pds"]:
-                owp["ice"]["clusters"] = convert_keys_to_ints(owp["ice"]["clusters"])
 
         # synced widget state
 
@@ -132,7 +133,11 @@ class PDPilotWidget(DOMWidget):
         # not synced
         self.df = df
         self.predict = predict
+        # TODO: should this be recalculated after any changes to one_way_pds?
         self.feature_to_pd = _get_feature_to_pd(self.one_way_pds)
+        self.one_hot_encoded_col_name_to_feature = pd_data[
+            "one_hot_encoded_col_name_to_feature"
+        ]
 
     @observe("two_way_to_calculate")
     def _on_two_way_to_calculate_change(self, change):
@@ -172,3 +177,111 @@ class PDPilotWidget(DOMWidget):
         two_ways = self.two_way_pds.copy()
         two_ways.append(result)
         self.two_way_pds = two_ways
+
+    @observe("cluster_update")
+    def _on_cluster_update_change(self, change):
+        update = change["new"]
+
+        if not update:
+            return
+
+        feature = update["feature"]
+        prev_num_clusters = update["prev_num_clusters"]
+        source_cluster_id = update["source_cluster_id"]
+        dest_cluster_id = update["dest_cluster_id"]
+        indices_list = update["indices"]
+        indices_set = set(indices_list)
+
+        # get the data for this feature
+
+        pd_index, owp = next(
+            (i, p) for i, p in enumerate(self.one_way_pds) if p["x_feature"] == feature
+        )
+
+        owp = copy.deepcopy(owp)
+        ice = owp["ice"]
+
+        centered_ice_lines = np.array(ice["centered_ice_lines"])
+        centered_pdp = np.array(ice["centered_pdp"])
+
+        clustering = ice["adjusted_clusterings"].get(
+            str(prev_num_clusters), ice["clusterings"][str(prev_num_clusters)]
+        )
+
+        clusters_indices = {
+            cluster["id"]: cluster["indices"] for cluster in clustering["clusters"]
+        }
+
+        # move indices from source to dest
+
+        source_cluster_indices_set = set(clusters_indices[source_cluster_id])
+        clusters_indices[source_cluster_id] = sorted(
+            source_cluster_indices_set.difference(indices_set)
+        )
+        clusters_indices[dest_cluster_id] = sorted(
+            clusters_indices.get(dest_cluster_id, []) + indices_list
+        )
+
+        # handle if the source cluster is now empty
+        if not clusters_indices[source_cluster_id]:
+            del clusters_indices[source_cluster_id]
+            old_cluster_ids = sorted(list(clusters_indices.keys()))
+            old_to_new = {
+                old_cid: new_cid for (new_cid, old_cid) in enumerate(old_cluster_ids)
+            }
+            clusters_indices = {
+                old_to_new[cid]: indices for (cid, indices) in clusters_indices.items()
+            }
+
+        new_num_clusters = len(clusters_indices.keys())
+
+        # get new labels
+
+        index_and_label = sorted(
+            [
+                (idx, cluster_id)
+                for cluster_id, indices in clusters_indices.items()
+                for idx in indices
+            ]
+        )
+        labels = np.array([label for (_, label) in index_and_label])
+
+        # update cluster distances and means
+
+        ice["adjusted_clusterings"][str(new_num_clusters)] = _get_clusters_info(
+            labels,
+            new_num_clusters,
+            centered_ice_lines,
+            centered_pdp,
+            self.df,
+            self.one_hot_encoded_col_name_to_feature,
+        )
+
+        ice["num_clusters"] = new_num_clusters
+
+        # update the extents
+
+        one_ways = self.one_way_pds.copy()
+        one_ways[pd_index] = owp
+
+        ice_cluster_center_min = math.inf
+        ice_cluster_center_max = -math.inf
+
+        for owp in one_ways:
+            ice = owp["ice"]
+            str_n_clust = str(ice["num_clusters"])
+
+            if str_n_clust in ice["clusterings"]:
+                clustering = ice["clusterings"][str_n_clust]
+                if clustering["centered_mean_min"] < ice_cluster_center_min:
+                    ice_cluster_center_min = clustering["centered_mean_min"]
+
+                if clustering["centered_mean_max"] > ice_cluster_center_max:
+                    ice_cluster_center_max = clustering["centered_mean_max"]
+
+        self.ice_cluster_center_extent = [
+            ice_cluster_center_min,
+            ice_cluster_center_max,
+        ]
+
+        self.one_way_pds = one_ways

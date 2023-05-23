@@ -2,7 +2,7 @@
   import type { OneWayPD, TwoWayPD, PDSortingOption, ICELevel } from '../types';
   import { isOneWayPdArray } from '../types';
   import PDP from './PDP.svelte';
-  import QuantitativeColorLegend from './vis/two-way/QuantitativeColorLegend.svelte';
+  import QuantitativeColorLegend from './vis/legends/QuantitativeColorLegend.svelte';
   import {
     globalColorTwoWayPdp,
     globalColorTwoWayInteraction,

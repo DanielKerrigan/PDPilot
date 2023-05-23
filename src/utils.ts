@@ -1,6 +1,7 @@
 import { sum } from 'd3-array';
+import type { OneWayPD } from './types';
 
-export { isNumeric, areArraysEqual, countsToPercents };
+export { isNumeric, areArraysEqual, countsToPercents, getClustering };
 
 /**
  * Checks if two arrays are equal to each other.
@@ -41,4 +42,13 @@ function isNumeric(value: any): boolean {
 function countsToPercents(x: number[]): number[] {
   const total = sum(x);
   return x.map((d) => d / total);
+}
+
+function getClustering(pd: OneWayPD, numClusters = -1) {
+  if (numClusters === -1) {
+    numClusters = pd.ice.num_clusters;
+  }
+  return (
+    pd.ice.adjusted_clusterings[numClusters] ?? pd.ice.clusterings[numClusters]
+  );
 }

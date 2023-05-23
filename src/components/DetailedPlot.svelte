@@ -10,11 +10,18 @@
     detailedICELevel,
     featureToPd,
     detailedContextKind,
+    isClassification,
+    labelExtent,
+    feature_info,
+    dataset,
+    labels,
+    num_instances,
+    highlighted_indices,
   } from '../stores';
   import PDP from './PDP.svelte';
   import ClusterDescriptions from './vis/ice-clusters/ClusterDescriptions.svelte';
-  import FeatureVsFeature from './vis/two-way/FeatureVsFeature.svelte';
-  import FeatureVsLabels from './vis/one-way/FeatureVsLabels.svelte';
+  import Scatterplot from './vis/distribution/Scatterplot.svelte';
+  import { getClustering } from '../utils';
 
   let pd: OneWayPD | TwoWayPD | null = null;
 
@@ -71,11 +78,15 @@
     }
   }
 
-  $: $detailedFeature1, $detailedFeature2, onChangeFeature();
+  $: $detailedFeature1, $detailedFeature2, $featureToPd, onChangeFeature();
 
   $: if ($two_way_pds) {
     getComputedTwoWayPd();
   }
+
+  $: xFeatureInfo = pd ? $feature_info[pd.x_feature] : null;
+  $: yFeatureInfo =
+    pd && pd.num_features === 2 ? $feature_info[pd.y_feature] : null;
 
   // one-way PDPs
 
@@ -249,7 +260,7 @@
           {/if}
         </div>
       </div>
-    {:else if pd.num_features === 1}
+    {:else if pd.num_features === 1 && xFeatureInfo}
       <div class="one-way-pdp-grid">
         {#if $detailedICELevel === 'cluster-lines' && pd.ice.num_clusters === 1}
           <div class="pdpilot-no-clusters-message">
@@ -279,16 +290,41 @@
               <ClusterDescriptions
                 on:filter={onFilterIndices}
                 {pd}
-                features={pd.ice.clusters[pd.ice.num_clusters]
-                  .interacting_features}
+                features={getClustering(pd).interacting_features}
               />
             </div>
           {:else if $detailedContextKind === 'scatterplot'}
             <div style:flex="1">
-              <FeatureVsLabels
-                {pd}
+              <Scatterplot
                 width={halfWidth}
                 height={gridHeight}
+                xValues={$dataset[pd.x_feature]}
+                yValues={$labels}
+                colorValues={Array.from({ length: $num_instances }, (_, i) =>
+                  $highlighted_indices.includes(i) ? 1 : 0
+                )}
+                xKind={xFeatureInfo.kind}
+                yKind={$isClassification ? 'categorical' : 'quantitative'}
+                colorKind={'categorical'}
+                xDomain={xFeatureInfo.kind === 'categorical'
+                  ? pd.x_values
+                  : [pd.x_values[0], pd.x_values[pd.x_values.length - 1]]}
+                yDomain={$labelExtent}
+                colorDomain={[0, 1]}
+                colorScheme={'highlight'}
+                xLabel={pd.x_feature}
+                yLabel={'Ground Truth'}
+                colorLabel=""
+                xAxisIntegerOnly={xFeatureInfo.subkind === 'discrete'}
+                yAxisIntegerOnly={false}
+                xAxisValueMap={'value_map' in xFeatureInfo
+                  ? xFeatureInfo.value_map
+                  : {}}
+                yAxisValueMap={{}}
+                xDistribution={xFeatureInfo.distribution}
+                yDistribution={null}
+                opacity={0.5}
+                allowBrushing={true}
                 showMarginalDistribution={true}
                 marginTop={marginalPlotHeight + 3}
                 marginRight={marginalPlotHeight + 3}
@@ -298,7 +334,7 @@
           {/if}
         {/if}
       </div>
-    {:else}
+    {:else if pd.num_features === 2 && xFeatureInfo && yFeatureInfo}
       <div class="two-way-pdp-grid interactions-predictions-scatter">
         <div style:grid-area="two-way-interaction">
           <PDP
@@ -334,15 +370,42 @@
         </div>
 
         <div style:grid-area="scatter">
-          <FeatureVsFeature
-            {pd}
+          <Scatterplot
             width={thirdWidth}
             height={gridHeight}
+            xValues={$dataset[pd.x_feature]}
+            yValues={$dataset[pd.y_feature]}
+            colorValues={$labels}
+            xKind={xFeatureInfo.kind}
+            yKind={yFeatureInfo.kind}
+            colorKind={$isClassification ? 'categorical' : 'quantitative'}
+            xDomain={xFeatureInfo.kind === 'categorical'
+              ? pd.x_axis
+              : [pd.x_axis[0], pd.x_axis[pd.x_axis.length - 1]]}
+            yDomain={$feature_info[pd.y_feature].kind === 'categorical'
+              ? pd.y_axis
+              : [pd.y_axis[0], pd.y_axis[pd.y_axis.length - 1]]}
+            colorDomain={$labelExtent}
+            colorScheme={$isClassification ? 'classes' : 'sequential'}
+            xLabel={pd.x_feature}
+            yLabel={pd.y_feature}
+            colorLabel="Ground Truth"
+            xAxisIntegerOnly={xFeatureInfo.subkind === 'discrete'}
+            yAxisIntegerOnly={yFeatureInfo.subkind === 'discrete'}
+            xAxisValueMap={'value_map' in xFeatureInfo
+              ? xFeatureInfo.value_map
+              : {}}
+            yAxisValueMap={'value_map' in yFeatureInfo
+              ? yFeatureInfo.value_map
+              : {}}
+            xDistribution={xFeatureInfo.distribution}
+            yDistribution={yFeatureInfo.distribution}
+            opacity={1}
+            allowBrushing={false}
             showMarginalDistribution={true}
             marginTop={marginalPlotHeight + 3}
             marginRight={marginalPlotHeight + 3}
             {marginalPlotHeight}
-            colorLegendTitle="Ground Truth"
           />
         </div>
       </div>

@@ -6,7 +6,7 @@
   import { scaleCanvas } from '../../../vis-utils';
   import { drawHeatmap } from '../../../drawing';
   import MarginalHistogram from '../marginal/MarginalHistogram.svelte';
-  import QuantitativeColorLegend from './QuantitativeColorLegend.svelte';
+  import QuantitativeColorLegend from '../legends/QuantitativeColorLegend.svelte';
   import { pairs } from 'd3-array';
   import type { TwoWayPD } from '../../../types';
   import {

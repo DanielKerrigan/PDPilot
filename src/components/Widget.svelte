@@ -93,16 +93,17 @@
     text-align: center;
     cursor: pointer;
     font-size: 1em;
+    line-height: 1em;
     padding: 0.0625em 0.0625em;
     font-family: inherit;
   }
 
   .pdpilot-widget-container :global(button:hover:enabled) {
-    background-color: var(--gray-0);
+    background-color: var(--gray-1);
   }
 
   .pdpilot-widget-container :global(button:active:enabled) {
-    background-color: var(--gray-1);
+    background-color: var(--gray-2);
   }
 
   .pdpilot-widget-container :global(button:disabled) {

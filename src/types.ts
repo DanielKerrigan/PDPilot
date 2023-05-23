@@ -10,6 +10,15 @@ export type Distribution = {
   percents: number[];
 };
 
+export type RaincloudData = {
+  values: { value: number; label: number }[];
+  densities: {
+    x: number;
+    density: number;
+  }[];
+  mean: number;
+};
+
 // Features
 
 export type OneHotFeatureInfo = {
@@ -72,6 +81,16 @@ type Cluster = {
   id: number;
   indices: number[];
   centered_mean: number[];
+  distance: number;
+};
+
+type Clustering = {
+  clusters: Cluster[];
+  cluster_labels: number[];
+  cluster_distance: number;
+  centered_mean_min: number;
+  centered_mean_max: number;
+  interacting_features: string[];
 };
 
 export type ICE = {
@@ -81,17 +100,8 @@ export type ICE = {
   centered_ice_max: number;
   ice_lines: number[][];
   centered_ice_lines: number[][];
-  clusters: Record<
-    number,
-    {
-      clusters: Cluster[];
-      cluster_labels: number[];
-      cluster_distance: number;
-      centered_mean_min: number;
-      centered_mean_max: number;
-      interacting_features: string[];
-    }
-  >;
+  clusterings: Record<string, Clustering>;
+  adjusted_clusterings: Record<string, Clustering>;
   centered_pdp: number[];
   num_clusters: number;
 };
@@ -101,6 +111,16 @@ export type ICELevel =
   | 'centered-lines'
   | 'cluster-centers'
   | 'cluster-lines';
+
+export type ClusterUpdate =
+  | {
+      feature: string;
+      prev_num_clusters: number;
+      source_cluster_id: number;
+      dest_cluster_id: number;
+      indices: number[];
+    }
+  | Record<string, never>;
 
 // Partial dependence
 
@@ -130,7 +150,6 @@ export type UnorderedOneWayPD = {
   pdp_min: number;
   pdp_max: number;
   deviation: number;
-  distance_to_cluster_center: number;
   ice: ICE;
 };
 

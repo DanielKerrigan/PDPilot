@@ -14,10 +14,10 @@
   import YAxis from '../axis/YAxis.svelte';
   import { onMount } from 'svelte';
   import { scaleCanvas } from '../../../vis-utils';
-  import QuantitativeColorLegend from './QuantitativeColorLegend.svelte';
+  import QuantitativeColorLegend from '../legends/QuantitativeColorLegend.svelte';
   import type { FeatureInfo, TwoWayPD } from '../../../types';
   import { feature_info, two_way_pdp_extent } from '../../../stores';
-  import CategoricalColorLegend from './CategoricalColorLegend.svelte';
+  import CategoricalColorLegend from '../legends/CategoricalColorLegend.svelte';
 
   export let pd: TwoWayPD;
   export let width: number;

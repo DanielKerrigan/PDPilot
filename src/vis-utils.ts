@@ -1,15 +1,17 @@
 import { scaleLinear } from 'd3-scale';
 import { format } from 'd3-format';
-import { bisectRight, rollup, range } from 'd3-array';
+import { bisectRight, rollup, range, mean, zip } from 'd3-array';
 import type {
   Distribution,
   FeatureInfo,
   ICELevel,
   OrderedOneWayPD,
+  RaincloudData,
   UnorderedOneWayPD,
 } from './types';
 import type { ScaleLinear } from 'd3-scale';
-import { countsToPercents } from './utils';
+import { countsToPercents, getClustering } from './utils';
+import { density1d } from 'fast-kde';
 export {
   scaleCanvas,
   defaultFormat,
@@ -19,6 +21,7 @@ export {
   getNiceDomain,
   highlightColor,
   getMaxPercent,
+  getRaincloudData,
 };
 
 // Adapted from https://www.html5rocks.com/en/tutorials/canvas/hidpi/
@@ -81,9 +84,15 @@ function getYScale(
         if all the ice lines are the same, then there are no clusters.
         in this case, use the centered ice min and max for the scale.
       */
-      const cluster = pdp.ice.clusters[pdp.ice.num_clusters];
-      const min = cluster?.centered_mean_min ?? pdp.ice.centered_ice_min;
-      const max = cluster?.centered_mean_max ?? pdp.ice.centered_ice_max;
+      let min = pdp.ice.centered_ice_min;
+      let max = pdp.ice.centered_ice_max;
+
+      if (pdp.ice.num_clusters !== 1) {
+        const clustering = getClustering(pdp);
+        min = clustering.centered_mean_min;
+        max = clustering.centered_mean_max;
+      }
+
       return scaleLinear()
         .domain([min, max])
         .nice()
@@ -194,10 +203,59 @@ function getNiceDomain(x: [number, number]): [number, number] {
   return [niceExtent[0], niceExtent[1]];
 }
 
+function getRaincloudData(
+  values: number[],
+  labels: number[] | null = null
+): RaincloudData {
+  const combinedValues = labels
+    ? zip(values, labels).map(([value, label]) => ({ value, label }))
+    : values.map((value) => ({ value, label: 0 }));
+
+  let densities: { x: number; density: number }[] = [];
+
+  // computing the KDE requires at least two data points
+  if (values.length > 1) {
+    const kde = density1d(values, { pad: 0, bins: 32 });
+    densities = Array.from(kde, ({ x, y }) => ({ x, density: y }));
+  }
+
+  const meanValue = mean(values) ?? 0;
+
+  return {
+    values: combinedValues,
+    densities: densities,
+    mean: meanValue,
+  };
+}
+
 const highlightColor = '#4EBA72';
 
 const categoricalColors = {
-  light: ['#a6cee3', '#fdbf6f', '#b2df8a', '#fb9a99', '#cab2d6'],
-  medium: ['#67a3cb', '#fea13f', '#7abf5a', '#f4645d', '#9c76b7'],
-  dark: ['#1f78b4', '#ff7f00', '#33a02c', '#e31a1c', '#6a3d9a'],
+  light: [
+    '#a6cee3',
+    '#fdbf6f',
+    '#b2df8a',
+    '#fb9a99',
+    '#cab2d6',
+    '#FFB3F2',
+    '#D4906D',
+  ],
+  medium: [
+    '#67a3cb',
+    '#fea13f',
+    '#7abf5a',
+    '#f4645d',
+    '#9c76b7',
+    '#fb9ada',
+    '#c3744a',
+  ],
+  dark: [
+    '#1f78b4',
+    '#ff7f00',
+    '#33a02c',
+    '#e31a1c',
+    '#6a3d9a',
+    '#f781bf',
+    '#B15928',
+  ],
 };

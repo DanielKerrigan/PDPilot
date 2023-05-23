@@ -32,6 +32,7 @@ export class PDPilotModel extends DOMWidgetModel {
       height: 600,
       highlighted_indices: [],
       two_way_to_calculate: [],
+      cluster_update: {},
     };
   }
 

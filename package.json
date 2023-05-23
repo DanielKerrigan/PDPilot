@@ -46,7 +46,8 @@
   "dependencies": {
     "@jupyter-widgets/base": "^1.1.10 || ^2 || ^3 || ^4 || ^5 || ^6",
     "d3": "^7.4.4",
-    "simple-statistics": "^7.8.0"
+    "fast-kde": "^0.2.1",
+    "lodash.clonedeep": "^4.5.0"
   },
   "devDependencies": {
     "@babel/core": "^7.5.0",
@@ -56,6 +57,7 @@
     "@lumino/widgets": "^1.6.0",
     "@tsconfig/svelte": "^3.0.0",
     "@types/d3": "^7.4.0",
+    "@types/lodash.clonedeep": "^4.5.7",
     "@types/webpack-env": "^1.13.6",
     "@typescript-eslint/eslint-plugin": "^5.45.0",
     "@typescript-eslint/parser": "^5.45.0",

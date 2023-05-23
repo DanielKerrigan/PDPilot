@@ -201,15 +201,15 @@ def partial_dependence(
 
         # cluster center min and max
 
-        num_clusters = ice["num_clusters"]
-        clusters = ice["clusters"]
+        str_num_clust = str(ice["num_clusters"])
+        clusterings = ice["clusterings"]
 
-        if num_clusters in clusters:
-            if clusters[num_clusters]["centered_mean_min"] < ice_cluster_center_min:
-                ice_cluster_center_min = clusters[num_clusters]["centered_mean_min"]
+        if str_num_clust in clusterings:
+            if clusterings[str_num_clust]["centered_mean_min"] < ice_cluster_center_min:
+                ice_cluster_center_min = clusterings[str_num_clust]["centered_mean_min"]
 
-            if clusters[num_clusters]["centered_mean_max"] > ice_cluster_center_max:
-                ice_cluster_center_max = clusters[num_clusters]["centered_mean_max"]
+            if clusterings[str_num_clust]["centered_mean_max"] > ice_cluster_center_max:
+                ice_cluster_center_max = clusterings[str_num_clust]["centered_mean_max"]
 
     two_way_pdp_min = math.inf
     two_way_pdp_max = -math.inf
@@ -247,6 +247,7 @@ def partial_dependence(
         "num_instances": md.size,
         "dataset": frontend_df.to_dict(orient="list"),
         "feature_info": md.feature_info,
+        "one_hot_encoded_col_name_to_feature": md.one_hot_encoded_col_name_to_feature,
     }
 
     if output_path:
@@ -485,7 +486,7 @@ def _calculate_ice(ice_lines, data, feature, md):
     best_score = -math.inf
     best_n_clusters = -1
 
-    clusters = {}
+    clusterings = {}
 
     for n_clusters in range(2, 6):
         cluster_model = KMeans(
@@ -511,66 +512,21 @@ def _calculate_ice(ice_lines, data, feature, md):
             best_score = score
             best_n_clusters = n_clusters
 
-        cluster_distance = np.float64(0)
-
-        local_clusters = []
-
-        interacting_features = defaultdict(int)
-
-        centered_mean_min = math.inf
-        centered_mean_max = -math.inf
-
-        for i in range(n_clusters):
-            mask = labels == i
-            # get the indices of the ICE lines in this cluster
-            indices = mask.nonzero()[0]
-            centered_lines = centered_ice_lines[mask]
-
-            centered_mean = centered_lines.mean(axis=0)
-
-            cluster_distance += np.mean(np.absolute(centered_mean - centered_pdp))
-
-            local_clusters.append(
-                {
-                    "id": i,
-                    "indices": indices.tolist(),
-                    "centered_mean": centered_mean.tolist(),
-                }
-            )
-
-            centered_mean_min = min(centered_mean_min, centered_mean.min())
-            centered_mean_max = max(centered_mean_max, centered_mean.max())
-
-            y = mask.astype(int)
-
-            importances = _get_interacting_features(data, y, md)
-            for feat, imp in importances.items():
-                interacting_features[feat] += imp
-
-            sorted_interacting_features = [
-                f
-                for f, _ in sorted(
-                    interacting_features.items(), key=itemgetter(1), reverse=True
-                )
-            ]
-
-        clusters[n_clusters] = {
-            "clusters": local_clusters,
-            "cluster_labels": labels.tolist(),
-            "cluster_distance": cluster_distance.item(),
-            "centered_mean_min": centered_mean_min.item(),
-            "centered_mean_max": centered_mean_max.item(),
-            "interacting_features": sorted_interacting_features,
-        }
-
-    interacting_features = defaultdict(int)
+        clusterings[str(n_clusters)] = _get_clusters_info(
+            labels=labels,
+            n_clusters=n_clusters,
+            centered_ice_lines=centered_ice_lines,
+            centered_pdp=centered_pdp,
+            data=data,
+            one_hot_encoded_col_name_to_feature=md.one_hot_encoded_col_name_to_feature,
+        )
 
     if best_n_clusters == 1:
         pairs = set()
     else:
         pairs = {
             (min(feature, other), max(feature, other))
-            for other in clusters[best_n_clusters]["interacting_features"]
+            for other in clusterings[str(best_n_clusters)]["interacting_features"]
             if feature != other
         }
 
@@ -582,21 +538,87 @@ def _calculate_ice(ice_lines, data, feature, md):
         "ice_lines": ice_lines.tolist(),
         "centered_ice_lines": centered_ice_lines.tolist(),
         "centered_pdp": centered_pdp.tolist(),
-        "clusters": clusters,
+        "clusterings": clusterings,
+        "adjusted_clusterings": {},
         "num_clusters": best_n_clusters,
     }
 
     return ice, pairs
 
 
-def _get_interacting_features(X, y, md):
+def _get_clusters_info(
+    labels,
+    n_clusters,
+    centered_ice_lines,
+    centered_pdp,
+    data,
+    one_hot_encoded_col_name_to_feature,
+):
+    cluster_distance = np.float64(0)
+
+    local_clusters = []
+
+    interacting_features = defaultdict(int)
+
+    centered_mean_min = math.inf
+    centered_mean_max = -math.inf
+
+    for i in range(n_clusters):
+        mask = labels == i
+        # get the indices of the ICE lines in this cluster
+        indices = mask.nonzero()[0]
+        centered_lines = centered_ice_lines[mask]
+
+        centered_mean = centered_lines.mean(axis=0)
+
+        distance = np.mean(np.absolute(centered_mean - centered_pdp))
+        cluster_distance += distance
+
+        local_clusters.append(
+            {
+                "id": i,
+                "indices": indices.tolist(),
+                "centered_mean": centered_mean.tolist(),
+                "distance": distance.item(),
+            }
+        )
+
+        centered_mean_min = min(centered_mean_min, centered_mean.min())
+        centered_mean_max = max(centered_mean_max, centered_mean.max())
+
+        y = mask.astype(int)
+
+        importances = _get_interacting_features(
+            data, y, one_hot_encoded_col_name_to_feature
+        )
+        for feat, imp in importances.items():
+            interacting_features[feat] += imp
+
+        sorted_interacting_features = [
+            f
+            for f, _ in sorted(
+                interacting_features.items(), key=itemgetter(1), reverse=True
+            )
+        ]
+
+    return {
+        "clusters": local_clusters,
+        "cluster_labels": labels.tolist(),
+        "cluster_distance": cluster_distance.item(),
+        "centered_mean_min": centered_mean_min.item(),
+        "centered_mean_max": centered_mean_max.item(),
+        "interacting_features": sorted_interacting_features,
+    }
+
+
+def _get_interacting_features(X, y, one_hot_encoded_col_name_to_feature):
     clf = DecisionTreeClassifier(max_depth=3, ccp_alpha=0.01)
     clf.fit(X, y)
 
     importances = defaultdict(int)
 
     for i in clf.tree_.feature:
-        feat = md.one_hot_encoded_col_name_to_feature.get(X.columns[i], X.columns[i])
+        feat = one_hot_encoded_col_name_to_feature.get(X.columns[i], X.columns[i])
         importances[feat] += clf.feature_importances_[i]
 
     return importances
