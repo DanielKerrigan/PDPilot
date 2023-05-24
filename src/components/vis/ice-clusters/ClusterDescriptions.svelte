@@ -405,7 +405,7 @@
 
 <div class="distributions-container">
   <div class="distributions-header">
-    <div class="pdpilot-bold">Feature Distributions</div>
+    <div class="pdpilot-bold">Cluster Descriptions</div>
     <div class="distributions-settings">
       {#if categoricalFeatures.length > 0}
         <label class="label-and-input">

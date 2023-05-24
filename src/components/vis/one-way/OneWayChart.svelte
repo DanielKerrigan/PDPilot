@@ -32,6 +32,7 @@
     {showBrushedBorder}
     {iceLineWidth}
     center={iceLevel === 'centered-lines'}
+    {showTitle}
   />
 {:else if iceLevel === 'cluster-centers'}
   <ClusterCenters

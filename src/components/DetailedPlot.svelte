@@ -267,8 +267,7 @@
               {indices}
               allowBrushing={true}
               showColorLegend={false}
-              showTitle={$detailedContextKind !== 'none' &&
-                $detailedICELevel === 'cluster-lines'}
+              showTitle={true}
             />
           </div>
 
@@ -316,6 +315,7 @@
                 marginTop={marginalPlotHeight + 3}
                 marginRight={marginalPlotHeight + 3}
                 {marginalPlotHeight}
+                title="Ground Truth Labels vs. Feature Values"
               />
             </div>
           {/if}
