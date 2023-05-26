@@ -80,12 +80,13 @@ setup_args = dict(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Framework :: Jupyter",
         "Topic :: Scientific/Engineering :: Visualization",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
     ],
     include_package_data=True,
-    python_requires=">=3.7.1,<3.11",
+    python_requires=">=3.7.1",
     install_requires=[
         "ipywidgets>=7.6.0,<9",
         "pandas>=1.3.5",
@@ -93,8 +94,6 @@ setup_args = dict(
         "joblib>=1.1.0",
         "scikit-learn>=1.0.2",
         "tqdm>=4.64.1",
-        "tslearn>=0.5.3",
-        "h5py",
     ],
     extras_require={
         "examples": ["pmlb", "xgboost"],
