@@ -10,22 +10,12 @@
     detailedICELevel,
     featureToPd,
     detailedContextKind,
-    isClassification,
-    labelExtent,
     feature_info,
-    dataset,
-    labels,
-    num_instances,
-    highlighted_indices,
   } from '../stores';
-  import PDP from './PDP.svelte';
-  import ClusterDescriptions from './vis/ice-clusters/ClusterDescriptions.svelte';
-  import Scatterplot from './vis/distribution/Scatterplot.svelte';
-  import { getClustering } from '../utils';
+  import OneWayDetailedPlot from './OneWayDetailedPlot.svelte';
+  import TwoWayDetailedPlot from './TwoWayDetailedPlot.svelte';
 
   let pd: OneWayPD | TwoWayPD | null = null;
-
-  const marginalPlotHeight = 50;
 
   // changing features
 
@@ -100,28 +90,6 @@
   $: gridWidth = contentRect ? contentRect.width : 0;
   $: gridHeight = contentRect ? contentRect.height : 0;
 
-  $: halfWidth = gridWidth / 2;
-  $: thirdWidth = gridWidth / 3;
-
-  // cluster description interaction
-
-  let indices: number[] | null = null;
-
-  function onFilterIndices(event: CustomEvent<number[]>) {
-    indices = event.detail;
-  }
-
-  $: if ($detailedContextKind !== 'cluster-descriptions') {
-    indices = null;
-  }
-
-  $: if (
-    $detailedICELevel !== 'cluster-lines' &&
-    $detailedContextKind === 'cluster-descriptions'
-  ) {
-    $detailedContextKind = 'scatterplot';
-  }
-
   // swap x and y axes in two-way plot
 
   function swapAxes() {
@@ -146,7 +114,7 @@
   <div class="zoomed-pdp-header">
     <div class="feature-selects">
       <label>
-        <span>Feat. 1</span>
+        <span>Feature 1</span>
         <select bind:value={$detailedFeature1}>
           <option value="" />
           {#each $feature_names as feature}
@@ -156,7 +124,7 @@
       </label>
 
       <label>
-        <span>Feat. 2</span>
+        <span>Feature 2</span>
         <select bind:value={$detailedFeature2}>
           <option value="" />
           {#each $feature_names as feature}
@@ -248,154 +216,20 @@
         </div>
       </div>
     {:else if pd.num_features === 1 && xFeatureInfo}
-      <div class="one-way-pdp-grid">
-        {#if $detailedICELevel === 'cluster-lines' && pd.ice.num_clusters === 1}
-          <div class="pdpilot-no-clusters-message">
-            This feature does not have any distinct clusters of ICE lines.
-          </div>
-        {:else}
-          <div style:flex="1">
-            <PDP
-              {pd}
-              width={$detailedContextKind === 'none' ? gridWidth : halfWidth}
-              height={gridHeight}
-              scaleLocally={$detailedScaleLocally}
-              showMarginalDistribution={false}
-              marginTop={10}
-              marginalPlotHeight={0}
-              iceLevel={$detailedICELevel}
-              {indices}
-              allowBrushing={true}
-              showColorLegend={false}
-              showTitle={true}
-            />
-          </div>
-
-          {#if $detailedContextKind === 'cluster-descriptions'}
-            <div style:flex="1">
-              <ClusterDescriptions
-                on:filter={onFilterIndices}
-                {pd}
-                features={getClustering(pd).interacting_features}
-              />
-            </div>
-          {:else if $detailedContextKind === 'scatterplot'}
-            <div style:flex="1">
-              <Scatterplot
-                width={halfWidth}
-                height={gridHeight}
-                xValues={$dataset[pd.x_feature]}
-                yValues={$labels}
-                colorValues={Array.from({ length: $num_instances }, (_, i) =>
-                  $highlighted_indices.includes(i) ? 1 : 0
-                )}
-                xKind={xFeatureInfo.kind}
-                yKind={$isClassification ? 'categorical' : 'quantitative'}
-                colorKind={'categorical'}
-                xDomain={xFeatureInfo.kind === 'categorical'
-                  ? pd.x_values
-                  : [pd.x_values[0], pd.x_values[pd.x_values.length - 1]]}
-                yDomain={$labelExtent}
-                colorDomain={[0, 1]}
-                colorScheme={'highlight'}
-                xLabel={pd.x_feature}
-                yLabel={'Ground Truth'}
-                colorLabel=""
-                xAxisIntegerOnly={xFeatureInfo.subkind === 'discrete'}
-                yAxisIntegerOnly={false}
-                xAxisValueMap={'value_map' in xFeatureInfo
-                  ? xFeatureInfo.value_map
-                  : {}}
-                yAxisValueMap={{}}
-                xDistribution={xFeatureInfo.distribution}
-                yDistribution={null}
-                opacity={0.5}
-                allowBrushing={true}
-                showMarginalDistribution={true}
-                marginTop={marginalPlotHeight + 3}
-                marginRight={marginalPlotHeight + 3}
-                {marginalPlotHeight}
-                title="Ground Truth Labels vs. Feature Values"
-              />
-            </div>
-          {/if}
-        {/if}
-      </div>
+      <OneWayDetailedPlot
+        {pd}
+        featureInfo={xFeatureInfo}
+        width={gridWidth}
+        height={gridHeight}
+      />
     {:else if pd.num_features === 2 && xFeatureInfo && yFeatureInfo}
-      <div class="two-way-pdp-grid interactions-predictions-scatter">
-        <div style:grid-area="two-way-interaction">
-          <PDP
-            {pd}
-            width={thirdWidth}
-            height={gridHeight}
-            scaleLocally={$detailedScaleLocally}
-            showMarginalPdp={true}
-            marginTop={marginalPlotHeight + 1}
-            marginRight={marginalPlotHeight + 1}
-            {marginalPlotHeight}
-            iceLevel="lines"
-            colorShows="interactions"
-            showColorLegend={true}
-            colorLegendTitle="Interactions"
-          />
-        </div>
-
-        <div style:grid-area="two-way-pdp">
-          <PDP
-            {pd}
-            width={thirdWidth}
-            height={gridHeight}
-            scaleLocally={$detailedScaleLocally}
-            showMarginalPdp={true}
-            marginTop={marginalPlotHeight + 1}
-            marginRight={marginalPlotHeight + 1}
-            {marginalPlotHeight}
-            iceLevel={$detailedICELevel}
-            showColorLegend={true}
-            colorLegendTitle="Predictions"
-          />
-        </div>
-
-        <div style:grid-area="scatter">
-          <Scatterplot
-            width={thirdWidth}
-            height={gridHeight}
-            xValues={$dataset[pd.x_feature]}
-            yValues={$dataset[pd.y_feature]}
-            colorValues={$labels}
-            xKind={xFeatureInfo.kind}
-            yKind={yFeatureInfo.kind}
-            colorKind={$isClassification ? 'categorical' : 'quantitative'}
-            xDomain={xFeatureInfo.kind === 'categorical'
-              ? pd.x_axis
-              : [pd.x_axis[0], pd.x_axis[pd.x_axis.length - 1]]}
-            yDomain={$feature_info[pd.y_feature].kind === 'categorical'
-              ? pd.y_axis
-              : [pd.y_axis[0], pd.y_axis[pd.y_axis.length - 1]]}
-            colorDomain={$labelExtent}
-            colorScheme={$isClassification ? 'classes' : 'sequential'}
-            xLabel={pd.x_feature}
-            yLabel={pd.y_feature}
-            colorLabel="Ground Truth"
-            xAxisIntegerOnly={xFeatureInfo.subkind === 'discrete'}
-            yAxisIntegerOnly={yFeatureInfo.subkind === 'discrete'}
-            xAxisValueMap={'value_map' in xFeatureInfo
-              ? xFeatureInfo.value_map
-              : {}}
-            yAxisValueMap={'value_map' in yFeatureInfo
-              ? yFeatureInfo.value_map
-              : {}}
-            xDistribution={xFeatureInfo.distribution}
-            yDistribution={yFeatureInfo.distribution}
-            opacity={1}
-            allowBrushing={false}
-            showMarginalDistribution={true}
-            marginTop={marginalPlotHeight + 3}
-            marginRight={marginalPlotHeight + 3}
-            {marginalPlotHeight}
-          />
-        </div>
-      </div>
+      <TwoWayDetailedPlot
+        {pd}
+        {xFeatureInfo}
+        {yFeatureInfo}
+        width={gridWidth}
+        height={gridHeight}
+      />
     {/if}
   </div>
 </div>
@@ -462,29 +296,12 @@
     min-height: 0px;
   }
 
-  .one-way-pdp-grid {
-    display: flex;
-    width: 100%;
-    height: 100%;
-  }
-
-  .two-way-pdp-grid {
-    display: grid;
-    width: 100%;
-    height: 100%;
-  }
-
   .label-and-input {
     /* don't grow and don't shrink */
     flex: 0 0 auto;
     display: flex;
     align-items: center;
     gap: 0.25em;
-  }
-
-  .interactions-predictions-scatter {
-    grid-template-columns: 1fr 1fr 1fr;
-    grid-template-areas: 'two-way-interaction two-way-pdp scatter';
   }
 
   .detailed-plot-message-container {
@@ -510,12 +327,6 @@
 
   .detailed-plot-message-content > button {
     margin: auto;
-  }
-
-  .pdpilot-no-clusters-message {
-    flex: 1;
-    text-align: center;
-    align-self: center;
   }
 
   .context-container {
