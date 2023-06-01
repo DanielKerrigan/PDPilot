@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { OneWayPD, ICELevel, TwoWayPD } from '../types';
+  import type { OneWayPD, TwoWayPD } from '../types';
   import {
     two_way_pds,
     feature_names,
@@ -7,9 +7,7 @@
     detailedFeature1,
     detailedFeature2,
     detailedScaleLocally,
-    detailedICELevel,
     featureToPd,
-    detailedContextKind,
     feature_info,
   } from '../stores';
   import OneWayDetailedPlot from './OneWayDetailedPlot.svelte';
@@ -78,18 +76,6 @@
   $: yFeatureInfo =
     pd && pd.num_features === 2 ? $feature_info[pd.y_feature] : null;
 
-  const iceLevels: { value: ICELevel; title: string }[] = [
-    { value: 'lines', title: 'Standard' },
-    { value: 'centered-lines', title: 'Centered' },
-    { value: 'cluster-lines', title: 'Clusters' },
-  ];
-
-  // sizes
-
-  let contentRect: DOMRectReadOnly | undefined | null;
-  $: gridWidth = contentRect ? contentRect.width : 0;
-  $: gridHeight = contentRect ? contentRect.height : 0;
-
   // swap x and y axes in two-way plot
 
   function swapAxes() {
@@ -135,63 +121,16 @@
     </div>
 
     {#if pd}
-      {#if pd.num_features === 1}
-        <label class="label-and-input">
-          Plot
-          <select bind:value={$detailedICELevel}>
-            {#each iceLevels as { value, title }}
-              <option {value}>{title}</option>
-            {/each}
-          </select>
-        </label>
-
-        <label class="label-and-input">
-          <input type="checkbox" bind:checked={$detailedScaleLocally} />Scale
-          locally
-        </label>
-
-        <div class="context-container">
-          <div>Context:</div>
-          <label class="label-and-input">
-            <input
-              type="radio"
-              bind:group={$detailedContextKind}
-              name="context"
-              value={'scatterplot'}
-            />
-            Scatterplot
-          </label>
-          {#if $detailedICELevel === 'cluster-lines'}
-            <label class="label-and-input">
-              <input
-                type="radio"
-                bind:group={$detailedContextKind}
-                name="context"
-                value={'cluster-descriptions'}
-              />
-              Cluster Descriptions
-            </label>
-          {/if}
-          <label class="label-and-input">
-            <input
-              type="radio"
-              bind:group={$detailedContextKind}
-              name="context"
-              value={'none'}
-            />
-            None
-          </label>
-        </div>
-      {:else}
-        <label class="label-and-input">
-          <input type="checkbox" bind:checked={$detailedScaleLocally} />Scale
-          locally
-        </label>
+      <label class="label-and-input">
+        <input type="checkbox" bind:checked={$detailedScaleLocally} />Scale
+        locally
+      </label>
+      {#if pd.num_features === 2}
         <button on:click={swapAxes} title="Swap x and y axes">Swap Axes</button>
       {/if}
     {/if}
   </div>
-  <div class="zoomed-pdp-content" bind:contentRect>
+  <div class="zoomed-pdp-content">
     {#if pd === null}
       <div class="detailed-plot-message-container">
         <div class="detailed-plot-message-content">
@@ -216,20 +155,9 @@
         </div>
       </div>
     {:else if pd.num_features === 1 && xFeatureInfo}
-      <OneWayDetailedPlot
-        {pd}
-        featureInfo={xFeatureInfo}
-        width={gridWidth}
-        height={gridHeight}
-      />
+      <OneWayDetailedPlot {pd} featureInfo={xFeatureInfo} />
     {:else if pd.num_features === 2 && xFeatureInfo && yFeatureInfo}
-      <TwoWayDetailedPlot
-        {pd}
-        {xFeatureInfo}
-        {yFeatureInfo}
-        width={gridWidth}
-        height={gridHeight}
-      />
+      <TwoWayDetailedPlot {pd} {xFeatureInfo} {yFeatureInfo} />
     {/if}
   </div>
 </div>
@@ -327,14 +255,5 @@
 
   .detailed-plot-message-content > button {
     margin: auto;
-  }
-
-  .context-container {
-    /* don't grow and don't shrink */
-    flex: 0 0 auto;
-
-    display: flex;
-    align-items: center;
-    gap: 0.5em;
   }
 </style>

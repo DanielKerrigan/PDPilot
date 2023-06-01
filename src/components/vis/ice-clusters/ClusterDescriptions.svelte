@@ -404,18 +404,15 @@
 </script>
 
 <div class="distributions-container">
-  <div class="distributions-header">
-    <div class="pdpilot-bold">Cluster Descriptions</div>
-    <div class="distributions-settings">
-      {#if categoricalFeatures.length > 0}
-        <label class="label-and-input">
-          <input type="checkbox" bind:checked={normalize} />Normalize bar charts
-        </label>
-      {/if}
-      <div>
-        {filteredI.length}
-        {filteredI.length === 1 ? 'instance' : 'instances'} selected
-      </div>
+  <div class="distributions-settings">
+    {#if categoricalFeatures.length > 0}
+      <label class="label-and-input">
+        <input type="checkbox" bind:checked={normalize} />Normalize bar charts
+      </label>
+    {/if}
+    <div>
+      {filteredI.length}
+      {filteredI.length === 1 ? 'instance' : 'instances'} selected
     </div>
   </div>
   <!-- TODO: switch to bind:contentBoxSize when it is working -->
@@ -476,10 +473,7 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-  }
-
-  .distributions-header {
-    margin-bottom: 0.5em;
+    gap: 0.5em;
   }
 
   .distributions-settings {

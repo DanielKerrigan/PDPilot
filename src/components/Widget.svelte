@@ -45,6 +45,7 @@
     --magenta: rgb(121, 35, 103);
 
     --blue: rgb(0, 95, 204);
+    --dark-blue: rgb(1, 51, 104);
 
     --gray-0: rgb(247, 247, 247);
     --gray-1: rgb(226, 226, 226);
@@ -86,9 +87,9 @@
   }
 
   .pdpilot-widget-container :global(button) {
-    color: black;
+    color: var(--blue);
     background-color: white;
-    border: 1px solid black;
+    border: 1px solid var(--blue);
     border-radius: 0.25em;
     text-align: center;
     cursor: pointer;
@@ -99,11 +100,14 @@
   }
 
   .pdpilot-widget-container :global(button:hover:enabled) {
-    background-color: var(--gray-1);
+    color: white;
+    background-color: var(--blue);
   }
 
   .pdpilot-widget-container :global(button:active:enabled) {
-    background-color: var(--gray-2);
+    color: white;
+    background-color: var(--dark-blue);
+    border-color: var(--dark-blue);
   }
 
   .pdpilot-widget-container :global(button:disabled) {

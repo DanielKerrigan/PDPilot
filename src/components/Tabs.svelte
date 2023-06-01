@@ -39,6 +39,17 @@
     border: none;
     border-radius: 0;
     background-color: transparent;
+    color: black;
+  }
+
+  button:hover:enabled {
+    color: black;
+    background-color: var(--gray-2);
+  }
+
+  button:active:enabled {
+    color: black;
+    background-color: var(--gray-3);
   }
 
   button.tab-selected {

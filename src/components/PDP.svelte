@@ -20,7 +20,6 @@
   export let allowBrushing = false;
   export let showBrushedBorder = false;
   export let iceLineWidth = 1;
-  export let showTitle = false;
   export let twoWayKind: 'lines' | 'heatmap' = 'heatmap';
 </script>
 
@@ -39,7 +38,6 @@
       {allowBrushing}
       {showBrushedBorder}
       {iceLineWidth}
-      {showTitle}
     />
   {:else if pd.num_features === 2}
     <TwoWayChart

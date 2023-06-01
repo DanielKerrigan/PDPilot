@@ -77,7 +77,7 @@ export type FeatureInfo = QuantitativeFeatureInfo | CategoricalFeatureInfo;
 
 // ICE
 
-type Cluster = {
+export type Cluster = {
   id: number;
   indices: number[];
   centered_mean: number[];
