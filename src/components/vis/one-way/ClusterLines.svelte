@@ -35,8 +35,7 @@
   export let height: number;
   export let scaleLocally: boolean;
   export let showMarginalDistribution: boolean;
-  // TODO: make this a set
-  export let indices: number[] | null;
+  export let indices: Set<number> | null;
   // marginTop is space above all plots / beneath header
   export let marginTop: number;
   export let marginalPlotHeight: number;
@@ -73,7 +72,7 @@
   $: clustersWithFilteredIndices = clusters.map((cluster) => ({
     ...cluster,
     filteredIndices: cluster.indices.filter(
-      (i) => indices === null || indices.includes(i)
+      (i) => indices === null || indices.has(i)
     ),
   }));
 
@@ -141,7 +140,6 @@
     clustersWithFilteredIndices: (Cluster & { filteredIndices: number[] })[],
     ctx: CanvasRenderingContext2D,
     line: Line<number>,
-    indices: number[] | null,
     fy: ScaleBand<number>,
     width: number,
     height: number,
@@ -218,7 +216,6 @@
       clustersWithFilteredIndices,
       ctx,
       line,
-      indices,
       fy,
       width,
       chartHeight,
@@ -237,7 +234,6 @@
     clustersWithFilteredIndices,
     ctx,
     line,
-    indices,
     fy,
     width,
     chartHeight,
