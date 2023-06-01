@@ -51,7 +51,7 @@
     {showMarginalDistribution}
     {marginTop}
     {marginalPlotHeight}
-    {indices}
+    indices={new Set(indices)}
   />
 {/if}
 
