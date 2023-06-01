@@ -60,14 +60,11 @@
   export let marginTop = 0;
   export let marginRight = 0;
   export let marginalPlotHeight: number;
-  export let title = '';
 
   let canvas: HTMLCanvasElement | undefined;
   let ctx: CanvasRenderingContext2D | undefined;
 
   // dimensions and margins
-
-  const titleHeight = 19;
 
   const legendHeight = 24;
 
@@ -341,189 +338,167 @@
   );
 </script>
 
-<div class="pdpilot-plot-container">
-  {#if title !== ''}
+<div
+  class="pdpilot-plot-container"
+  style:--top="{legendHeight + aboveLegendMargin}px"
+>
+  {#if colorLabel !== ''}
+    <!-- using padding instead of margin to avoid margin collapse -->
     <div
-      style:--height="{titleHeight}px"
-      class="pdpilot-bold pdpilot-plot-title"
+      style:margin-left="{margin.left - legendMarginOffset}px"
+      style:padding-top="{aboveLegendMargin}px"
     >
-      {title}
+      {#if 'interpolator' in color}
+        <QuantitativeColorLegend
+          width={sideLength + legendWidthOffset}
+          height={legendHeight}
+          {color}
+          marginLeft={legendMargin}
+          marginRight={legendMargin}
+          title={colorLabel}
+        />
+      {:else}
+        <CategoricalColorLegend
+          width={sideLength + legendWidthOffset}
+          height={legendHeight}
+          {color}
+          marginLeft={legendMargin}
+          marginRight={legendMargin}
+          title={colorLabel}
+        />
+      {/if}
     </div>
   {/if}
-  <div
-    class="scatterplot-container"
-    style:--top="{legendHeight + aboveLegendMargin}px"
-  >
-    {#if colorLabel !== ''}
-      <!-- using padding instead of margin to avoid margin collapse -->
-      <div
-        style:margin-left="{margin.left - legendMarginOffset}px"
-        style:padding-top="{aboveLegendMargin}px"
-      >
-        {#if 'interpolator' in color}
-          <QuantitativeColorLegend
-            width={sideLength + legendWidthOffset}
-            height={legendHeight}
-            {color}
-            marginLeft={legendMargin}
-            marginRight={legendMargin}
-            title={colorLabel}
+
+  <canvas bind:this={canvas} />
+
+  <svg {width} height={heightExcludingLegend}>
+    <XAxis
+      scale={x}
+      y={heightExcludingLegend - margin.bottom}
+      label={xLabel}
+      integerOnly={xAxisIntegerOnly}
+      value_map={xAxisValueMap}
+    />
+
+    <YAxis
+      scale={y}
+      x={margin.left}
+      label={yLabel}
+      integerOnly={yAxisIntegerOnly}
+      value_map={yAxisValueMap}
+    />
+
+    <g bind:this={group} />
+
+    {#if showMarginalDistribution}
+      {#if allowBrushing && highlightedDistribution && $highlighted_indices.length > 0}
+        {#if 'bandwidth' in x}
+          <MarginalBarChart
+            data={highlightedDistribution}
+            fill={highlightColor}
+            {x}
+            height={marginalPlotHeight}
+            direction="horizontal"
+            translate={[
+              0,
+              margin.top -
+                marginalPlotHeight -
+                (marginTop - marginalPlotHeight),
+            ]}
+            unit="percent"
+            maxValue={maxPercent}
           />
         {:else}
-          <CategoricalColorLegend
-            width={sideLength + legendWidthOffset}
-            height={legendHeight}
-            {color}
-            marginLeft={legendMargin}
-            marginRight={legendMargin}
-            title={colorLabel}
+          <MarginalHistogram
+            data={highlightedDistribution}
+            fill={highlightColor}
+            {x}
+            height={marginalPlotHeight}
+            direction="horizontal"
+            translate={[
+              0,
+              margin.top -
+                marginalPlotHeight -
+                (marginTop - marginalPlotHeight),
+            ]}
+            unit="percent"
+            maxValue={maxPercent}
           />
         {/if}
-      </div>
-    {/if}
-
-    <canvas bind:this={canvas} />
-
-    <svg {width} height={heightExcludingLegend}>
-      <XAxis
-        scale={x}
-        y={heightExcludingLegend - margin.bottom}
-        label={xLabel}
-        integerOnly={xAxisIntegerOnly}
-        value_map={xAxisValueMap}
-      />
-
-      <YAxis
-        scale={y}
-        x={margin.left}
-        label={yLabel}
-        integerOnly={yAxisIntegerOnly}
-        value_map={yAxisValueMap}
-      />
-
-      <g bind:this={group} />
-
-      {#if showMarginalDistribution}
-        {#if allowBrushing && highlightedDistribution && $highlighted_indices.length > 0}
-          {#if 'bandwidth' in x}
-            <MarginalBarChart
-              data={highlightedDistribution}
-              fill={highlightColor}
-              {x}
-              height={marginalPlotHeight}
-              direction="horizontal"
-              translate={[
-                0,
-                margin.top -
-                  marginalPlotHeight -
-                  (marginTop - marginalPlotHeight),
-              ]}
-              unit="percent"
-              maxValue={maxPercent}
-            />
-          {:else}
-            <MarginalHistogram
-              data={highlightedDistribution}
-              fill={highlightColor}
-              {x}
-              height={marginalPlotHeight}
-              direction="horizontal"
-              translate={[
-                0,
-                margin.top -
-                  marginalPlotHeight -
-                  (marginTop - marginalPlotHeight),
-              ]}
-              unit="percent"
-              maxValue={maxPercent}
-            />
-          {/if}
-        {/if}
-        {#if xDistribution}
-          {#if 'bandwidth' in x}
-            <MarginalBarChart
-              data={xDistribution}
-              fill={showHighlightedDistribution ? 'none' : 'var(--gray-3)'}
-              stroke={showHighlightedDistribution ? 'var(--black)' : 'none'}
-              {x}
-              height={marginalPlotHeight}
-              direction="horizontal"
-              translate={[
-                0,
-                margin.top -
-                  marginalPlotHeight -
-                  (marginTop - marginalPlotHeight),
-              ]}
-              unit="percent"
-              maxValue={maxPercent}
-            />
-          {:else}
-            <MarginalHistogram
-              data={xDistribution}
-              fill={showHighlightedDistribution ? 'none' : 'var(--gray-3)'}
-              stroke={showHighlightedDistribution ? 'var(--black)' : 'none'}
-              {x}
-              height={marginalPlotHeight}
-              direction="horizontal"
-              translate={[
-                0,
-                margin.top -
-                  marginalPlotHeight -
-                  (marginTop - marginalPlotHeight),
-              ]}
-              unit="percent"
-              maxValue={maxPercent}
-            />
-          {/if}
-        {/if}
-
-        {#if yDistribution}
-          {#if 'bandwidth' in y}
-            <MarginalBarChart
-              data={yDistribution}
-              x={y}
-              height={marginalPlotHeight}
-              direction="vertical"
-              translate={[
-                width - margin.right + (marginRight - marginalPlotHeight),
-                0,
-              ]}
-            />
-          {:else}
-            <MarginalHistogram
-              data={yDistribution}
-              x={y}
-              height={marginalPlotHeight}
-              direction="vertical"
-              translate={[
-                width - margin.right + (marginRight - marginalPlotHeight),
-                0,
-              ]}
-            />
-          {/if}
+      {/if}
+      {#if xDistribution}
+        {#if 'bandwidth' in x}
+          <MarginalBarChart
+            data={xDistribution}
+            fill={showHighlightedDistribution ? 'none' : 'var(--gray-3)'}
+            stroke={showHighlightedDistribution ? 'var(--black)' : 'none'}
+            {x}
+            height={marginalPlotHeight}
+            direction="horizontal"
+            translate={[
+              0,
+              margin.top -
+                marginalPlotHeight -
+                (marginTop - marginalPlotHeight),
+            ]}
+            unit="percent"
+            maxValue={maxPercent}
+          />
+        {:else}
+          <MarginalHistogram
+            data={xDistribution}
+            fill={showHighlightedDistribution ? 'none' : 'var(--gray-3)'}
+            stroke={showHighlightedDistribution ? 'var(--black)' : 'none'}
+            {x}
+            height={marginalPlotHeight}
+            direction="horizontal"
+            translate={[
+              0,
+              margin.top -
+                marginalPlotHeight -
+                (marginTop - marginalPlotHeight),
+            ]}
+            unit="percent"
+            maxValue={maxPercent}
+          />
         {/if}
       {/if}
-    </svg>
-  </div>
+
+      {#if yDistribution}
+        {#if 'bandwidth' in y}
+          <MarginalBarChart
+            data={yDistribution}
+            x={y}
+            height={marginalPlotHeight}
+            direction="vertical"
+            translate={[
+              width - margin.right + (marginRight - marginalPlotHeight),
+              0,
+            ]}
+          />
+        {:else}
+          <MarginalHistogram
+            data={yDistribution}
+            x={y}
+            height={marginalPlotHeight}
+            direction="vertical"
+            translate={[
+              width - margin.right + (marginRight - marginalPlotHeight),
+              0,
+            ]}
+          />
+        {/if}
+      {/if}
+    {/if}
+  </svg>
 </div>
 
 <style>
   .pdpilot-plot-container {
     width: 100%;
     height: 100%;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .scatterplot-container {
     position: relative;
-    flex: 1;
-  }
-
-  .pdpilot-plot-title {
-    height: var(--height);
-    display: flex;
-    align-items: center;
   }
 
   svg,

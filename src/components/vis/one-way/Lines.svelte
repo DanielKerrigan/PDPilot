@@ -41,12 +41,9 @@
   export let showBrushedBorder = false;
   export let iceLineWidth: number;
   export let center = false;
-  export let showTitle = false;
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
-
-  const titleHeight = 19;
 
   $: feature = $feature_info[pd.x_feature];
 
@@ -56,8 +53,6 @@
     bottom: 35,
     left: 50,
   };
-
-  $: chartHeight = showTitle ? height - titleHeight : height;
 
   $: x =
     feature.kind === 'quantitative'
@@ -73,7 +68,7 @@
 
   $: y = getYScale(
     pd,
-    chartHeight,
+    height,
     0,
     center ? 'centered-lines' : 'lines',
     scaleLocally,
@@ -199,13 +194,13 @@
       radius,
       showHighlights,
       width,
-      chartHeight,
+      height,
       center
     );
   }
 
   $: if (ctx) {
-    scaleCanvas(canvas, ctx, width, chartHeight);
+    scaleCanvas(canvas, ctx, width, height);
     draw();
   }
 
@@ -220,7 +215,7 @@
     radius,
     showHighlights,
     width,
-    chartHeight,
+    height,
     center
   );
 
@@ -289,7 +284,7 @@
   $: brush = d3brush<undefined>()
     .extent([
       [margin.left, margin.top],
-      [width - margin.right, chartHeight - margin.bottom],
+      [width - margin.right, height - margin.bottom],
     ])
     .on('start', brushStart)
     .on('brush', brushed)
@@ -319,64 +314,30 @@
 </script>
 
 <div class="pdpilot-plot-container">
-  {#if showTitle}
-    <div
-      style:--height="{titleHeight}px"
-      class="pdpilot-bold pdpilot-plot-title"
-    >
-      {center ? 'Centered ICE Plot' : 'ICE Plot'}
-    </div>
-  {/if}
-  <div class="pdpilot-lines-container">
-    <canvas bind:this={canvas} />
+  <canvas bind:this={canvas} />
 
-    <svg {width} height={chartHeight}>
-      <g bind:this={group}>
-        <XAxis
-          scale={x}
-          y={chartHeight - margin.bottom}
-          label={pd.x_feature}
-          integerOnly={feature.subkind === 'discrete'}
-          value_map={'value_map' in feature ? feature.value_map : {}}
-        />
+  <svg {width} {height}>
+    <g bind:this={group}>
+      <XAxis
+        scale={x}
+        y={height - margin.bottom}
+        label={pd.x_feature}
+        integerOnly={feature.subkind === 'discrete'}
+        value_map={'value_map' in feature ? feature.value_map : {}}
+      />
 
-        <YAxis
-          scale={y}
-          x={margin.left}
-          label={center ? 'centered prediction' : 'prediction'}
-        />
+      <YAxis
+        scale={y}
+        x={margin.left}
+        label={center ? 'centered prediction' : 'prediction'}
+      />
 
-        {#if showMarginalDistribution}
-          {#if allowBrushing && highlightedDistribution && $highlighted_indices.length > 0}
-            {#if 'bandwidth' in x}
-              <MarginalBarChart
-                data={highlightedDistribution}
-                fill={highlightColor}
-                {x}
-                height={marginalPlotHeight}
-                direction="horizontal"
-                translate={[0, margin.top - marginalPlotHeight]}
-                unit="percent"
-                maxValue={maxPercent}
-              />
-            {:else}
-              <MarginalHistogram
-                data={highlightedDistribution}
-                fill={highlightColor}
-                {x}
-                height={marginalPlotHeight}
-                direction="horizontal"
-                translate={[0, margin.top - marginalPlotHeight]}
-                unit="percent"
-                maxValue={maxPercent}
-              />
-            {/if}
-          {/if}
+      {#if showMarginalDistribution}
+        {#if allowBrushing && highlightedDistribution && $highlighted_indices.length > 0}
           {#if 'bandwidth' in x}
             <MarginalBarChart
-              data={feature.distribution}
-              fill={showHighlightedDistribution ? 'none' : 'var(--gray-3)'}
-              stroke={showHighlightedDistribution ? 'var(--black)' : 'none'}
+              data={highlightedDistribution}
+              fill={highlightColor}
               {x}
               height={marginalPlotHeight}
               direction="horizontal"
@@ -386,9 +347,8 @@
             />
           {:else}
             <MarginalHistogram
-              data={feature.distribution}
-              fill={showHighlightedDistribution ? 'none' : 'var(--gray-3)'}
-              stroke={showHighlightedDistribution ? 'var(--black)' : 'none'}
+              data={highlightedDistribution}
+              fill={highlightColor}
               {x}
               height={marginalPlotHeight}
               direction="horizontal"
@@ -398,41 +358,54 @@
             />
           {/if}
         {/if}
-
-        <!-- border around brushed plot -->
-        {#if showBrushedBorder && $brushedFeature === pd.x_feature}
-          <rect
-            x={margin.left}
-            y={margin.top}
-            width={width - margin.left - margin.right}
-            height={chartHeight - margin.top - margin.bottom}
-            stroke="var(--gray-2)"
-            fill="none"
-            pointer-events="none"
+        {#if 'bandwidth' in x}
+          <MarginalBarChart
+            data={feature.distribution}
+            fill={showHighlightedDistribution ? 'none' : 'var(--gray-3)'}
+            stroke={showHighlightedDistribution ? 'var(--black)' : 'none'}
+            {x}
+            height={marginalPlotHeight}
+            direction="horizontal"
+            translate={[0, margin.top - marginalPlotHeight]}
+            unit="percent"
+            maxValue={maxPercent}
+          />
+        {:else}
+          <MarginalHistogram
+            data={feature.distribution}
+            fill={showHighlightedDistribution ? 'none' : 'var(--gray-3)'}
+            stroke={showHighlightedDistribution ? 'var(--black)' : 'none'}
+            {x}
+            height={marginalPlotHeight}
+            direction="horizontal"
+            translate={[0, margin.top - marginalPlotHeight]}
+            unit="percent"
+            maxValue={maxPercent}
           />
         {/if}
-      </g>
-    </svg>
-  </div>
+      {/if}
+
+      <!-- border around brushed plot -->
+      {#if showBrushedBorder && $brushedFeature === pd.x_feature}
+        <rect
+          x={margin.left}
+          y={margin.top}
+          width={width - margin.left - margin.right}
+          height={height - margin.top - margin.bottom}
+          stroke="var(--gray-2)"
+          fill="none"
+          pointer-events="none"
+        />
+      {/if}
+    </g>
+  </svg>
 </div>
 
 <style>
   .pdpilot-plot-container {
     width: 100%;
     height: 100%;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .pdpilot-lines-container {
     position: relative;
-    flex: 1;
-  }
-
-  .pdpilot-plot-title {
-    height: var(--height);
-    display: flex;
-    align-items: center;
   }
 
   svg,

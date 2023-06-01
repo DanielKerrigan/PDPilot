@@ -14,15 +14,18 @@
   export let pd: TwoWayPD;
   export let xFeatureInfo: FeatureInfo;
   export let yFeatureInfo: FeatureInfo;
-  export let width: number;
-  export let height: number;
+
+  // sizes
+
+  let contentRect: DOMRectReadOnly | undefined | null;
+  $: width = contentRect ? contentRect.width : 0;
+  $: height = contentRect ? contentRect.height : 0;
+  $: thirdWidth = width / 3;
 
   const marginalPlotHeight = 50;
-
-  $: thirdWidth = width / 3;
 </script>
 
-<div class="two-way-pdp-grid interactions-predictions-scatter">
+<div class="two-way-pdp-grid" bind:contentRect>
   <div style:grid-area="two-way-interaction">
     <PDP
       {pd}
@@ -98,9 +101,6 @@
     display: grid;
     width: 100%;
     height: 100%;
-  }
-
-  .interactions-predictions-scatter {
     grid-template-columns: 1fr 1fr 1fr;
     grid-template-areas: 'two-way-interaction two-way-pdp scatter';
   }

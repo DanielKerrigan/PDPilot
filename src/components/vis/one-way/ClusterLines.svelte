@@ -1,11 +1,11 @@
 <script lang="ts">
-  import type { OneWayPD } from '../../../types';
+  import type { OneWayPD, Cluster } from '../../../types';
   import { range } from 'd3-array';
   import { scaleLinear, scaleOrdinal, scalePoint, scaleBand } from 'd3-scale';
   import type { ScaleBand } from 'd3-scale';
   import type { Line } from 'd3-shape';
   import { line as d3line } from 'd3-shape';
-  import type { D3BrushEvent } from 'd3-brush';
+  import type { D3BrushEvent, BrushBehavior } from 'd3-brush';
   import { brush as d3brush } from 'd3-brush';
   import { select } from 'd3-selection';
   import type { Selection } from 'd3-selection';
@@ -40,7 +40,6 @@
   // marginTop is space above all plots / beneath header
   export let marginTop: number;
   export let marginalPlotHeight: number;
-  export let showTitle: boolean;
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
@@ -56,9 +55,9 @@
 
   // margin.top is space above each individual plot
   const margin = {
-    top: 5,
+    top: 10,
     right: 10,
-    bottom: 35,
+    bottom: 32,
     left: 50,
   };
 
@@ -71,11 +70,19 @@
 
   $: clusters = getClustering(copyPd).clusters;
 
+  $: clustersWithFilteredIndices = clusters.map((cluster) => ({
+    ...cluster,
+    filteredIndices: cluster.indices.filter(
+      (i) => indices === null || indices.includes(i)
+    ),
+  }));
+
   $: isAdjusted = copyPd.ice.num_clusters in copyPd.ice.adjusted_clusterings;
 
   $: allLinesInClustedBrushed =
     sourceClusterId !== -1 &&
-    clusters[sourceClusterId].indices.length === brushedIndices.size;
+    clustersWithFilteredIndices[sourceClusterId].indices.length ===
+      brushedIndices.size;
 
   $: fy = scaleBand<number>().domain(clusterIds).range([0, chartHeight]);
 
@@ -131,6 +138,7 @@
 
   function drawClusterLines(
     pd: OneWayPD,
+    clustersWithFilteredIndices: (Cluster & { filteredIndices: number[] })[],
     ctx: CanvasRenderingContext2D,
     line: Line<number>,
     indices: number[] | null,
@@ -153,7 +161,7 @@
 
     ctx.clearRect(0, 0, width, height);
 
-    clusters.forEach((cluster) => {
+    clustersWithFilteredIndices.forEach((cluster) => {
       ctx.translate(0, fy(cluster.id) ?? 0);
 
       // cluster ice lines
@@ -161,16 +169,14 @@
       ctx.lineWidth = 1.0;
       ctx.globalAlpha = 0.25;
 
-      cluster.indices.forEach((idx) => {
-        if (indices === null || indices.includes(idx)) {
-          ctx.beginPath();
-          ctx.strokeStyle =
-            cluster.id === sourceClusterId && !brushedIndices.has(idx)
-              ? 'rgb(171, 171, 171)'
-              : light(cluster.id);
-          line(pd.ice.centered_ice_lines[idx]);
-          ctx.stroke();
-        }
+      cluster.filteredIndices.forEach((idx) => {
+        ctx.beginPath();
+        ctx.strokeStyle =
+          cluster.id === sourceClusterId && !brushedIndices.has(idx)
+            ? 'rgb(171, 171, 171)'
+            : light(cluster.id);
+        line(pd.ice.centered_ice_lines[idx]);
+        ctx.stroke();
       });
 
       // pdp line
@@ -209,6 +215,7 @@
   function draw() {
     drawClusterLines(
       copyPd,
+      clustersWithFilteredIndices,
       ctx,
       line,
       indices,
@@ -227,6 +234,7 @@
 
   $: drawClusterLines(
     copyPd,
+    clustersWithFilteredIndices,
     ctx,
     line,
     indices,
@@ -307,7 +315,9 @@
       [number, number]
     ];
 
-    const cluster = clusters.find((c) => c.id === sourceClusterId);
+    const cluster = clustersWithFilteredIndices.find(
+      (c) => c.id === sourceClusterId
+    );
 
     if (!cluster) {
       return;
@@ -316,12 +326,10 @@
     // pixel coordinates of the x values
     const xs = copyPd.x_values.map((v) => x(v) ?? 0);
 
-    const iceLines = cluster.indices
-      .filter((i) => indices === null || indices.includes(i))
-      .map((i) => ({
-        line: copyPd.ice.centered_ice_lines[i],
-        index: i,
-      }));
+    const iceLines = cluster.filteredIndices.map((i) => ({
+      line: copyPd.ice.centered_ice_lines[i],
+      index: i,
+    }));
 
     brushedIndices = new Set(
       iceLines
@@ -356,7 +364,7 @@
   let svg: SVGElement;
   let selection: Selection<SVGGElement, undefined, SVGElement, undefined>;
 
-  async function setupBrush() {
+  async function setupBrush(brush: BrushBehavior<undefined>) {
     // this is needed for when the number of clusters is changed.
     await tick();
     selection = select(svg).selectAll('.brush-group');
@@ -365,7 +373,7 @@
 
   // TODO: this won't disable brushing after it's enabled
   $: if (svg && pd) {
-    setupBrush();
+    setupBrush(brush);
   }
 
   function adjustClusters(destinationClusterId: number) {
@@ -394,103 +402,98 @@
 </script>
 
 <div class="cluster-lines-container">
-  <div class="cluster-lines-header">
-    {#if showTitle}
-      <div class="cluster-lines-title pdpilot-bold">ICE Clusters</div>
-    {/if}
-    <div class="cluster-lines-settings">
-      {#if brushedIndices.size === 0}
-        <div>Number of clusters:</div>
-        <div class="num-cluster-change">
-          <button
-            disabled={copyPd.ice.num_clusters <= 2}
-            on:click={() => setNumClusters(copyPd.ice.num_clusters - 1)}
-            title="Decrement number of clusters"
+  <div class="cluster-lines-settings">
+    {#if brushedIndices.size === 0}
+      <div>Number of clusters:</div>
+      <div class="num-cluster-change">
+        <button
+          disabled={copyPd.ice.num_clusters <= 2}
+          on:click={() => setNumClusters(copyPd.ice.num_clusters - 1)}
+          title="Decrement number of clusters"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="pdpilot-icon icon-tabler icon-tabler-minus"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke="currentColor"
+            fill="none"
+            stroke-linecap="round"
+            stroke-linejoin="round"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="pdpilot-icon icon-tabler icon-tabler-minus"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              stroke-width="2"
-              stroke="currentColor"
-              fill="none"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-              <path d="M5 12l14 0" />
-            </svg>
-          </button>
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M5 12l14 0" />
+          </svg>
+        </button>
 
-          <div class="current-num-clusters">{copyPd.ice.num_clusters}</div>
+        <div class="current-num-clusters">{copyPd.ice.num_clusters}</div>
 
-          <button
-            disabled={copyPd.ice.num_clusters === 1 ||
-              copyPd.ice.num_clusters >= 5}
-            on:click={() => setNumClusters(copyPd.ice.num_clusters + 1)}
-            title="Increment number of clusters"
+        <button
+          disabled={copyPd.ice.num_clusters === 1 ||
+            copyPd.ice.num_clusters >= 5}
+          on:click={() => setNumClusters(copyPd.ice.num_clusters + 1)}
+          title="Increment number of clusters"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="pdpilot-icon icon-tabler icon-tabler-plus"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke="currentColor"
+            fill="none"
+            stroke-linecap="round"
+            stroke-linejoin="round"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="pdpilot-icon icon-tabler icon-tabler-plus"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              stroke-width="2"
-              stroke="currentColor"
-              fill="none"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-              <path d="M12 5l0 14" />
-              <path d="M5 12l14 0" />
-            </svg>
-          </button>
-        </div>
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M12 5l0 14" />
+            <path d="M5 12l14 0" />
+          </svg>
+        </button>
+      </div>
 
-        {#if isAdjusted}
-          <button
-            style:margin-left="auto"
-            style:margin-right="{margin.right}px"
-            on:click={resetClusters}
-          >
-            Reset Clusters
-          </button>
-        {/if}
-      {:else}
-        <div>Move lines to cluster:</div>
-        <div class="move-lines">
-          <button
-            on:click={() => adjustClusters(copyPd.ice.num_clusters)}
-            disabled={allLinesInClustedBrushed || copyPd.ice.num_clusters === 5}
-          >
-            New
-          </button>
-          {#each clusterIds as clusterId}
-            {#if clusterId === sourceClusterId}
-              <button class="cluster-number" disabled={true}>
-                {clusterId + 1}
-              </button>
-            {:else}
-              <button
-                class="cluster-number"
-                disabled={copyPd.ice.num_clusters === 2 &&
-                  allLinesInClustedBrushed}
-                on:click={() => adjustClusters(clusterId)}
-                style:--light={light(clusterId)}
-                style:--medium={medium(clusterId)}
-                style:--dark={dark(clusterId)}
-              >
-                {clusterId + 1}
-              </button>
-            {/if}
-          {/each}
-        </div>
+      {#if isAdjusted}
+        <button
+          style:margin-left="auto"
+          style:margin-right="{margin.right}px"
+          on:click={resetClusters}
+        >
+          Reset Clusters
+        </button>
       {/if}
-    </div>
+    {:else}
+      <div>Move lines to cluster:</div>
+      <div class="move-lines">
+        <button
+          on:click={() => adjustClusters(copyPd.ice.num_clusters)}
+          disabled={allLinesInClustedBrushed || copyPd.ice.num_clusters === 5}
+        >
+          New
+        </button>
+        {#each clusterIds as clusterId}
+          {#if clusterId === sourceClusterId}
+            <button class="cluster-number" disabled={true}>
+              {clusterId + 1}
+            </button>
+          {:else}
+            <button
+              class="cluster-number"
+              disabled={copyPd.ice.num_clusters === 2 &&
+                allLinesInClustedBrushed}
+              on:click={() => adjustClusters(clusterId)}
+              style:--light={light(clusterId)}
+              style:--medium={medium(clusterId)}
+              style:--dark={dark(clusterId)}
+            >
+              {clusterId + 1}
+            </button>
+          {/if}
+        {/each}
+      </div>
+    {/if}
   </div>
 
   {#if showMarginalDistribution}
@@ -521,8 +524,15 @@
   >
     <canvas bind:this={canvas} />
     <svg class="svg-for-clusters" height={chartHeight} {width} bind:this={svg}>
-      {#each clusters as cluster}
+      {#each clustersWithFilteredIndices as cluster}
         <g transform="translate(0,{fy(cluster.id) ?? 0})">
+          <text
+            dominant-baseline="middle"
+            text-anchor="end"
+            font-size="10"
+            x={width - margin.right}
+            y={margin.top / 2}>{cluster.filteredIndices.length} instances</text
+          >
           <YAxis scale={y} x={margin.left} label={'centered prediction'} />
           <XAxis
             scale={x}
@@ -548,14 +558,11 @@
     flex-direction: column;
   }
 
-  .cluster-lines-header {
-    margin-bottom: 0.5em;
-  }
-
   .cluster-lines-settings {
     display: flex;
     align-items: center;
     gap: 0.5em;
+    margin-bottom: 0.5em;
   }
 
   .cluster-lines-chart {
@@ -578,19 +585,23 @@
 
   .cluster-number {
     width: 1.25em;
+    color: var(--black);
   }
 
   .move-lines > .cluster-number:enabled {
     background-color: var(--light);
     border-color: var(--dark);
+    color: var(--black);
   }
 
   .move-lines > .cluster-number:hover:enabled {
     background-color: var(--medium);
+    color: var(--black);
   }
 
   .move-lines > .cluster-number:active:enabled {
     background-color: var(--dark);
+    color: var(--black);
   }
 
   .svg-for-clusters,

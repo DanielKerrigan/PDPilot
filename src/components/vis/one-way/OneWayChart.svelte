@@ -16,7 +16,6 @@
   export let allowBrushing: boolean;
   export let showBrushedBorder: boolean;
   export let iceLineWidth: number;
-  export let showTitle = false;
 </script>
 
 {#if iceLevel === 'lines' || iceLevel === 'centered-lines'}
@@ -32,7 +31,6 @@
     {showBrushedBorder}
     {iceLineWidth}
     center={iceLevel === 'centered-lines'}
-    {showTitle}
   />
 {:else if iceLevel === 'cluster-centers'}
   <ClusterCenters
@@ -54,7 +52,6 @@
     {marginTop}
     {marginalPlotHeight}
     {indices}
-    {showTitle}
   />
 {/if}
 
