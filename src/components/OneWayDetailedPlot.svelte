@@ -14,7 +14,7 @@
     dataset,
     labels,
     num_instances,
-    highlighted_indices,
+    highlightedIndicesSet,
   } from '../stores';
   import PDP from './PDP.svelte';
   import ClusterDescriptions from './vis/ice-clusters/ClusterDescriptions.svelte';
@@ -146,7 +146,7 @@
             xValues={$dataset[pd.x_feature]}
             yValues={$labels}
             colorValues={Array.from({ length: $num_instances }, (_, i) =>
-              $highlighted_indices.includes(i) ? 1 : 0
+              $highlightedIndicesSet.has(i) ? 1 : 0
             )}
             xKind={featureInfo.kind}
             yKind={$isClassification ? 'categorical' : 'quantitative'}
