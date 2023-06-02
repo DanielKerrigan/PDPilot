@@ -131,6 +131,9 @@ def partial_dependence(
         [x[0] for x in one_way_results], key=itemgetter("deviation"), reverse=True
     )
     feature_pairs = {pair for x in one_way_results for pair in x[1]}
+    feature_to_ice_lines = {
+        owp["x_feature"]: lines for owp, _, lines in one_way_results
+    }
 
     feature_to_pd = _get_feature_to_pd(one_way_pds) if one_way_pds else None
 
@@ -234,6 +237,7 @@ def partial_dependence(
 
     results = {
         "one_way_pds": one_way_pds,
+        "feature_to_ice_lines": feature_to_ice_lines,
         "two_way_pds": two_way_pds,
         "two_way_pdp_extent": [two_way_pdp_min, two_way_pdp_max],
         "two_way_interaction_extent": [
@@ -343,7 +347,7 @@ def _calc_one_way_pd(
             else ("decreasing" if percent_pos < (0.5 - tol) else "mixed")
         )
 
-    return par_dep, pairs
+    return par_dep, pairs, ice_lines.tolist()
 
 
 def _calc_two_way_pd(
@@ -535,7 +539,6 @@ def _calculate_ice(ice_lines, data, feature, md):
         "ice_max": ice_lines.max().item(),
         "centered_ice_min": centered_ice_lines.min().item(),
         "centered_ice_max": centered_ice_lines.max().item(),
-        "ice_lines": ice_lines.tolist(),
         "centered_pdp": centered_pdp.tolist(),
         "clusterings": clusterings,
         "adjusted_clusterings": {},

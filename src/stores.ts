@@ -79,6 +79,7 @@ export let labels: Writable<number[]>;
 export let num_instances: Writable<number>;
 
 export let one_way_pds: Writable<OneWayPD[]>;
+export let feature_to_ice_lines: Writable<Record<string, number[][]>>;
 export let two_way_pds: Writable<TwoWayPD[]>;
 
 export let two_way_pdp_extent: Writable<[number, number]>;
@@ -160,6 +161,11 @@ export function setStores(model: DOMWidgetModel): void {
   num_instances = createSyncedWidget<number>('num_instances', 0, model);
 
   one_way_pds = createSyncedWidget<OneWayPD[]>('one_way_pds', [], model);
+  feature_to_ice_lines = createSyncedWidget<Record<string, number[][]>>(
+    'feature_to_ice_lines',
+    {},
+    model
+  );
   two_way_pds = createSyncedWidget<TwoWayPD[]>('two_way_pds', [], model);
 
   two_way_pdp_extent = createSyncedWidget<[number, number]>(
