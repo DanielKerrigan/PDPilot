@@ -3,7 +3,7 @@ import type { OneWayPD, TwoWayPD, PDSortingOption } from './types';
 import { isOneWayPdArray } from './types';
 
 import { descending, transpose, mean } from 'd3-array';
-import { getClustering } from './utils';
+import { centerIceLines, getClustering } from './utils';
 
 export { singlePDPSortingOptions, doublePDPSortingOptions };
 
@@ -76,9 +76,8 @@ const singlePDPSortingOptions: PDSortingOption[] = [
 
       const scores = Object.fromEntries(
         data.map((pd) => {
-          const highlightedLines = indices.map(
-            (i) => pd.ice.centered_ice_lines[i]
-          );
+          const standardIceLines = indices.map((i) => pd.ice.ice_lines[i]);
+          const highlightedLines = centerIceLines(standardIceLines);
           const highlightedCenter = transpose<number>(highlightedLines).map(
             (points) => mean(points) ?? 0
           );

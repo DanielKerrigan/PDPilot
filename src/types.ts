@@ -84,7 +84,7 @@ export type Cluster = {
   distance: number;
 };
 
-type Clustering = {
+export type Clustering = {
   clusters: Cluster[];
   cluster_labels: number[];
   cluster_distance: number;
@@ -99,7 +99,6 @@ export type ICE = {
   centered_ice_min: number;
   centered_ice_max: number;
   ice_lines: number[][];
-  centered_ice_lines: number[][];
   clusterings: Record<string, Clustering>;
   adjusted_clusterings: Record<string, Clustering>;
   centered_pdp: number[];

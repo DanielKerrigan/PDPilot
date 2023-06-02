@@ -1,7 +1,13 @@
 import { sum } from 'd3-array';
-import type { OneWayPD } from './types';
+import type { OneWayPD, Clustering } from './types';
 
-export { isNumeric, areArraysEqual, countsToPercents, getClustering };
+export {
+  isNumeric,
+  areArraysEqual,
+  countsToPercents,
+  getClustering,
+  centerIceLines,
+};
 
 /**
  * Checks if two arrays are equal to each other.
@@ -44,11 +50,20 @@ function countsToPercents(x: number[]): number[] {
   return x.map((d) => d / total);
 }
 
-function getClustering(pd: OneWayPD, numClusters = -1) {
+function getClustering(pd: OneWayPD, numClusters = -1): Clustering {
   if (numClusters === -1) {
     numClusters = pd.ice.num_clusters;
   }
   return (
     pd.ice.adjusted_clusterings[numClusters] ?? pd.ice.clusterings[numClusters]
   );
+}
+
+/**
+ * Centers the ICE lines.
+ * @param iceLines standard ICE lines
+ * @returns centered ICE lines
+ */
+function centerIceLines(iceLines: number[][]): number[][] {
+  return iceLines.map((line) => line.map((d) => d - line[0]));
 }

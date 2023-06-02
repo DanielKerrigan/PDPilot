@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Distribution, OneWayPD } from '../../../types';
+  import { centerIceLines } from '../../../utils';
   import { scaleLinear, scalePoint } from 'd3-scale';
   import type { ScaleLinear, ScalePoint } from 'd3-scale';
   import { line as d3line } from 'd3-shape';
@@ -88,6 +89,11 @@
 
   $: showHighlights = allowBrushing && $highlighted_indices.length > 0;
 
+  $: centeredIceLines = centerIceLines(pd.ice.ice_lines);
+
+  $: iceLines = center ? centeredIceLines : pd.ice.ice_lines;
+  $: pdpLine = center ? pd.ice.centered_pdp : pd.mean_predictions;
+
   // canvas
 
   onMount(() => {
@@ -95,7 +101,9 @@
   });
 
   function drawIcePdp(
-    pd: OneWayPD,
+    iceLines: number[][],
+    pdpLine: number[],
+    xValues: number[],
     ctx: CanvasRenderingContext2D,
     line: Line<number>,
     highlight: number[],
@@ -128,8 +136,6 @@
     ctx.strokeStyle = 'rgb(198, 198, 198)';
     ctx.globalAlpha = 0.15;
 
-    const iceLines = center ? pd.ice.centered_ice_lines : pd.ice.ice_lines;
-
     iceLines.forEach((d) => {
       ctx.beginPath();
       line(d);
@@ -157,15 +163,15 @@
     ctx.globalAlpha = 1;
 
     ctx.beginPath();
-    line(center ? pd.ice.centered_pdp : pd.mean_predictions);
+    line(pdpLine);
     ctx.stroke();
 
     // pdp circles
 
     if ('step' in x) {
-      for (let i = 0; i < pd.x_values.length; i++) {
-        const cx = x(pd.x_values[i]) ?? 0;
-        const cy = y(center ? pd.ice.centered_pdp[i] : pd.mean_predictions[i]);
+      for (let i = 0; i < xValues.length; i++) {
+        const cx = x(xValues[i]) ?? 0;
+        const cy = y(pdpLine[i]);
 
         ctx.beginPath();
         ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
@@ -184,7 +190,9 @@
   */
   function draw() {
     drawIcePdp(
-      pd,
+      iceLines,
+      pdpLine,
+      pd.x_values,
       ctx,
       line,
       $highlighted_indices,
@@ -205,7 +213,9 @@
   }
 
   $: drawIcePdp(
-    pd,
+    iceLines,
+    pdpLine,
+    pd.x_values,
     ctx,
     line,
     $highlighted_indices,
@@ -251,8 +261,6 @@
 
     // pixel coordinates of the x values
     const xs = pd.x_values.map((v) => x(v) ?? 0);
-
-    const iceLines = center ? pd.ice.centered_ice_lines : pd.ice.ice_lines;
 
     $highlighted_indices = iceLines
       .map((lines, index) => ({ lines, index }))
