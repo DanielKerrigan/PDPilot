@@ -17,6 +17,7 @@
     num_instances,
     isClassification,
     highlighted_indices,
+    highlightedIndicesSet,
     brushedFeature,
     brushingInProgress,
     highlightedDistributions,
@@ -106,7 +107,7 @@
   $: feature = $feature_info[pd.x_feature];
   $: xValues = $dataset[pd.x_feature];
   $: colorValues = Array.from({ length: $num_instances }, (_, i) =>
-    $highlighted_indices.includes(i) ? 1 : 0
+    $highlightedIndicesSet.has(i) ? 1 : 0
   );
   $: I = range($num_instances);
 

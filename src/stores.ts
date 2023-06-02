@@ -125,6 +125,7 @@ export let quasiRandomPoints: Readable<{ x: number; y: number }[]>;
 export let brushingInProgress: Writable<boolean>;
 export let brushedFeature: Writable<string>;
 
+export let highlightedIndicesSet: Readable<Set<number>>;
 export let highlightedDistributions: Readable<Map<string, Distribution>>;
 
 // color
@@ -261,6 +262,11 @@ export function setStores(model: DOMWidgetModel): void {
 
   brushingInProgress = writable(false);
   brushedFeature = writable('');
+
+  highlightedIndicesSet = derived(
+    highlighted_indices,
+    ($highlighted_indices) => new Set($highlighted_indices)
+  );
 
   highlightedDistributions = derived(
     [feature_info, dataset, highlighted_indices],
