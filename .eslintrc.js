@@ -3,6 +3,7 @@ module.exports = {
     'eslint:recommended',
     'plugin:@typescript-eslint/eslint-recommended',
     'plugin:@typescript-eslint/recommended',
+    'plugin:svelte/recommended',
     'prettier',
   ],
   parser: '@typescript-eslint/parser',
@@ -16,8 +17,16 @@ module.exports = {
     es2017: true,
     browser: true,
   },
-  plugins: ['@typescript-eslint', 'svelte3'],
-  overrides: [{ files: ['*.svelte'], processor: 'svelte3/svelte3' }],
+  plugins: ['@typescript-eslint'],
+  overrides: [
+    {
+      files: ['*.svelte'],
+      parser: 'svelte-eslint-parser',
+      parserOptions: {
+        parser: '@typescript-eslint/parser',
+      },
+    },
+  ],
   rules: {
     '@typescript-eslint/no-unused-vars': ['warn', { args: 'none' }],
     '@typescript-eslint/no-explicit-any': 'off',
@@ -31,8 +40,5 @@ module.exports = {
     curly: ['error', 'all'],
     eqeqeq: 'error',
     'prefer-arrow-callback': 'error',
-  },
-  settings: {
-    'svelte3/typescript': true,
   },
 };
