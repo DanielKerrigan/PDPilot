@@ -201,7 +201,8 @@ class PDPilotWidget(DOMWidget):
         owp = copy.deepcopy(owp)
         ice = owp["ice"]
 
-        centered_ice_lines = np.array(ice["centered_ice_lines"])
+        ice_lines = np.array(ice["ice_lines"])
+        centered_ice_lines = ice_lines - ice_lines[:, 0].reshape(-1, 1)
         centered_pdp = np.array(ice["centered_pdp"])
 
         clustering = ice["adjusted_clusterings"].get(

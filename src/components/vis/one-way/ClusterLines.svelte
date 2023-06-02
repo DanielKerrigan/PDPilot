@@ -28,7 +28,7 @@
   import MarginalBarChart from '../marginal/MarginalBarChart.svelte';
   import cloneDeep from 'lodash.clonedeep';
   import { onMount, tick } from 'svelte';
-  import { getClustering } from '../../../utils';
+  import { centerIceLines, getClustering } from '../../../utils';
 
   export let pd: OneWayPD;
   export let width: number;
@@ -129,6 +129,8 @@
     .y((d) => y(d))
     .context(ctx);
 
+  $: centeredIceLines = centerIceLines(copyPd.ice.ice_lines);
+
   // canvas
 
   onMount(() => {
@@ -136,7 +138,8 @@
   });
 
   function drawClusterLines(
-    pd: OneWayPD,
+    centeredIceLines: number[][],
+    centeredPdpLine: number[],
     clustersWithFilteredIndices: (Cluster & { filteredIndices: number[] })[],
     ctx: CanvasRenderingContext2D,
     line: Line<number>,
@@ -173,7 +176,7 @@
           cluster.id === sourceClusterId && !brushedIndices.has(idx)
             ? 'rgb(171, 171, 171)'
             : light(cluster.id);
-        line(pd.ice.centered_ice_lines[idx]);
+        line(centeredIceLines[idx]);
         ctx.stroke();
       });
 
@@ -184,7 +187,7 @@
       ctx.globalAlpha = 1.0;
 
       ctx.beginPath();
-      line(pd.ice.centered_pdp);
+      line(centeredPdpLine);
       ctx.stroke();
 
       // cluster mean line
@@ -212,7 +215,8 @@
   */
   function draw() {
     drawClusterLines(
-      copyPd,
+      centeredIceLines,
+      copyPd.ice.centered_pdp,
       clustersWithFilteredIndices,
       ctx,
       line,
@@ -230,7 +234,8 @@
   }
 
   $: drawClusterLines(
-    copyPd,
+    centeredIceLines,
+    copyPd.ice.centered_pdp,
     clustersWithFilteredIndices,
     ctx,
     line,
@@ -323,7 +328,7 @@
     const xs = copyPd.x_values.map((v) => x(v) ?? 0);
 
     const iceLines = cluster.filteredIndices.map((i) => ({
-      line: copyPd.ice.centered_ice_lines[i],
+      line: centeredIceLines[i],
       index: i,
     }));
 
@@ -368,7 +373,7 @@
   }
 
   // TODO: this won't disable brushing after it's enabled
-  $: if (svg && pd) {
+  $: if (svg && copyPd) {
     setupBrush(brush);
   }
 

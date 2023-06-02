@@ -536,7 +536,6 @@ def _calculate_ice(ice_lines, data, feature, md):
         "centered_ice_min": centered_ice_lines.min().item(),
         "centered_ice_max": centered_ice_lines.max().item(),
         "ice_lines": ice_lines.tolist(),
-        "centered_ice_lines": centered_ice_lines.tolist(),
         "centered_pdp": centered_pdp.tolist(),
         "clusterings": clusterings,
         "adjusted_clusterings": {},
