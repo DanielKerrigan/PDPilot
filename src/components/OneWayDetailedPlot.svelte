@@ -119,6 +119,8 @@
       </div>
     </div>
 
+    <div class="pdpilot-vertical-divider" />
+
     <div class="pdpilot-half">
       <div
         class="pdpilot-half-header"
@@ -186,7 +188,6 @@
     display: flex;
     width: 100%;
     height: 100%;
-    gap: 2em;
   }
 
   .pdpilot-no-clusters-message {
@@ -203,5 +204,11 @@
 
   .pdpilot-half-vis {
     flex: 1;
+  }
+
+  .pdpilot-vertical-divider {
+    width: 1px;
+    margin: 0 1em;
+    background-color: var(--gray-1);
   }
 </style>
