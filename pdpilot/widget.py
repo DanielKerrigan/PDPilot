@@ -59,6 +59,15 @@ class PDPilotWidget(DOMWidget):
     num_instances = Int(0).tag(sync=True)
 
     one_way_pds = ListTraitlet([]).tag(sync=True)
+    """
+    The ice lines are a lot of data, so we want to limit how often we have to
+    transfer them between the backend and frontend. If they were a part of
+    one_way_pds, then they would get sent whenever the ICE clusters get
+    adjusted in the detailed plot view. By separating them out, adjusting
+    the clusters becomes faster and won't run into the "message too big"
+    errors with tornado.
+    """
+    feature_to_ice_lines = Dict({}).tag(sync=True)
     two_way_pds = ListTraitlet([]).tag(sync=True)
 
     two_way_pdp_extent = ListTraitlet([0, 0]).tag(sync=True)
@@ -114,6 +123,7 @@ class PDPilotWidget(DOMWidget):
         self.num_instances = pd_data["num_instances"]
 
         self.one_way_pds = pd_data["one_way_pds"]
+        self.feature_to_ice_lines = pd_data["feature_to_ice_lines"]
         self.two_way_pds = pd_data["two_way_pds"]
 
         self.two_way_pdp_extent = pd_data["two_way_pdp_extent"]
@@ -201,7 +211,7 @@ class PDPilotWidget(DOMWidget):
         owp = copy.deepcopy(owp)
         ice = owp["ice"]
 
-        ice_lines = np.array(ice["ice_lines"])
+        ice_lines = np.array(self.feature_to_ice_lines[feature])
         centered_ice_lines = ice_lines - ice_lines[:, 0].reshape(-1, 1)
         centered_pdp = np.array(ice["centered_pdp"])
 

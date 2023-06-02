@@ -18,6 +18,7 @@
     feature_info,
     one_way_pds,
     cluster_update,
+    feature_to_ice_lines,
   } from '../../../stores';
   import MarginalHistogram from '../marginal/MarginalHistogram.svelte';
   import {
@@ -129,7 +130,7 @@
     .y((d) => y(d))
     .context(ctx);
 
-  $: centeredIceLines = centerIceLines(copyPd.ice.ice_lines);
+  $: centeredIceLines = centerIceLines($feature_to_ice_lines[copyPd.x_feature]);
 
   // canvas
 

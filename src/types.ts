@@ -98,7 +98,6 @@ export type ICE = {
   ice_max: number;
   centered_ice_min: number;
   centered_ice_max: number;
-  ice_lines: number[][];
   clusterings: Record<string, Clustering>;
   adjusted_clusterings: Record<string, Clustering>;
   centered_pdp: number[];
@@ -182,6 +181,7 @@ export type PDSortingOption = {
       highlightedIndices?: number[];
       highlightedDistributions?: Map<string, Distribution>;
       featureInfo?: Record<string, FeatureInfo>;
+      featureToIceLines?: Record<string, number[][]>;
     }
   ) => OneWayPD[] | TwoWayPD[];
 };

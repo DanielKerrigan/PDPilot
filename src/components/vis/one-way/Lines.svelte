@@ -16,6 +16,7 @@
     brushingInProgress,
     highlightedDistributions,
     brushedFeature,
+    feature_to_ice_lines,
   } from '../../../stores';
   import { select } from 'd3-selection';
   import type { Selection } from 'd3-selection';
@@ -89,9 +90,10 @@
 
   $: showHighlights = allowBrushing && $highlighted_indices.length > 0;
 
-  $: centeredIceLines = centerIceLines(pd.ice.ice_lines);
+  $: standardIceLines = $feature_to_ice_lines[pd.x_feature];
+  $: centeredIceLines = centerIceLines(standardIceLines);
 
-  $: iceLines = center ? centeredIceLines : pd.ice.ice_lines;
+  $: iceLines = center ? centeredIceLines : standardIceLines;
   $: pdpLine = center ? pd.ice.centered_pdp : pd.mean_predictions;
 
   // canvas

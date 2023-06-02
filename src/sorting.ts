@@ -67,16 +67,19 @@ const singlePDPSortingOptions: PDSortingOption[] = [
         !isOneWayPdArray(data) ||
         !extra ||
         !extra.highlightedIndices ||
-        extra.highlightedIndices.length <= 1
+        extra.highlightedIndices.length <= 1 ||
+        !extra.featureToIceLines
       ) {
         return data;
       }
 
       const indices = extra.highlightedIndices;
+      const featureToIceLines = extra.featureToIceLines;
 
       const scores = Object.fromEntries(
         data.map((pd) => {
-          const standardIceLines = indices.map((i) => pd.ice.ice_lines[i]);
+          const allIceLines = featureToIceLines[pd.x_feature];
+          const standardIceLines = indices.map((i) => allIceLines[i]);
           const highlightedLines = centerIceLines(standardIceLines);
           const highlightedCenter = transpose<number>(highlightedLines).map(
             (points) => mean(points) ?? 0

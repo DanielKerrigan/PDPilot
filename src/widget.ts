@@ -22,6 +22,7 @@ export class PDPilotModel extends DOMWidgetModel {
       labels: [],
       num_instances: 0,
       one_way_pds: [],
+      feature_to_ice_lines: {},
       two_way_pds: [],
       two_way_pdp_extent: [0, 0],
       two_way_interaction_extent: [0, 0],

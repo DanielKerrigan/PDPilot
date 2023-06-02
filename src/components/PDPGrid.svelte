@@ -16,6 +16,7 @@
     detailedScaleLocally,
     detailedICELevel,
     detailedContextKind,
+    feature_to_ice_lines,
   } from '../stores';
   import InfoTooltip from './InfoTooltip.svelte';
 
@@ -91,6 +92,7 @@
       highlightedIndices: $highlighted_indices,
       highlightedDistributions: $highlightedDistributions,
       featureInfo: $feature_info,
+      featureToIceLines: $feature_to_ice_lines,
     });
 
     // when the sorting or data changes, go to the first page
