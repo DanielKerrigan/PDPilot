@@ -39,8 +39,8 @@ function scaleCanvas(
   canvas.height = height * devicePixelRatio;
 
   // ...then scale it back down with CSS
-  canvas.style.width = width + 'px';
-  canvas.style.height = height + 'px';
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
 
   // scale the drawing context so everything will work at the higher ratio
   context.scale(devicePixelRatio, devicePixelRatio);

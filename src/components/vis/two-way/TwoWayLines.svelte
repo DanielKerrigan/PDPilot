@@ -23,12 +23,9 @@
   export let width: number;
   export let height: number;
   export let scaleLocally: boolean;
-  export let showMarginalDistribution: boolean;
-  export let colorShows: 'predictions' | 'interactions';
   export let showColorLegend: boolean;
   export let marginTop = 0;
   export let marginRight = 0;
-  export let marginalPlotHeight: number;
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;

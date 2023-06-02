@@ -39,12 +39,9 @@
     {width}
     {height}
     {scaleLocally}
-    {showMarginalDistribution}
-    {colorShows}
     {showColorLegend}
     {marginTop}
     {marginRight}
-    {marginalPlotHeight}
   />
 {/if}
 
