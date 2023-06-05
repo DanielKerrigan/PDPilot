@@ -104,7 +104,10 @@
     left: minMargin.left + extraLeftRightMargin,
   };
 
-  $: heightExcludingLegend = height - legendHeight - aboveLegendMargin;
+  $: heightExcludingLegend = Math.max(
+    height - legendHeight - aboveLegendMargin,
+    0
+  );
 
   // scales
 
@@ -267,7 +270,8 @@
   let group: SVGGElement;
   let selection: Selection<SVGGElement, undefined, null, undefined> | undefined;
 
-  $: if (group && allowBrushing) {
+  // don't draw brush with negative dimensions
+  $: if (group && allowBrushing && width > 0 && heightExcludingLegend > 0) {
     selection = select(group);
     selection.call(brush);
   }

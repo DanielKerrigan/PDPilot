@@ -305,7 +305,8 @@
     selection.call(brush.clear);
   }
 
-  $: if (group && features) {
+  // avoid drawing rect for brush with negative width
+  $: if (group && features && visWidth > 0) {
     setupBrush(brush);
   }
 

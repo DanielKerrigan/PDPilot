@@ -373,8 +373,9 @@
     selection.call(brush);
   }
 
+  // avoid drawing rect for brush with negative height
   // TODO: this won't disable brushing after it's enabled
-  $: if (svg && copyPd) {
+  $: if (svg && copyPd && chartHeight > 0) {
     setupBrush(brush);
   }
 
