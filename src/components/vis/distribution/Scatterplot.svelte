@@ -287,7 +287,9 @@
   }
 
   let highlightedDistribution: Distribution | undefined;
-  $: highlightedDistribution = $highlightedDistributions.get(xLabel);
+  $: highlightedDistribution = allowBrushing
+    ? $highlightedDistributions.get(xLabel)
+    : undefined;
 
   $: showHighlightedDistribution =
     highlightedDistribution && $highlighted_indices.length > 0;
@@ -396,7 +398,7 @@
     <g bind:this={group} />
 
     {#if showMarginalDistribution}
-      {#if allowBrushing && highlightedDistribution && $highlighted_indices.length > 0}
+      {#if highlightedDistribution && $highlighted_indices.length > 0}
         {#if 'bandwidth' in x}
           <MarginalBarChart
             data={highlightedDistribution}

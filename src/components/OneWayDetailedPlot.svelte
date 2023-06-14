@@ -81,7 +81,7 @@
 <div class="one-way-detailed-pdp-container">
   {#if $detailedICELevel === 'cluster-lines' && pd.ice.num_clusters === 1}
     <div class="pdpilot-no-clusters-message">
-      This feature does not have any distinct clusters of ICE lines.
+      This feature does not have enough distinct clusters of ICE lines.
     </div>
   {:else}
     <div class="pdpilot-half">

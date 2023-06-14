@@ -16,10 +16,10 @@
   }
 
   function onEnabledFeaturesChange(enabledFeatures: string[]) {
-    selectedFeatures =
-      enabledFeatures.length === $feature_names.length ? [] : enabledFeatures;
+    const allEnabled = enabledFeatures.length === $feature_names.length;
+    selectedFeatures = allEnabled ? [] : enabledFeatures;
 
-    dispatchSelections(selectedFeatures);
+    dispatchSelections(selectedFeatures, allEnabled);
   }
 
   $: onEnabledFeaturesChange(enabledFeatures);
@@ -35,11 +35,15 @@
     selectedFeatures = [];
   }
 
-  $: dispatchSelections(selectedFeatures);
+  $: dispatchSelections(
+    selectedFeatures,
+    enabledFeatures.length === $feature_names.length
+  );
 
-  function dispatchSelections(feats: string[]) {
-    // if nothing is selected, then the default is that all are selected
-    if (feats.length === 0) {
+  function dispatchSelections(feats: string[], allEnabled: boolean) {
+    // if nothing is selected and all features are enabled,
+    // then the default is that all are selected
+    if (feats.length === 0 && allEnabled) {
       dispatch('changeNameFilters', $feature_names);
     } else {
       dispatch('changeNameFilters', feats);
@@ -66,6 +70,7 @@
         />
         <label
           class="pdpilot-cutoff"
+          class:disabled-feature-label={disabled}
           for="{idPrefix}-{feature}-checkbox"
           title={feature}>{feature}</label
         >
@@ -108,5 +113,10 @@
 
   .hidden {
     display: none;
+  }
+
+  .disabled-feature-label {
+    color: var(--gray-5);
+    cursor: not-allowed;
   }
 </style>

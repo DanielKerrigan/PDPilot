@@ -7,20 +7,19 @@ Compute partial dependence plots
 
 import json
 import math
-from operator import itemgetter
 from collections import defaultdict
+from operator import itemgetter
 from pathlib import Path
-from typing import Callable, Union, Dict, Tuple, List
+from typing import Callable, Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
-from sklearn.tree import DecisionTreeClassifier
-from tqdm import tqdm
-
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.tree import DecisionTreeClassifier
+from tqdm import tqdm
 
 from pdpilot.metadata import Metadata
 from pdpilot.tqdm_joblib import tqdm_joblib
@@ -36,6 +35,8 @@ def partial_dependence(
     nominal_features: Union[List[str], None] = None,
     ordinal_features: Union[List[str], None] = None,
     feature_value_mappings: Union[Dict[str, Dict[str, str]], None] = None,
+    num_clusters_extent: Tuple[int, int] = (2, 5),
+    mixed_shape_tolerance: float = 0.15,
     n_jobs: int = 1,
     output_path: Union[str, None] = None,
 ) -> Union[dict, None]:
@@ -70,6 +71,15 @@ def partial_dependence(
         the dataset, to the desired label for that value in the UI,
         defaults to None.
     :type feature_value_mappings: dict[str, dict[str, str]] | None, optional
+    :param num_clusters_extent: The minimum and maximum number of clusters to
+        try when clustering the lines of ICE plots. Defaults to (2, 5).
+    :type num_clusters_extent: tuple[int, int]
+    :param mixed_shape_tolerance: Quantitative and ordinal one-way PDPs are labeled
+        as having positive, negative, or mixed shapes. A lower value for this parameter
+        leads to more PDPs being labeled as positive or negative and fewer being
+        labeled as mixed. A higher value leads to more being labeled as mixed.
+        Must be in the range [0, 0.5]. Defaults to 0.15.
+    :type mixed_shape_tolerance: float
     :param n_jobs: Number of jobs to use to parallelize computation,
         defaults to 1.
     :type n_jobs: int, optional
@@ -111,6 +121,8 @@ def partial_dependence(
             "data_copy": subset_copy,
             "feature": feature,
             "md": md,
+            "num_clusters_extent": num_clusters_extent,
+            "mixed_shape_tolerance": mixed_shape_tolerance,
             "feature_to_pd": None,
         }
         for feature in features
@@ -146,6 +158,8 @@ def partial_dependence(
             "data_copy": subset_copy,
             "feature": pair,
             "md": md,
+            "num_clusters_extent": None,
+            "mixed_shape_tolerance": None,
             "feature_to_pd": feature_to_pd,
         }
         for pair in feature_pairs
@@ -260,12 +274,16 @@ def partial_dependence(
         return results
 
 
+# TODO: does it make sense to still have _calc_pd? might be better to just call
+# _calc_two_way_pd or _calc_one_way_pd directly
 def _calc_pd(
     predict,
     data,
     data_copy,
     feature,
     md,
+    num_clusters_extent,
+    mixed_shape_tolerance,
     feature_to_pd,
 ):
     if isinstance(feature, tuple) or isinstance(feature, list):
@@ -284,15 +302,13 @@ def _calc_pd(
             data_copy,
             feature,
             md,
+            num_clusters_extent,
+            mixed_shape_tolerance,
         )
 
 
 def _calc_one_way_pd(
-    predict,
-    data,
-    data_copy,
-    feature,
-    md,
+    predict, data, data_copy, feature, md, num_clusters_extent, mixed_shape_tolerance
 ):
     feat_info = md.feature_info[feature]
 
@@ -316,7 +332,13 @@ def _calc_one_way_pd(
 
     mean_predictions = mean_predictions.tolist()
 
-    ice, pairs = _calculate_ice(ice_lines=ice_lines, data=data, feature=feature, md=md)
+    ice, pairs = _calculate_ice(
+        ice_lines=ice_lines,
+        data=data,
+        feature=feature,
+        md=md,
+        num_clusters_extent=num_clusters_extent,
+    )
 
     par_dep = {
         "num_features": 1,
@@ -339,12 +361,15 @@ def _calc_one_way_pd(
         pos = diff[diff > 0].sum()
         neg = np.abs(diff[diff < 0].sum())
         percent_pos = pos / (pos + neg) if pos + neg != 0 else 0.5
-        tol = 0.15
 
         par_dep["shape"] = (
             "increasing"
-            if percent_pos > (0.5 + tol)
-            else ("decreasing" if percent_pos < (0.5 - tol) else "mixed")
+            if percent_pos >= (0.5 + mixed_shape_tolerance)
+            else (
+                "decreasing"
+                if percent_pos <= (0.5 - mixed_shape_tolerance)
+                else "mixed"
+            )
         )
 
     return par_dep, pairs, ice_lines.tolist()
@@ -479,7 +504,7 @@ def _get_feature_to_pd(one_way_pds):
     return {par_dep["x_feature"]: par_dep for par_dep in one_way_pds}
 
 
-def _calculate_ice(ice_lines, data, feature, md):
+def _calculate_ice(ice_lines, data, feature, md, num_clusters_extent):
     centered_ice_lines = ice_lines - ice_lines[:, 0].reshape(-1, 1)
     centered_pdp = centered_ice_lines.mean(axis=0)
 
@@ -492,7 +517,7 @@ def _calculate_ice(ice_lines, data, feature, md):
 
     clusterings = {}
 
-    for n_clusters in range(2, 6):
+    for n_clusters in range(num_clusters_extent[0], num_clusters_extent[1] + 1):
         cluster_model = KMeans(
             n_clusters=n_clusters,
             init="k-means++",
@@ -503,11 +528,13 @@ def _calculate_ice(ice_lines, data, feature, md):
         cluster_model.fit(slopes)
         labels = cluster_model.labels_
 
-        if len(np.unique(labels)) == 1:
-            # all of the lines were assigned to the same cluster.
-            # this can happen if the feature is not used by the model, causing
-            # all of the centered ice lines to be the same
-            best_n_clusters = 1
+        if len(np.unique(labels)) < n_clusters:
+            # Fewer than n_clusters clusters were found.
+            # This could happen if the feature is not used by the model, causing
+            # all of the centered ice lines to be the same.
+            if best_n_clusters == -1:
+                best_n_clusters = 1
+
             break
 
         score = silhouette_score(distances, cluster_model.labels_, metric="precomputed")
