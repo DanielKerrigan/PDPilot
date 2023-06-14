@@ -3,6 +3,7 @@
 scratch/
 **/__pycache__
 MANIFEST
+supplemental/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
