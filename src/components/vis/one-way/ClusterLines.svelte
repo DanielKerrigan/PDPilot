@@ -70,6 +70,10 @@
 
   $: clusters = getClustering(copyPd).clusters;
 
+  $: allowedNumClusters = Object.keys(pd.ice.clusterings).map((d) => +d);
+  $: minNumClusters = Math.min(...allowedNumClusters);
+  $: maxNumClusters = Math.max(...allowedNumClusters);
+
   $: clustersWithFilteredIndices = clusters.map((cluster) => ({
     ...cluster,
     filteredIndices: cluster.indices.filter(
@@ -248,7 +252,7 @@
   );
 
   function setNumClusters(numClusters: number) {
-    if (numClusters < 2 || numClusters > 5) {
+    if (numClusters < minNumClusters || numClusters > maxNumClusters) {
       return;
     }
 
@@ -410,7 +414,7 @@
       <div>Number of clusters:</div>
       <div class="num-cluster-change">
         <button
-          disabled={copyPd.ice.num_clusters <= 2}
+          disabled={copyPd.ice.num_clusters <= minNumClusters}
           on:click={() => setNumClusters(copyPd.ice.num_clusters - 1)}
           title="Decrement number of clusters"
         >
@@ -435,7 +439,7 @@
 
         <button
           disabled={copyPd.ice.num_clusters === 1 ||
-            copyPd.ice.num_clusters >= 5}
+            copyPd.ice.num_clusters >= maxNumClusters}
           on:click={() => setNumClusters(copyPd.ice.num_clusters + 1)}
           title="Increment number of clusters"
         >
@@ -472,7 +476,8 @@
       <div class="move-lines">
         <button
           on:click={() => adjustClusters(copyPd.ice.num_clusters)}
-          disabled={allLinesInClustedBrushed || copyPd.ice.num_clusters === 5}
+          disabled={allLinesInClustedBrushed ||
+            copyPd.ice.num_clusters === maxNumClusters}
         >
           New
         </button>
@@ -484,7 +489,7 @@
           {:else}
             <button
               class="cluster-number"
-              disabled={copyPd.ice.num_clusters === 2 &&
+              disabled={copyPd.ice.num_clusters === minNumClusters &&
                 allLinesInClustedBrushed}
               on:click={() => adjustClusters(clusterId)}
               style:--light={light(clusterId)}
