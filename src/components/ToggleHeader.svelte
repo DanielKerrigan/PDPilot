@@ -11,6 +11,8 @@
     style:width="{size}px"
     style:height="{size}px"
     style:padding="0"
+    style:color="var(--black)"
+    style:background-color="white"
     on:click={() => (expanded = !expanded)}
   >
     <!-- no pdpilot-icon class here because we don't want the

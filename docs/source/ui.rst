@@ -1,13 +1,17 @@
 
-Usage
-=====
+User Interface
+==============
 
 The UI is organized into three tabs: One-way Plots, Two-way Plots, and Detailed Plot.
 
 One-way Plots
 -------------
 
-The One-way Plots tab shows a grid of PDP + ICE plots, each containing one feature. Each plot shows the ICE lines in gray and the partial dependence line in black.  Above the plots, there is a row of controls. The arrow buttons allow you to change pages. The “ICE” dropdown menu controls the type of visualization shown. The default is the standard ICE plot. Alternatively, you can show centered ICE plots, where all of the lines start at y = 0. Lastly, you can cluster the ICE lines and show the mean of each cluster. The “Scale locally” checkbox determines whether each plot has the same y-axis or each plot has its y-axis scaled to fit its own data. For normal ICE plots, scaling locally may not have any effect if the ICE lines already take up the full range of y-values. The "Distributions" checkbox toggles whether or not the marginal distributions of the features are shown above the plots. Brushing the lines on an ICE plot highlights the lines for those instances across all of the plots.
+.. image:: screenshots/one-way-plots.png
+  :width: 800
+  :alt: Screenshot of the One-way Plots tab in PDPilot.
+
+The One-way Plots tab shows a grid of `PDP <https://christophm.github.io/interpretable-ml-book/pdp.html>`_ + `ICE <https://christophm.github.io/interpretable-ml-book/ice.html>`_ plots, each containing one feature. Each plot shows the ICE lines in gray and the partial dependence line in black.  Above the plots, there is a row of controls. The arrow buttons allow you to change pages. The “ICE” dropdown menu controls the type of visualization shown. The default is the standard ICE plot. Alternatively, you can show centered ICE plots, where all of the lines start at y = 0. Lastly, you can cluster the ICE lines and show the mean of each cluster. The “Scale locally” checkbox determines whether each plot has the same y-axis or each plot has its y-axis scaled to fit its own data. For normal ICE plots, scaling locally may not have any effect if the ICE lines already take up the full range of y-values. The "Distributions" checkbox toggles whether or not the marginal distributions of the features are shown above the plots. Brushing the lines on an ICE plot highlights the lines for those instances across all of the plots.
 
 The “Sort” dropdown menu controls how the plots are sorted. The one-way plots can be ranked according to one of several metrics:
 
@@ -21,6 +25,10 @@ On the left sidebar, you can filter the plots by the type of the feature, by the
 Two-way Plots
 -------------
 
+.. image:: screenshots/two-way-plots.png
+  :width: 800
+  :alt: Screenshot of the Two-way Plots tab in PDPilot.
+
 The Two-way Plots tab shows a grid of PDPs, each containing two features. The default color scale visualizes the interactions between the pairs of features. A positive value indicates a positive interaction effect. This means that the features are interacting in a way that make the average prediction higher than expected if there was no interaction. A negative value indicates a negative interaction effect that lowers the model's average prediction compared to what would be expected with no interaction. Using the one-way PDPs for a given pair of features, we can calculate what the two-way PDP would look like if there was no interaction between the two features. We then visualize the difference between the the actual PDP and the calculated PDP with no interaction. Using the "Color" drop-down menu, you can change the color scale to "predictions" in order to show traditional two-way PDPs, where color encodes the model's average prediction.
 
 The two-way plots can be ranked according to the following metrics:
@@ -33,6 +41,20 @@ Detailed Plot
 
 Hovering over any plot in the One-way Plots or Two-way Plots tab will reveal an expand button in the bottom-left corner of the plot. Clicking on this button will show this plot in the Detailed Plot tab. Alternatively, you can directly go to the Detailed Plot tab and choose which feature or pair of features you want to look at in more detail.
 
-For a one-way plot, this tab shows a larger version of the plot and allows you to analyze the clusters in more depth. In this tab, the “Clusters” visualization shows each cluster in its own plot. The ICE lines in each cluster are shown in lighter-colored lines. The mean of each cluster is shown in a darker-colored line. The partial dependence line is shown in black in each plot. In order to understand what kind of instances make up each cluster, you can select the "Describe clusters" checkbox. This visualizes the distributions of the instances in each cluster for a handful of features. PDPilot automatically chooses features that are helpful in separating the clusters.
+.. image:: screenshots/detailed-plot-one-way-scatter.png
+  :width: 800
+  :alt: Screenshot of the Detailed Plots tab in PDPilot for a one-way PDP.
 
-For a two-way plot, the Detailed Plot tab shows the one-way ICE plots for both features, the two-way PDP, and the two-way interaction PDP. Two-way PDPs are expensive to compute, so for efficiency, PDPilot only computes the two-way PDPs that it expects to show interaction. If you change the features in the Detailed Plot tab, the two-way PDP for the pair that you select may not have been pre-computed. In this case, you can click the “Compute Now” button to calculate the two-way PDP.
+For a one-way plot, this tab shows two visualizations side-by-side. On the left is a visualization of the ICE plot and on the right is a visualization that provides more context. For the ICE plot, you can choose between a standard ICE plot, a centered ICE plot, and a clustered ICE plot. For standard and centered ICE plots, the only available context plot visualizes the feature values and ground truth labels.
+
+.. image:: screenshots/detailed-plot-one-way-clusters.png
+  :width: 800
+  :alt: Screenshot of the Detailed Plots tab in PDPilot for a one-way PDP.
+
+In this tab, the “Clusters” visualization shows each cluster of ICE lines in its own plot. The ICE lines in each cluster are shown in lighter-colored lines. The mean of each cluster is shown in a darker-colored line. The partial dependence line is shown in black in each plot. In order to understand what kind of instances make up each cluster, you can change the context visualization to "Cluster Descriptions". This visualizes the distributions of the instances in each cluster for a handful of features. PDPilot automatically chooses features that are helpful in separating the clusters.
+
+.. image:: screenshots/detailed-plot-two-way.png
+  :width: 800
+  :alt: Screenshot of the Detailed Plots tab in PDPilot for a two-way PDP.
+
+For a two-way plot, the Detailed Plot tab shows the two-way PDP, the two-way interaction PDP, and a plot that visualizes the values of the two fetures and the ground truth labels. The corresponding one-way PDPs are shown in the margins of the two-way PDPs. Two-way plots are expensive to compute, so for efficiency, PDPilot only computes the two-way PDPs that it expects to show interaction. If you change the features in the Detailed Plot tab, the two-way PDP for the pair that you select may not have been pre-computed. In this case, you can click the “Compute Now” button to calculate the two-way PDP.
