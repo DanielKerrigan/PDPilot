@@ -11,7 +11,9 @@ One-way Plots
   :width: 800
   :alt: Screenshot of the One-way Plots tab in PDPilot.
 
-The One-way Plots tab shows a grid of `PDP <https://christophm.github.io/interpretable-ml-book/pdp.html>`_ + `ICE <https://christophm.github.io/interpretable-ml-book/ice.html>`_ plots, each containing one feature. Each plot shows the ICE lines in gray and the partial dependence line in black.  Above the plots, there is a row of controls. The arrow buttons allow you to change pages. The “ICE” dropdown menu controls the type of visualization shown. The default is the standard ICE plot. Alternatively, you can show centered ICE plots, where all of the lines start at y = 0. Lastly, you can cluster the ICE lines and show the mean of each cluster. The “Scale locally” checkbox determines whether each plot has the same y-axis or each plot has its y-axis scaled to fit its own data. For normal ICE plots, scaling locally may not have any effect if the ICE lines already take up the full range of y-values. The "Distributions" checkbox toggles whether or not the marginal distributions of the features are shown above the plots. Brushing the lines on an ICE plot highlights the lines for those instances across all of the plots.
+The One-way Plots tab shows a grid of `PDP <https://christophm.github.io/interpretable-ml-book/pdp.html>`_ + `ICE <https://christophm.github.io/interpretable-ml-book/ice.html>`_ plots, each containing one feature. Each plot shows the ICE lines in gray and the partial dependence line in black. Above each plot is a histogram showing the distribution of the feature's values in the dataset. In the row of controls at the top, the arrow buttons allow you to change pages. The “ICE” dropdown menu controls the type of visualization shown. The default is the standard ICE plot. Alternatively, you can show centered ICE plots, where all of the lines start at y = 0. Lastly, you can cluster the ICE lines and show the mean of each cluster. The “Scale locally” checkbox determines whether each plot has the same y-axis or each plot has its y-axis scaled to fit its own data. For normal ICE plots, scaling locally may not have any effect if the ICE lines already take up the full range of y-values.
+
+Brushing the lines on an ICE plot highlights the lines for those instances across all of the plots. When you brush lines, the histograms update to show both the distribution of the highlighted instances and the distribution of the entire dataset. The green bars show the distribution of the highlighted instances. The transparent bars with black outline show the distribution of the entire dataset. The two plots are overlaid so that you can compare the highlighted distribution to the overall distribution.
 
 The “Sort” dropdown menu controls how the plots are sorted. The one-way plots can be ranked according to one of several metrics:
 
@@ -20,7 +22,7 @@ The “Sort” dropdown menu controls how the plots are sorted. The one-way plot
 * **Highlighted similarity**: Used in coordination with brushing ICE lines. This metric can be useful to identify if a cluster of instances in one plot is also a cluster in any others. Plots where the highlighted lines are closer together and farther from the partial dependence line are ranked first. The distances are computed on the centered ICE lines, so this metric is best paired with the centered ICE lines visualization. If you change the highlighted instances after selecting this metric, then clicking the refresh button next to the drop-down menu will update the rankings.
 * **Highlighted distribution**: Used in coordination with brushing ICE lines. For each plot, this metric measures the distance between the distribution of feature values for the highlighted instances to the distribution for all instances. The plots are sorted in descending order so that the features whose highlighted distributions are most different from the overall distributions are ranked higher. If you change the highlighted instances after selecting this metric, then clicking the refresh button next to the drop-down menu will update the rankings.
 
-On the left sidebar, you can filter the plots by the type of the feature, by the shape of the PDP, and by feature name. Ordered features have values with defined orders, such as quantities. Nominal features have values without defined orders, such as categories. For ordered features, you can filter by whether the feature's PDP is generally increasing, decreasing, or sometimes increasing and sometimes decreasing.
+On the left sidebar, you can filter the plots by the type of the feature, by the shape of the PDP, and by feature name. Ordered features have values with defined orders, such as temperature or day of the week. Nominal features have values without defined orders. For ordered features, you can filter by whether the feature's PDP is generally increasing, decreasing, or sometimes increasing and sometimes decreasing.
 
 Two-way Plots
 -------------
@@ -41,15 +43,15 @@ Detailed Plot
 
 Hovering over any plot in the One-way Plots or Two-way Plots tab will reveal an expand button in the bottom-left corner of the plot. Clicking on this button will show this plot in the Detailed Plot tab. Alternatively, you can directly go to the Detailed Plot tab and choose which feature or pair of features you want to look at in more detail.
 
-.. image:: screenshots/detailed-plot-one-way-scatter.png
+.. image:: screenshots/detailed-plot-one-way-ground-truth.png
   :width: 800
-  :alt: Screenshot of the Detailed Plots tab in PDPilot for a one-way PDP.
+  :alt: Screenshot of the Detailed Plots tab in PDPilot showing a one-way ICE plot alongside a visualization of the feature values vs. ground truth labels.
 
-For a one-way plot, this tab shows two visualizations side-by-side. On the left is a visualization of the ICE plot and on the right is a visualization that provides more context. For the ICE plot, you can choose between a standard ICE plot, a centered ICE plot, and a clustered ICE plot. For standard and centered ICE plots, the only available context plot visualizes the feature values and ground truth labels.
+For a one-way plot, this tab shows two visualizations side-by-side. On the left is a visualization of the ICE plot and on the right is a visualization that provides more context. For the ICE plot, you can choose between a standard ICE plot, a centered ICE plot, and a clustered ICE plot. For standard and centered ICE plots, the context plot visualizes the feature values and ground truth labels.
 
 .. image:: screenshots/detailed-plot-one-way-clusters.png
   :width: 800
-  :alt: Screenshot of the Detailed Plots tab in PDPilot for a one-way PDP.
+  :alt: Screenshot of the Detailed Plots tab in PDPilot showing a clustered one-way ICE plot alongside visual descriptions of the clusters.
 
 In this tab, the “Clusters” visualization shows each cluster of ICE lines in its own plot. The ICE lines in each cluster are shown in lighter-colored lines. The mean of each cluster is shown in a darker-colored line. The partial dependence line is shown in black in each plot. In order to understand what kind of instances make up each cluster, you can change the context visualization to "Cluster Descriptions". This visualizes the distributions of the instances in each cluster for a handful of features. PDPilot automatically chooses features that are helpful in separating the clusters.
 

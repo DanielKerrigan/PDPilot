@@ -50,7 +50,7 @@
   }[] = [];
 
   $: contextOptions = [
-    { value: 'scatterplot', label: 'Scatterplot', enabled: true },
+    { value: 'scatterplot', label: 'Feature vs. Label', enabled: true },
     {
       value: 'cluster-descriptions',
       label: 'Cluster Descriptions',
