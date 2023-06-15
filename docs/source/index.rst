@@ -28,6 +28,7 @@ See the `example notebooks <https://github.com/DanielKerrigan/PDPilot/tree/main/
 .. toctree::
    :caption: User Guide
 
+   installation
    api
    ui
 
