@@ -15,6 +15,7 @@ from typing import Callable, Dict, List, Tuple, Union
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
+from numpy.random import MT19937, RandomState, SeedSequence
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 from sklearn.metrics.pairwise import euclidean_distances
@@ -38,6 +39,7 @@ def partial_dependence(
     num_clusters_extent: Tuple[int, int] = (2, 5),
     mixed_shape_tolerance: float = 0.15,
     n_jobs: int = 1,
+    seed: Union[int, None] = None,
     output_path: Union[str, None] = None,
 ) -> Union[dict, None]:
     """Calculates the data needed for the widget. This includes computing the
@@ -83,6 +85,8 @@ def partial_dependence(
     :param n_jobs: Number of jobs to use to parallelize computation,
         defaults to 1.
     :type n_jobs: int, optional
+    :param seed:  Random state for clustering. Defaults to None.
+    :type seed: int | None, optional
     :param output_path: A file path to write the results to.
         If None, then the results are instead returned.
     :type output_path: str | None, optional
@@ -114,6 +118,9 @@ def partial_dependence(
 
     # one-way
 
+    seed_sequence = SeedSequence(seed)
+    seeds = seed_sequence.spawn(len(features))
+
     one_way_work = [
         {
             "predict": predict,
@@ -123,20 +130,22 @@ def partial_dependence(
             "md": md,
             "num_clusters_extent": num_clusters_extent,
             "mixed_shape_tolerance": mixed_shape_tolerance,
-            "feature_to_pd": None,
+            "seed_sequence": seeds[i],
         }
-        for feature in features
+        for i, feature in enumerate(features)
     ]
 
     num_one_way = len(features)
     print(f"Calculating {num_one_way} one-way PDPs")
 
     if n_jobs == 1:
-        one_way_results = [_calc_pd(**args) for args in tqdm(one_way_work, ncols=80)]
+        one_way_results = [
+            _calc_one_way_pd(**args) for args in tqdm(one_way_work, ncols=80)
+        ]
     else:
         with tqdm_joblib(tqdm(total=num_one_way, unit="PDP", ncols=80)) as _:
             one_way_results = Parallel(n_jobs=n_jobs)(
-                delayed(_calc_pd)(**args) for args in one_way_work
+                delayed(_calc_one_way_pd)(**args) for args in one_way_work
             )
     # TODO: why are we sorting here?
     one_way_pds = sorted(
@@ -156,10 +165,8 @@ def partial_dependence(
             "predict": predict,
             "data": subset,
             "data_copy": subset_copy,
-            "feature": pair,
-            "md": md,
-            "num_clusters_extent": None,
-            "mixed_shape_tolerance": None,
+            "pair": pair,
+            "feature_info": md.feature_info,
             "feature_to_pd": feature_to_pd,
         }
         for pair in feature_pairs
@@ -168,11 +175,13 @@ def partial_dependence(
     print(f"Calculating {num_two_way} two-way PDPs")
 
     if n_jobs == 1:
-        two_way_pds = [_calc_pd(**args) for args in tqdm(two_way_work, ncols=80)]
+        two_way_pds = [
+            _calc_two_way_pd(**args) for args in tqdm(two_way_work, ncols=80)
+        ]
     else:
         with tqdm_joblib(tqdm(total=num_two_way, unit="PDP", ncols=80)) as _:
             two_way_pds = Parallel(n_jobs=n_jobs)(
-                delayed(_calc_pd)(**args) for args in two_way_work
+                delayed(_calc_two_way_pd)(**args) for args in two_way_work
             )
 
     two_way_pds.sort(key=itemgetter("H"), reverse=True)
@@ -274,9 +283,7 @@ def partial_dependence(
         return results
 
 
-# TODO: does it make sense to still have _calc_pd? might be better to just call
-# _calc_two_way_pd or _calc_one_way_pd directly
-def _calc_pd(
+def _calc_one_way_pd(
     predict,
     data,
     data_copy,
@@ -284,32 +291,10 @@ def _calc_pd(
     md,
     num_clusters_extent,
     mixed_shape_tolerance,
-    feature_to_pd,
+    seed_sequence,
 ):
-    if isinstance(feature, tuple) or isinstance(feature, list):
-        return _calc_two_way_pd(
-            predict,
-            data,
-            data_copy,
-            feature,
-            md.feature_info,
-            feature_to_pd,
-        )
-    else:
-        return _calc_one_way_pd(
-            predict,
-            data,
-            data_copy,
-            feature,
-            md,
-            num_clusters_extent,
-            mixed_shape_tolerance,
-        )
+    random_state = RandomState(MT19937(seed_sequence))
 
-
-def _calc_one_way_pd(
-    predict, data, data_copy, feature, md, num_clusters_extent, mixed_shape_tolerance
-):
     feat_info = md.feature_info[feature]
 
     ice_lines = []
@@ -338,6 +323,7 @@ def _calc_one_way_pd(
         feature=feature,
         md=md,
         num_clusters_extent=num_clusters_extent,
+        random_state=random_state,
     )
 
     par_dep = {
@@ -504,7 +490,7 @@ def _get_feature_to_pd(one_way_pds):
     return {par_dep["x_feature"]: par_dep for par_dep in one_way_pds}
 
 
-def _calculate_ice(ice_lines, data, feature, md, num_clusters_extent):
+def _calculate_ice(ice_lines, data, feature, md, num_clusters_extent, random_state):
     centered_ice_lines = ice_lines - ice_lines[:, 0].reshape(-1, 1)
     centered_pdp = centered_ice_lines.mean(axis=0)
 
@@ -524,6 +510,7 @@ def _calculate_ice(ice_lines, data, feature, md, num_clusters_extent):
             n_init=5,
             max_iter=300,
             algorithm="lloyd",
+            random_state=random_state,
         )
         cluster_model.fit(slopes)
         labels = cluster_model.labels_
@@ -550,6 +537,7 @@ def _calculate_ice(ice_lines, data, feature, md, num_clusters_extent):
             centered_pdp=centered_pdp,
             data=data,
             one_hot_encoded_col_name_to_feature=md.one_hot_encoded_col_name_to_feature,
+            random_state=random_state,
         )
 
     if best_n_clusters == 1:
@@ -582,6 +570,7 @@ def _get_clusters_info(
     centered_pdp,
     data,
     one_hot_encoded_col_name_to_feature,
+    random_state,
 ):
     cluster_distance = np.float64(0)
 
@@ -618,7 +607,7 @@ def _get_clusters_info(
         y = mask.astype(int)
 
         importances = _get_interacting_features(
-            data, y, one_hot_encoded_col_name_to_feature
+            data, y, one_hot_encoded_col_name_to_feature, random_state
         )
         for feat, imp in importances.items():
             interacting_features[feat] += imp
@@ -640,8 +629,8 @@ def _get_clusters_info(
     }
 
 
-def _get_interacting_features(X, y, one_hot_encoded_col_name_to_feature):
-    clf = DecisionTreeClassifier(max_depth=3, ccp_alpha=0.01)
+def _get_interacting_features(X, y, one_hot_encoded_col_name_to_feature, random_state):
+    clf = DecisionTreeClassifier(max_depth=3, ccp_alpha=0.01, random_state=random_state)
     clf.fit(X, y)
 
     importances = defaultdict(int)

@@ -14,6 +14,7 @@ from typing import Callable, List, Union
 import numpy as np
 import pandas as pd
 from ipywidgets import DOMWidget
+from numpy.random import MT19937, RandomState, SeedSequence
 from traitlets import Dict, Int
 from traitlets import List as ListTraitlet
 from traitlets import Unicode, observe
@@ -36,6 +37,8 @@ class PDPilotWidget(DOMWidget):
     :param pd_data: The dictionary returned by :func:`pdpilot.pdp.partial_dependence`
         or a path to the file containing that data.
     :type pd_data: dict | str | Path
+    :param seed:  Random state for clustering. Defaults to None.
+    :type seed: int | None, optional
     :param height: The height of the widget in pixels, defaults to 600.
     :type height: int, optional
     :raises OSError: Raised if ``pd_data`` is a str or Path and the file cannot be read.
@@ -93,6 +96,7 @@ class PDPilotWidget(DOMWidget):
         df: pd.DataFrame,
         labels: Union[List[float], List[int], np.ndarray, pd.Series],
         pd_data: Union[str, Path, dict],
+        seed: Union[int, None] = None,
         height: int = 600,
         **kwargs,
     ):
@@ -149,6 +153,9 @@ class PDPilotWidget(DOMWidget):
         self.one_hot_encoded_col_name_to_feature = pd_data[
             "one_hot_encoded_col_name_to_feature"
         ]
+
+        seed_sequence = SeedSequence(seed)
+        self.random_state = RandomState(MT19937(seed_sequence))
 
     @observe("two_way_to_calculate")
     def _on_two_way_to_calculate_change(self, change):
@@ -267,6 +274,7 @@ class PDPilotWidget(DOMWidget):
             centered_pdp,
             self.df,
             self.one_hot_encoded_col_name_to_feature,
+            self.random_state,
         )
 
         ice["num_clusters"] = new_num_clusters
