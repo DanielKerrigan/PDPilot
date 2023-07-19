@@ -348,15 +348,12 @@ def _calc_one_way_pd(
         neg = np.abs(diff[diff < 0].sum())
         percent_pos = pos / (pos + neg) if pos + neg != 0 else 0.5
 
-        par_dep["shape"] = (
-            "increasing"
-            if percent_pos >= (0.5 + mixed_shape_tolerance)
-            else (
-                "decreasing"
-                if percent_pos <= (0.5 - mixed_shape_tolerance)
-                else "mixed"
-            )
-        )
+        if percent_pos >= (0.5 + mixed_shape_tolerance):
+            par_dep["shape"] = "increasing"
+        elif percent_pos <= (0.5 - mixed_shape_tolerance):
+            par_dep["shape"] = "decreasing"
+        else:
+            par_dep["shape"] = "mixed"
 
     return par_dep, pairs, ice_lines.tolist()
 
