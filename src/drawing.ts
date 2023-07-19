@@ -20,23 +20,38 @@ export function drawHeatmap(
   y: ScaleLinear<number, number> | ScaleBand<number>,
   color: ScaleSequential<string, string> | ScaleDiverging<string, string>,
   colorShows: 'predictions' | 'interactions',
-  rectWidth: number,
-  rectHeight: number
+  diffX: Map<number, { before: number; after: number }>,
+  diffY: Map<number, { before: number; after: number }>
 ): void {
   ctx.save();
 
   ctx.clearRect(0, 0, width, height);
 
   for (let i = 0; i < data.x_values.length; i++) {
-    const x1 = data.x_values[i];
-    const y1 = data.y_values[i];
+    const cx = data.x_values[i];
+    const cy = data.y_values[i];
     const pred = data.mean_predictions[i];
     const interaction = data.interactions[i];
 
     ctx.fillStyle = color(colorShows === 'interactions' ? interaction : pred);
 
-    const rectX = 'bandwidth' in x ? (x(x1) ?? 0) + 1 : x(x1) - rectWidth / 2;
-    const rectY = 'bandwidth' in y ? (y(y1) ?? 0) + 1 : y(y1) - rectHeight / 2;
+    // left position of rect
+    const rectX =
+      'bandwidth' in x ? x(cx) ?? 0 : x(cx - (diffX.get(cx)?.before ?? 0));
+
+    // top position of rect
+    const rectY =
+      'bandwidth' in y ? y(cy) ?? 0 : y(cy + (diffY.get(cy)?.after ?? 0));
+
+    const rectWidth =
+      'bandwidth' in x
+        ? x.bandwidth()
+        : x(cx + (diffX.get(cx)?.after ?? 0)) - rectX;
+
+    const rectHeight =
+      'bandwidth' in y
+        ? y.bandwidth()
+        : y(cy - (diffY.get(cy)?.before ?? 0)) - rectY;
 
     ctx.fillRect(rectX, rectY, rectWidth, rectHeight);
   }

@@ -3,11 +3,10 @@
   import XAxis from '../axis/XAxis.svelte';
   import YAxis from '../axis/YAxis.svelte';
   import { onMount } from 'svelte';
-  import { scaleCanvas } from '../../../vis-utils';
+  import { getHeatmapDiffs, scaleCanvas } from '../../../vis-utils';
   import { drawHeatmap } from '../../../drawing';
   import MarginalHistogram from '../marginal/MarginalHistogram.svelte';
   import QuantitativeColorLegend from '../legends/QuantitativeColorLegend.svelte';
-  import { pairs } from 'd3-array';
   import type { TwoWayPD } from '../../../types';
   import {
     feature_info,
@@ -88,15 +87,19 @@
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
 
-  // get the minimum difference between sampling points
-  $: minDiffX = Math.min(...pairs(pd.x_axis, (a, b) => b - a));
-  $: minDiffY = Math.min(...pairs(pd.y_axis, (a, b) => b - a));
+  // get the differences between sampling points
+  $: diffX = getHeatmapDiffs(pd.x_axis);
+  $: diffY = getHeatmapDiffs(pd.y_axis);
 
-  $: minX = pd.x_axis[0] - minDiffX / 2;
-  $: maxX = pd.x_axis[pd.x_axis.length - 1] + minDiffX / 2;
+  $: minX = pd.x_axis[0] - (diffX.get(pd.x_axis[0])?.before ?? 0);
+  $: maxX =
+    pd.x_axis[pd.x_axis.length - 1] +
+    (diffX.get(pd.x_axis[pd.x_axis.length - 1])?.after ?? 0);
 
-  $: minY = pd.y_axis[0] - minDiffY / 2;
-  $: maxY = pd.y_axis[pd.y_axis.length - 1] + minDiffY / 2;
+  $: minY = pd.y_axis[0] - (diffY.get(pd.y_axis[0])?.before ?? 0);
+  $: maxY =
+    pd.y_axis[pd.y_axis.length - 1] +
+    (diffY.get(pd.y_axis[pd.y_axis.length - 1])?.after ?? 0);
 
   $: x =
     xFeature.kind === 'quantitative'
@@ -115,11 +118,6 @@
       : scaleBand<number>()
           .domain(pd.y_axis)
           .range([heightExcludingLegend - margin.bottom, margin.top]);
-
-  $: rectWidth =
-    'bandwidth' in x ? x.bandwidth() - 2 : x(minX + minDiffX) - x(minX);
-  $: rectHeight =
-    'bandwidth' in y ? y.bandwidth() - 2 : y(minY) - y(minY + minDiffY);
 
   onMount(() => {
     ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
@@ -143,8 +141,8 @@
         y,
         color,
         colorShows,
-        rectWidth,
-        rectHeight
+        diffX,
+        diffY
       );
     }
   }
@@ -169,8 +167,8 @@
       y,
       color,
       colorShows,
-      rectWidth,
-      rectHeight
+      diffX,
+      diffY
     );
   }
 

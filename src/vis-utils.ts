@@ -1,6 +1,6 @@
 import { scaleLinear } from 'd3-scale';
 import { format } from 'd3-format';
-import { bisectRight, rollup, range, mean, zip } from 'd3-array';
+import { bisectRight, rollup, range, mean, zip, pairs } from 'd3-array';
 import type {
   Distribution,
   FeatureInfo,
@@ -22,6 +22,7 @@ export {
   highlightColor,
   getMaxPercent,
   getRaincloudData,
+  getHeatmapDiffs,
 };
 
 // Adapted from https://www.html5rocks.com/en/tutorials/canvas/hidpi/
@@ -226,6 +227,35 @@ function getRaincloudData(
     densities: densities,
     mean: meanValue,
   };
+}
+
+function getHeatmapDiffs(
+  values: number[]
+): Map<number, { before: number; after: number }> {
+  const diffs = new Map(values.map((d) => [d, { before: 0, after: 0 }]));
+
+  pairs(values).forEach(([first, second], i) => {
+    const firstDiff = diffs.get(first);
+    const secondDiff = diffs.get(second);
+
+    if (!firstDiff || !secondDiff) {
+      return;
+    }
+
+    const diff = (second - first) / 2;
+    firstDiff.after = diff;
+    secondDiff.before = diff;
+
+    if (i === 0) {
+      firstDiff.before = diff;
+    }
+
+    if (i === values.length - 2) {
+      secondDiff.after = diff;
+    }
+  });
+
+  return diffs;
 }
 
 const highlightColor = '#4EBA72';
