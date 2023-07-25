@@ -36,6 +36,12 @@ const resolve = {
   conditionNames: ['svelte', 'browser', 'import'],
 };
 
+// TODO: reduce size
+const performance = {
+  maxAssetSize: 500000,
+  maxEntrypointSize: 500000,
+};
+
 module.exports = [
   /**
    * Lab extension
@@ -55,6 +61,7 @@ module.exports = [
     },
     externals,
     resolve,
+    performance,
   },
 
   /**
@@ -76,6 +83,7 @@ module.exports = [
     },
     externals,
     resolve,
+    performance,
   },
 
   /**
@@ -102,6 +110,7 @@ module.exports = [
     },
     externals,
     resolve,
+    performance,
   },
 
   /**
@@ -122,5 +131,6 @@ module.exports = [
     },
     externals,
     resolve,
+    performance,
   },
 ];

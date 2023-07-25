@@ -17,6 +17,8 @@
 
 <div class="tooltip-container">
   {#if kind === 'alert'}
+    <!-- TODO: do this accessibly-->
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
     <svg
       xmlns="http://www.w3.org/2000/svg"
       class="pdpilot-icon icon-tabler icon-tabler-alert-circle"
@@ -38,6 +40,8 @@
     </svg>
   {:else}
     <!-- question mark icon -->
+    <!-- TODO: do this accessibly-->
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
     <svg
       xmlns="http://www.w3.org/2000/svg"
       class="pdpilot-icon icon-tabler icon-tabler-help"
