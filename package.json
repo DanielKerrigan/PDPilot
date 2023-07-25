@@ -1,6 +1,6 @@
 {
   "name": "pdpilot",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "A Jupyter widget for exploring PDP and ICE plots.",
   "keywords": [
     "jupyter",
