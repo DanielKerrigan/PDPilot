@@ -77,7 +77,7 @@ export function drawScatterplot(
     return;
   }
 
-  const minRainCloudSize = 40;
+  const minRainCloudSize = 20;
 
   ctx.save();
 
