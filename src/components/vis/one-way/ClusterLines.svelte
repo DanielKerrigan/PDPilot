@@ -541,7 +541,7 @@
             x={width - margin.right}
             y={margin.top / 2}>{cluster.filteredIndices.length} instances</text
           >
-          <YAxis scale={y} x={margin.left} label={'centered prediction'} />
+          <YAxis scale={y} x={margin.left} label={'Centered prediction'} />
           <XAxis
             scale={x}
             y={facetHeight - margin.bottom}

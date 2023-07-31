@@ -79,7 +79,7 @@
       colorScheme={$isClassification ? 'classes' : 'sequential'}
       xLabel={pd.x_feature}
       yLabel={pd.y_feature}
-      colorLabel="Ground Truth"
+      colorLabel="Ground truth"
       xAxisIntegerOnly={xFeatureInfo.subkind === 'discrete'}
       yAxisIntegerOnly={yFeatureInfo.subkind === 'discrete'}
       xAxisValueMap={'value_map' in xFeatureInfo ? xFeatureInfo.value_map : {}}

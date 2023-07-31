@@ -160,7 +160,7 @@
             colorDomain={[0, 1]}
             colorScheme={'highlight'}
             xLabel={pd.x_feature}
-            yLabel={'Ground Truth'}
+            yLabel={'Ground truth'}
             colorLabel=""
             xAxisIntegerOnly={featureInfo.subkind === 'discrete'}
             yAxisIntegerOnly={false}

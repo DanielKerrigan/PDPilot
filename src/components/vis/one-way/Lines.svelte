@@ -339,7 +339,7 @@
       <YAxis
         scale={y}
         x={margin.left}
-        label={center ? 'centered prediction' : 'prediction'}
+        label={center ? 'Centered prediction' : 'Prediction'}
       />
 
       {#if showMarginalDistribution}

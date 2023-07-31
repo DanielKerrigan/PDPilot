@@ -309,8 +309,8 @@
           <label class="label-and-input">
             Color
             <select bind:value={colorShows}>
-              <option value="interactions">interactions</option>
-              <option value="predictions">predictions</option>
+              <option value="interactions">Interactions</option>
+              <option value="predictions">Predictions</option>
             </select>
           </label>
 

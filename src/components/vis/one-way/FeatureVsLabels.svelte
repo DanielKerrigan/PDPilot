@@ -306,7 +306,7 @@
     <YAxis
       scale={y}
       x={margin.left}
-      label="Ground Truth"
+      label="Ground truth"
       integerOnly={false}
       value_map={{}}
     />
