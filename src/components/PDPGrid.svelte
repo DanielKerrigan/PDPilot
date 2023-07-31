@@ -219,13 +219,13 @@
         top="0"
         marginRight="1em"
         marginTop="1.5em"
-        width="30em"
+        width="25em"
       >
         <div>
           {#if ways === 1}
             <ul>
               <li>
-                <span class="pdpilot-bold">Variance:</span> Plots that have more
+                <span class="pdpilot-bold">Importance:</span> Plots that have more
                 variance in their ICE lines are ranked higher.
               </li>
               <li>
@@ -234,14 +234,15 @@
                 higher.
               </li>
               <li>
-                <span class="pdpilot-bold">Highlighted similarity:</span> Plots where
-                the highlighted lines are closer together and farther from the partial
-                dependence line are ranked higher.
+                <span class="pdpilot-bold">Highlighted line similarity:</span> Plots
+                where the highlighted lines are closer together and farther from
+                the partial dependence line are ranked higher.
               </li>
               <li>
-                <span class="pdpilot-bold">Highlighted distribution:</span> Plots
-                for features whose distributions of highlighted instances are more
-                different from the overall distributions are ranked higher.
+                <span class="pdpilot-bold"
+                  >Highlighted histogram difference:</span
+                > Plots for features whose distributions of highlighted instances
+                are more different from the overall distributions are ranked higher.
               </li>
             </ul>
           {:else}

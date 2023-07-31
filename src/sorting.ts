@@ -26,7 +26,7 @@ function distanceRatio(
 
 const singlePDPSortingOptions: PDSortingOption[] = [
   {
-    name: 'Variance',
+    name: 'Importance',
     forBrushing: false,
     sort: function (data: OneWayPD[] | TwoWayPD[]): OneWayPD[] | TwoWayPD[] {
       if (data.length === 0 || !isOneWayPdArray(data)) {
@@ -56,7 +56,7 @@ const singlePDPSortingOptions: PDSortingOption[] = [
     },
   },
   {
-    name: 'Highlighted similarity',
+    name: 'Highlighted line similarity',
     forBrushing: true,
     sort: function (
       data: OneWayPD[] | TwoWayPD[],
@@ -101,7 +101,7 @@ const singlePDPSortingOptions: PDSortingOption[] = [
     },
   },
   {
-    name: 'Highlighted distribution',
+    name: 'Highlighted histogram difference',
     forBrushing: true,
     sort: function (
       data: OneWayPD[] | TwoWayPD[],
