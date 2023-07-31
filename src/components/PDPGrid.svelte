@@ -36,7 +36,7 @@
 
   let iceLevel: ICELevel = 'lines';
 
-  let colorShows: 'predictions' | 'interactions' = 'interactions';
+  let colorShows: 'predictions' | 'interactions' = 'predictions';
 
   let gridContentRect: DOMRectReadOnly | undefined | null;
   let legendContentRect: DOMRectReadOnly | undefined | null;
@@ -309,8 +309,8 @@
           <label class="label-and-input">
             Color
             <select bind:value={colorShows}>
-              <option value="interactions">Interactions</option>
               <option value="predictions">Predictions</option>
+              <option value="interactions">Interactions</option>
             </select>
           </label>
 
