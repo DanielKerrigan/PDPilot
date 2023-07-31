@@ -31,10 +31,22 @@
   $: line = d3line<number>()
     .x(direction === 'horizontal' ? xAccessor : yAccessor)
     .y(direction === 'horizontal' ? yAccessor : xAccessor);
+
+  $: radius = 'bandwidth' in x ? Math.min(2, x.bandwidth() / 2) : 0;
 </script>
 
 <g transform="translate({translate})">
   <path d={line(I)} {stroke} fill="none" />
+  {#if 'bandwidth' in x}
+    {#each I as i}
+      <circle
+        cx={direction === 'horizontal' ? xAccessor(i) : yAccessor(i)}
+        cy={direction === 'horizontal' ? yAccessor(i) : xAccessor(i)}
+        r={radius}
+        fill={stroke}
+      />
+    {/each}
+  {/if}
 </g>
 
 <style>
