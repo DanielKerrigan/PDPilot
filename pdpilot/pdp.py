@@ -58,7 +58,7 @@ def partial_dependence(
         spaced to use to compute the plots, defaults to 20.
     :type resolution: int, optional
     :param one_hot_features: A dictionary that maps from the name of a feature
-        to a list tuples containg the corresponding one-hot encoded column
+        to a list tuples containing the corresponding one-hot encoded column
         names and feature values, defaults to None.
     :type one_hot_features: dict[str, list[tuple[str, str]]] | None, optional
     :param nominal_features: List of nominal and binary features in the
