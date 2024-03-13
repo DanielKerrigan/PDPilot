@@ -1,7 +1,11 @@
+import logging
 from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
+
+
+logger = logging.getLogger("pdpilot")
 
 
 class Metadata:
@@ -9,6 +13,7 @@ class Metadata:
         self,
         df: pd.DataFrame,
         resolution: int,
+        intial_features_to_plot: List[str],
         one_hot_features: Union[Dict[str, List[Tuple[str, str]]], None],
         nominal_features: Union[List[str], None],
         ordinal_features: Union[List[str], None],
@@ -47,6 +52,18 @@ class Metadata:
             indices = list(range(len(names)))
             feature_value_mappings[feature] = dict(zip(indices, names))
             unique_feature_vals[feature] = indices
+
+        self.features_to_plot = []
+
+        for feature in intial_features_to_plot:
+            if len(unique_feature_vals[feature]) == 1:
+                logger.warning(
+                    'Feature "%s" has only one unique value (%s). It will not be plotted.',
+                    feature,
+                    unique_feature_vals[feature][0],
+                )
+            else:
+                self.features_to_plot.append(feature)
 
         if nominal_features is None:
             nominal_features = {
@@ -174,8 +191,14 @@ class Metadata:
                 n_points = (max_val - min_val) + 1
 
                 if n_points < resolution:
-                    print(
-                        f'Integer feature "{feature}" has {n_unique} unique values in the range [{min_val},{max_val}], but the resolution is set to {resolution}. {n_points} values will be used.'
+                    logger.warning(
+                        'Integer feature "%s" has %d unique values in the range [%d,%d], but the resolution is set to %d. %d values will be used.',
+                        feature,
+                        n_unique,
+                        min_val,
+                        max_val,
+                        resolution,
+                        n_points,
                     )
 
                 values = np.arange(

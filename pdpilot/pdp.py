@@ -6,24 +6,31 @@ Compute partial dependence plots
 """
 
 import json
+import logging
 import math
 from collections import defaultdict
 from operator import itemgetter
 from pathlib import Path
 from typing import Callable, Dict, List, Tuple, Union
+import warnings
 
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 from numpy.random import MT19937, RandomState, SeedSequence
 from sklearn.cluster import KMeans
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics import silhouette_score
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.tree import DecisionTreeClassifier
 from tqdm import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
 
 from pdpilot.metadata import Metadata
 from pdpilot.tqdm_joblib import tqdm_joblib
+
+
+logger = logging.getLogger("pdpilot")
 
 
 def partial_dependence(
@@ -41,6 +48,7 @@ def partial_dependence(
     n_jobs: int = 1,
     seed: Union[int, None] = None,
     output_path: Union[str, None] = None,
+    logging_level: str = "INFO",
 ) -> Union[dict, None]:
     """Calculates the data needed for the widget. This includes computing the
     data for the PDP and ICE plots, calculating the metrics
@@ -90,12 +98,29 @@ def partial_dependence(
     :param output_path: A file path to write the results to.
         If None, then the results are instead returned.
     :type output_path: str | None, optional
+    :param logging_level: The verbosity of printed messages. Must be "DEBUG", "INFO",
+        "WARNING", or "ERROR". Defaults to "INFO".
+    :type logging_level: string, optional
     :raises OSError: Raised when the ``output_path``, if provided, cannot be written to.
     :return: Wigdet data, or None if an ``output_path`` is provided.
     :rtype: dict | None
     """
 
-    # first check that the output path exists if provided so that the function
+    # set up logging
+
+    valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR"]
+    if logging_level not in valid_levels:
+        raise ValueError(f"Unknown logging level {logging_level}.")
+
+    log_level = logging.getLevelName(logging_level)
+    logger.setLevel(log_level)
+
+    ch = logging.StreamHandler()
+    formatter = logging.Formatter("%(name)s - %(levelname)s - %(message)s")
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+
+    # check that the output path exists if provided so that the function
     # can fail quickly, rather than waiting until all the work is done
     if output_path:
         path = Path(output_path).resolve()
@@ -106,6 +131,7 @@ def partial_dependence(
     md = Metadata(
         df,
         resolution,
+        features,
         one_hot_features,
         nominal_features,
         ordinal_features,
@@ -119,7 +145,7 @@ def partial_dependence(
     # one-way
 
     seed_sequence = SeedSequence(seed)
-    seeds = seed_sequence.spawn(len(features))
+    seeds = seed_sequence.spawn(len(md.features_to_plot))
 
     one_way_work = [
         {
@@ -132,18 +158,23 @@ def partial_dependence(
             "mixed_shape_tolerance": mixed_shape_tolerance,
             "seed_sequence": seeds[i],
         }
-        for i, feature in enumerate(features)
+        for i, feature in enumerate(md.features_to_plot)
     ]
 
-    num_one_way = len(features)
-    print(f"Calculating {num_one_way} one-way PDPs")
+    num_one_way = len(md.features_to_plot)
+    logger.info("Calculating %d one-way PDPs.", num_one_way)
+
+    disable_tqdm = log_level > logging.INFO
 
     if n_jobs == 1:
         one_way_results = [
-            _calc_one_way_pd(**args) for args in tqdm(one_way_work, ncols=80)
+            _calc_one_way_pd(**args)
+            for args in tqdm(one_way_work, ncols=80, disable=disable_tqdm)
         ]
     else:
-        with tqdm_joblib(tqdm(total=num_one_way, unit="PDP", ncols=80)) as _:
+        with tqdm_joblib(
+            tqdm(total=num_one_way, unit="PDP", ncols=80, disable=disable_tqdm)
+        ) as _:
             one_way_results = Parallel(n_jobs=n_jobs)(
                 delayed(_calc_one_way_pd)(**args) for args in one_way_work
             )
@@ -171,15 +202,19 @@ def partial_dependence(
         }
         for pair in feature_pairs
     ]
+
     num_two_way = len(feature_pairs)
-    print(f"Calculating {num_two_way} two-way PDPs")
+    logger.info("Calculating %d two-way PDPs.", num_two_way)
 
     if n_jobs == 1:
         two_way_pds = [
-            _calc_two_way_pd(**args) for args in tqdm(two_way_work, ncols=80)
+            _calc_two_way_pd(**args)
+            for args in tqdm(two_way_work, ncols=80, disable=disable_tqdm)
         ]
     else:
-        with tqdm_joblib(tqdm(total=num_two_way, unit="PDP", ncols=80)) as _:
+        with tqdm_joblib(
+            tqdm(total=num_two_way, unit="PDP", ncols=80, disable=disable_tqdm)
+        ) as _:
             two_way_pds = Parallel(n_jobs=n_jobs)(
                 delayed(_calc_two_way_pd)(**args) for args in two_way_work
             )
@@ -509,7 +544,12 @@ def _calculate_ice(ice_lines, data, feature, md, num_clusters_extent, random_sta
             algorithm="lloyd",
             random_state=random_state,
         )
-        cluster_model.fit(slopes)
+
+        with warnings.catch_warnings():
+            # Supress ConvergenceWarning warning. Log it below.
+            warnings.simplefilter("ignore", category=ConvergenceWarning)
+            cluster_model.fit(slopes)
+
         labels = cluster_model.labels_
 
         if len(np.unique(labels)) < n_clusters:
@@ -518,6 +558,12 @@ def _calculate_ice(ice_lines, data, feature, md, num_clusters_extent, random_sta
             # all of the centered ice lines to be the same.
             if best_n_clusters == -1:
                 best_n_clusters = 1
+
+                with logging_redirect_tqdm(loggers=[logger]):
+                    logger.warning(
+                        'No clusters detected in the ICE lines for feature "%s".',
+                        feature,
+                    )
 
             break
 
