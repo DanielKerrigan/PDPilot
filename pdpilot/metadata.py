@@ -39,9 +39,9 @@ class Metadata:
             for encoded_col_name, _ in col_and_value
         }
 
-        non_one_hot_features = [
+        non_one_hot_features = {
             feat for feat in df.columns if feat not in one_hot_encoded_col_names
-        ]
+        }
 
         # dictionary from feature name to sorted list of unique values for that feature
         unique_feature_vals = {
@@ -71,27 +71,33 @@ class Metadata:
                 for feature, values in unique_feature_vals.items()
                 if len(values) <= 2
             }
+        else:
+            nominal_features = set(nominal_features)
 
         if ordinal_features is None:
             ordinal_features = {
                 feature
-                for feature in df[non_one_hot_features]
+                for feature in df[list(non_one_hot_features - nominal_features)]
                 .select_dtypes([np.integer])
                 .columns
                 if len(unique_feature_vals[feature]) > 2
                 and len(unique_feature_vals[feature]) < 13
             }
+        else:
+            ordinal_features = set(ordinal_features)
 
+        # TODO: this is sloppy. can we assume that any remaining features are
+        # numeric? or do we need to be checking the type? how would remaining
+        # non-numeric features get handled?
         quantitative_features = set(
-            df[non_one_hot_features].select_dtypes(["number"]).columns
-        )
-        quantitative_features = quantitative_features - (
-            set(nominal_features) | set(ordinal_features)
+            df[list(non_one_hot_features - nominal_features - ordinal_features)]
+            .select_dtypes(["number"])
+            .columns
         )
 
         # list of features to show in the UI.
         self.one_hot_feature_names = list(one_hot_features.keys())
-
+        # TODO: where is this actually used?
         self.features = sorted(
             self.one_hot_feature_names
             + list(nominal_features)
