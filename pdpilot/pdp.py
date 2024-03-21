@@ -45,6 +45,7 @@ def partial_dependence(
     feature_value_mappings: Union[Dict[str, Dict[str, str]], None] = None,
     num_clusters_extent: Tuple[int, int] = (2, 5),
     mixed_shape_tolerance: float = 0.15,
+    compute_two_way_pdps: bool = True,
     n_jobs: int = 1,
     seed: Union[int, None] = None,
     output_path: Union[str, None] = None,
@@ -90,6 +91,8 @@ def partial_dependence(
         labeled as mixed. A higher value leads to more being labeled as mixed.
         Must be in the range [0, 0.5]. Defaults to 0.15.
     :type mixed_shape_tolerance: float
+    :param compute_two_way_pdps: Whether or not to compute two-way PDPs. Defaults to True.
+    :type compute_two_way_pdps: bool
     :param n_jobs: Number of jobs to use to parallelize computation,
         defaults to 1.
     :type n_jobs: int, optional
@@ -191,35 +194,56 @@ def partial_dependence(
 
     # two-way
 
-    two_way_work = [
-        {
-            "predict": predict,
-            "data": subset,
-            "data_copy": subset_copy,
-            "pair": pair,
-            "feature_info": md.feature_info,
-            "feature_to_pd": feature_to_pd,
-        }
-        for pair in feature_pairs
-    ]
-
-    num_two_way = len(feature_pairs)
-    logger.info("Calculating %d two-way PDPs.", num_two_way)
-
-    if n_jobs == 1:
-        two_way_pds = [
-            _calc_two_way_pd(**args)
-            for args in tqdm(two_way_work, ncols=80, disable=disable_tqdm)
+    if compute_two_way_pdps:
+        two_way_work = [
+            {
+                "predict": predict,
+                "data": subset,
+                "data_copy": subset_copy,
+                "pair": pair,
+                "feature_info": md.feature_info,
+                "feature_to_pd": feature_to_pd,
+            }
+            for pair in feature_pairs
         ]
-    else:
-        with tqdm_joblib(
-            tqdm(total=num_two_way, unit="PDP", ncols=80, disable=disable_tqdm)
-        ) as _:
-            two_way_pds = Parallel(n_jobs=n_jobs)(
-                delayed(_calc_two_way_pd)(**args) for args in two_way_work
-            )
 
-    two_way_pds.sort(key=itemgetter("H"), reverse=True)
+        num_two_way = len(feature_pairs)
+        logger.info("Calculating %d two-way PDPs.", num_two_way)
+
+        if n_jobs == 1:
+            two_way_pds = [
+                _calc_two_way_pd(**args)
+                for args in tqdm(two_way_work, ncols=80, disable=disable_tqdm)
+            ]
+        else:
+            with tqdm_joblib(
+                tqdm(total=num_two_way, unit="PDP", ncols=80, disable=disable_tqdm)
+            ) as _:
+                two_way_pds = Parallel(n_jobs=n_jobs)(
+                    delayed(_calc_two_way_pd)(**args) for args in two_way_work
+                )
+
+        two_way_pds.sort(key=itemgetter("H"), reverse=True)
+
+        two_way_pdp_min = math.inf
+        two_way_pdp_max = -math.inf
+
+        two_way_interaction_max = -math.inf
+
+        for twp in two_way_pds:
+            if twp["pdp_min"] < two_way_pdp_min:
+                two_way_pdp_min = twp["pdp_min"]
+
+            if twp["pdp_max"] > two_way_pdp_max:
+                two_way_pdp_max = twp["pdp_max"]
+
+            if twp["interaction_max"] > two_way_interaction_max:
+                two_way_interaction_max = twp["interaction_max"]
+    else:
+        two_way_pds = []
+        two_way_pdp_min = 0
+        two_way_pdp_max = 0
+        two_way_interaction_max = 0
 
     # min and max predictions
 
@@ -271,21 +295,6 @@ def partial_dependence(
 
             if clusterings[str_num_clust]["centered_mean_max"] > ice_cluster_center_max:
                 ice_cluster_center_max = clusterings[str_num_clust]["centered_mean_max"]
-
-    two_way_pdp_min = math.inf
-    two_way_pdp_max = -math.inf
-
-    two_way_interaction_max = -math.inf
-
-    for twp in two_way_pds:
-        if twp["pdp_min"] < two_way_pdp_min:
-            two_way_pdp_min = twp["pdp_min"]
-
-        if twp["pdp_max"] > two_way_pdp_max:
-            two_way_pdp_max = twp["pdp_max"]
-
-        if twp["interaction_max"] > two_way_interaction_max:
-            two_way_interaction_max = twp["interaction_max"]
 
     # to make the dataset easier to work with on the frontend,
     # turn one-hot encoded features into integer encoded categories
