@@ -6,4 +6,4 @@ Information about the frontend package of the widgets.
 """
 
 module_name = "pdpilot"
-module_version = "^0.5.4"
+module_version = "^0.5.5"
