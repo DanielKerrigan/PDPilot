@@ -46,6 +46,7 @@ def partial_dependence(
     num_clusters_extent: Tuple[int, int] = (2, 5),
     mixed_shape_tolerance: float = 0.15,
     compute_two_way_pdps: bool = True,
+    cluster_preprocessing: str = "diff",
     n_jobs: int = 1,
     seed: Union[int, None] = None,
     output_path: Union[str, None] = None,
@@ -93,6 +94,11 @@ def partial_dependence(
     :type mixed_shape_tolerance: float
     :param compute_two_way_pdps: Whether or not to compute two-way PDPs. Defaults to True.
     :type compute_two_way_pdps: bool
+    :param cluster_preprocessing: How to preprocess the ICE lines before
+        clustering them. "diff" calculates the differences in y-values between
+        successive points in the lines using `np.diff`. "center" centers the ICE
+        lines so that they all begin at `y = 0`. Defaults to "diff".
+    :type cluster_preprocessing: str
     :param n_jobs: Number of jobs to use to parallelize computation,
         defaults to 1.
     :type n_jobs: int, optional
@@ -113,7 +119,7 @@ def partial_dependence(
 
     valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR"]
     if logging_level not in valid_levels:
-        raise ValueError(f"Unknown logging level {logging_level}.")
+        raise ValueError(f"Unknown logging_level {logging_level}.")
 
     log_level = logging.getLevelName(logging_level)
     logger.setLevel(log_level)
@@ -123,11 +129,15 @@ def partial_dependence(
     ch.setFormatter(formatter)
     logger.addHandler(ch)
 
+    # check for valid cluster preprocessing
+    valid_preprocessing = ["diff", "center"]
+    if cluster_preprocessing not in valid_preprocessing:
+        raise ValueError(f"Unknown cluster_preprocessing {cluster_preprocessing}.")
+
     # check that the output path exists if provided so that the function
     # can fail quickly, rather than waiting until all the work is done
     if output_path:
         path = Path(output_path).resolve()
-
         if not path.parent.is_dir():
             raise OSError(f"Cannot write to {path.parent}")
 
@@ -159,6 +169,7 @@ def partial_dependence(
             "md": md,
             "num_clusters_extent": num_clusters_extent,
             "mixed_shape_tolerance": mixed_shape_tolerance,
+            "cluster_preprocessing": cluster_preprocessing,
             "seed_sequence": seeds[i],
         }
         for i, feature in enumerate(md.features_to_plot)
@@ -335,6 +346,7 @@ def _calc_one_way_pd(
     md,
     num_clusters_extent,
     mixed_shape_tolerance,
+    cluster_preprocessing,
     seed_sequence,
 ):
     random_state = RandomState(MT19937(seed_sequence))
@@ -367,6 +379,7 @@ def _calc_one_way_pd(
         feature=feature,
         md=md,
         num_clusters_extent=num_clusters_extent,
+        cluster_preprocessing=cluster_preprocessing,
         random_state=random_state,
     )
 
@@ -531,13 +544,24 @@ def _get_feature_to_pd(one_way_pds):
     return {par_dep["x_feature"]: par_dep for par_dep in one_way_pds}
 
 
-def _calculate_ice(ice_lines, data, feature, md, num_clusters_extent, random_state):
+def _calculate_ice(
+    ice_lines,
+    data,
+    feature,
+    md,
+    num_clusters_extent,
+    cluster_preprocessing,
+    random_state,
+):
     centered_ice_lines = ice_lines - ice_lines[:, 0].reshape(-1, 1)
     centered_pdp = centered_ice_lines.mean(axis=0)
 
-    slopes = np.diff(ice_lines)
+    if cluster_preprocessing == "diff":
+        lines_to_cluster = np.diff(ice_lines)
+    elif cluster_preprocessing == "center":
+        lines_to_cluster = centered_ice_lines
 
-    distances = euclidean_distances(slopes, slopes)
+    distances = euclidean_distances(lines_to_cluster, lines_to_cluster)
 
     best_score = -math.inf
     best_n_clusters = -1
@@ -557,7 +581,7 @@ def _calculate_ice(ice_lines, data, feature, md, num_clusters_extent, random_sta
         with warnings.catch_warnings():
             # Supress ConvergenceWarning warning. Log it below.
             warnings.simplefilter("ignore", category=ConvergenceWarning)
-            cluster_model.fit(slopes)
+            cluster_model.fit(lines_to_cluster)
 
         labels = cluster_model.labels_
 

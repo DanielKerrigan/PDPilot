@@ -98,7 +98,7 @@ setup_args = dict(
     extras_require={
         "examples": ["pmlb", "xgboost"],
         "docs": ["sphinx", "furo"],
-        "dev": ["pylint", "black", "twine", "jupyter_packaging"],
+        "dev": ["twine", "jupyter_packaging"],
         "test": ["pytest"],
     },
     entry_points={},
