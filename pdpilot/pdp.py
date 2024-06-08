@@ -44,7 +44,7 @@ def partial_dependence(
     ordinal_features: Union[List[str], None] = None,
     feature_value_mappings: Union[Dict[str, Dict[str, str]], None] = None,
     num_clusters_extent: Tuple[int, int] = (2, 5),
-    mixed_shape_tolerance: float = 0.15,
+    mixed_shape_tolerance: float = 0.29,
     compute_two_way_pdps: bool = True,
     cluster_preprocessing: str = "diff",
     n_jobs: int = 1,
@@ -62,7 +62,7 @@ def partial_dependence(
     :type predict: Callable[[pd.DataFrame], list[float]]
     :param df: Instances to use to compute the PDPs and ICE plots.
     :type df: pd.DataFrame
-    :param features: List of feature names to compute the plots for.
+    :param features: List of feature names in the dataset.
     :type features: list[str]
     :param resolution: For quantitative features, the number of evenly
         spaced to use to compute the plots, defaults to 20.
@@ -90,7 +90,7 @@ def partial_dependence(
         as having positive, negative, or mixed shapes. A lower value for this parameter
         leads to more PDPs being labeled as positive or negative and fewer being
         labeled as mixed. A higher value leads to more being labeled as mixed.
-        Must be in the range [0, 0.5]. Defaults to 0.15.
+        Must be in the range [0, 0.5]. Defaults to 0.29.
     :type mixed_shape_tolerance: float
     :param compute_two_way_pdps: Whether or not to compute two-way PDPs. Defaults to True.
     :type compute_two_way_pdps: bool
