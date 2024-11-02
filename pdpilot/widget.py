@@ -152,6 +152,7 @@ class PDPilotWidget(DOMWidget):
         self.one_hot_encoded_col_name_to_feature = pd_data[
             "one_hot_encoded_col_name_to_feature"
         ]
+        self.params = pd_data["params"]
 
         seed_sequence = SeedSequence(seed)
         self.random_state = RandomState(MT19937(seed_sequence))
@@ -267,13 +268,15 @@ class PDPilotWidget(DOMWidget):
         # update cluster distances and means
 
         ice["adjusted_clusterings"][str(new_num_clusters)] = _get_clusters_info(
-            labels,
-            new_num_clusters,
-            centered_ice_lines,
-            centered_pdp,
-            self.df,
-            self.one_hot_encoded_col_name_to_feature,
-            self.random_state,
+            labels=labels,
+            n_clusters=new_num_clusters,
+            centered_ice_lines=centered_ice_lines,
+            centered_pdp=centered_pdp,
+            data=self.df,
+            one_hot_encoded_col_name_to_feature=self.one_hot_encoded_col_name_to_feature,
+            decision_tree_max_depth=self.params["decision_tree_max_depth"],
+            decision_tree_ccp_alpha=self.params["decision_tree_ccp_alpha"],
+            random_state=self.random_state,
         )
 
         ice["num_clusters"] = new_num_clusters

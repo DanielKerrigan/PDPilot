@@ -339,6 +339,15 @@ def partial_dependence(
         "dataset": frontend_df.to_dict(orient="list"),
         "feature_info": md.feature_info,
         "one_hot_encoded_col_name_to_feature": md.one_hot_encoded_col_name_to_feature,
+        "params": {
+            "resolution": resolution,
+            "num_clusters_extent": num_clusters_extent,
+            "decision_tree_max_depth": decision_tree_max_depth,
+            "decision_tree_ccp_alpha": decision_tree_ccp_alpha,
+            "mixed_shape_tolerance": mixed_shape_tolerance,
+            "compute_two_way_pdps": compute_two_way_pdps,
+            "cluster_preprocessing": cluster_preprocessing,
+        },
     }
 
     if output_path:
