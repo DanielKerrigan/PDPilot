@@ -15,9 +15,8 @@ import numpy as np
 import pandas as pd
 from ipywidgets import DOMWidget
 from numpy.random import MT19937, RandomState, SeedSequence
-from traitlets import Dict, Int
+from traitlets import Dict, Int, Unicode, observe
 from traitlets import List as ListTraitlet
-from traitlets import Unicode, observe
 
 from pdpilot._frontend import module_name, module_version
 from pdpilot.pdp import _calc_two_way_pd, _get_clusters_info, _get_feature_to_pd

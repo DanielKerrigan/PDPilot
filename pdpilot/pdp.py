@@ -8,11 +8,11 @@ Compute partial dependence plots
 import json
 import logging
 import math
+import warnings
 from collections import defaultdict
 from operator import itemgetter
 from pathlib import Path
 from typing import Callable, Dict, List, Tuple, Union
-import warnings
 
 import numpy as np
 import pandas as pd
@@ -29,7 +29,6 @@ from tqdm.contrib.logging import logging_redirect_tqdm
 from pdpilot.metadata import Metadata
 from pdpilot.tqdm_joblib import tqdm_joblib
 
-
 logger = logging.getLogger("pdpilot")
 
 
@@ -44,6 +43,8 @@ def partial_dependence(
     ordinal_features: Union[List[str], None] = None,
     feature_value_mappings: Union[Dict[str, Dict[str, str]], None] = None,
     num_clusters_extent: Tuple[int, int] = (2, 5),
+    decision_tree_max_depth: int = 3,
+    decision_tree_ccp_alpha: float = 0.01,
     mixed_shape_tolerance: float = 0.29,
     compute_two_way_pdps: bool = True,
     cluster_preprocessing: str = "diff",
@@ -86,6 +87,12 @@ def partial_dependence(
     :param num_clusters_extent: The minimum and maximum number of clusters to
         try when clustering the lines of ICE plots. Defaults to (2, 5).
     :type num_clusters_extent: tuple[int, int]
+    :param decision_tree_max_depth: The max depth of the decision tree
+        used to explain the clusters.
+    :type decision_tree_max_depth: int
+    :param decision_tree_ccp_alpha: The cost complexity pruning alpha value of
+        the decision tree used to explain the clusters.
+    :type decision_tree_ccp_alpha: float
     :param mixed_shape_tolerance: Quantitative and ordinal one-way PDPs are labeled
         as having positive, negative, or mixed shapes. A lower value for this parameter
         leads to more PDPs being labeled as positive or negative and fewer being
@@ -170,6 +177,8 @@ def partial_dependence(
             "num_clusters_extent": num_clusters_extent,
             "mixed_shape_tolerance": mixed_shape_tolerance,
             "cluster_preprocessing": cluster_preprocessing,
+            "decision_tree_max_depth": decision_tree_max_depth,
+            "decision_tree_ccp_alpha": decision_tree_ccp_alpha,
             "seed_sequence": seeds[i],
         }
         for i, feature in enumerate(md.features_to_plot)
@@ -347,6 +356,8 @@ def _calc_one_way_pd(
     num_clusters_extent,
     mixed_shape_tolerance,
     cluster_preprocessing,
+    decision_tree_max_depth,
+    decision_tree_ccp_alpha,
     seed_sequence,
 ):
     random_state = RandomState(MT19937(seed_sequence))
@@ -380,6 +391,8 @@ def _calc_one_way_pd(
         md=md,
         num_clusters_extent=num_clusters_extent,
         cluster_preprocessing=cluster_preprocessing,
+        decision_tree_max_depth=decision_tree_max_depth,
+        decision_tree_ccp_alpha=decision_tree_ccp_alpha,
         random_state=random_state,
     )
 
@@ -551,6 +564,8 @@ def _calculate_ice(
     md,
     num_clusters_extent,
     cluster_preprocessing,
+    decision_tree_max_depth,
+    decision_tree_ccp_alpha,
     random_state,
 ):
     centered_ice_lines = ice_lines - ice_lines[:, 0].reshape(-1, 1)
@@ -613,6 +628,8 @@ def _calculate_ice(
             centered_pdp=centered_pdp,
             data=data,
             one_hot_encoded_col_name_to_feature=md.one_hot_encoded_col_name_to_feature,
+            decision_tree_max_depth=decision_tree_max_depth,
+            decision_tree_ccp_alpha=decision_tree_ccp_alpha,
             random_state=random_state,
         )
 
@@ -646,6 +663,8 @@ def _get_clusters_info(
     centered_pdp,
     data,
     one_hot_encoded_col_name_to_feature,
+    decision_tree_max_depth,
+    decision_tree_ccp_alpha,
     random_state,
 ):
     cluster_distance = np.float64(0)
@@ -683,7 +702,12 @@ def _get_clusters_info(
         y = mask.astype(int)
 
         importances = _get_interacting_features(
-            data, y, one_hot_encoded_col_name_to_feature, random_state
+            X=data,
+            y=y,
+            one_hot_encoded_col_name_to_feature=one_hot_encoded_col_name_to_feature,
+            decision_tree_max_depth=decision_tree_max_depth,
+            decision_tree_ccp_alpha=decision_tree_ccp_alpha,
+            random_state=random_state,
         )
         for feat, imp in importances.items():
             interacting_features[feat] += imp
@@ -705,8 +729,19 @@ def _get_clusters_info(
     }
 
 
-def _get_interacting_features(X, y, one_hot_encoded_col_name_to_feature, random_state):
-    clf = DecisionTreeClassifier(max_depth=3, ccp_alpha=0.01, random_state=random_state)
+def _get_interacting_features(
+    X,
+    y,
+    one_hot_encoded_col_name_to_feature,
+    decision_tree_max_depth,
+    decision_tree_ccp_alpha,
+    random_state,
+):
+    clf = DecisionTreeClassifier(
+        max_depth=decision_tree_max_depth,
+        ccp_alpha=decision_tree_ccp_alpha,
+        random_state=random_state,
+    )
     clf.fit(X, y)
 
     importances = defaultdict(int)
