@@ -678,7 +678,7 @@ def _get_clusters_info(
 
     local_clusters = []
 
-    interacting_features = defaultdict(int)
+    interacting_features = defaultdict(float)
 
     centered_mean_min = math.inf
     centered_mean_max = -math.inf
@@ -748,11 +748,11 @@ def _get_interacting_features(
     )
     clf.fit(X, y)
 
-    importances = defaultdict(int)
+    importances = {}
 
-    for i in clf.tree_.feature:
+    for i in np.nonzero(clf.feature_importances_)[0]:
         feat = one_hot_encoded_col_name_to_feature.get(X.columns[i], X.columns[i])
-        importances[feat] += clf.feature_importances_[i]
+        importances[feat] = clf.feature_importances_[i]
 
     return importances
 
