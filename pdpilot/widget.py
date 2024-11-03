@@ -274,8 +274,7 @@ class PDPilotWidget(DOMWidget):
             centered_pdp=centered_pdp,
             data=self.df,
             one_hot_encoded_col_name_to_feature=self.one_hot_encoded_col_name_to_feature,
-            decision_tree_max_depth=self.params["decision_tree_max_depth"],
-            decision_tree_ccp_alpha=self.params["decision_tree_ccp_alpha"],
+            decision_tree_params=self.params["decision_tree_params"],
             random_state=self.random_state,
         )
 

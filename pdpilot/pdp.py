@@ -12,7 +12,7 @@ import warnings
 from collections import defaultdict
 from operator import itemgetter
 from pathlib import Path
-from typing import Callable, Dict, List, Tuple, Union
+from typing import Any, Callable, Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -43,8 +43,7 @@ def partial_dependence(
     ordinal_features: Union[List[str], None] = None,
     feature_value_mappings: Union[Dict[str, Dict[str, str]], None] = None,
     num_clusters_extent: Tuple[int, int] = (2, 5),
-    decision_tree_max_depth: int = 3,
-    decision_tree_ccp_alpha: float = 0.01,
+    decision_tree_params: Union[Dict[str, Any], None] = None,
     mixed_shape_tolerance: float = 0.29,
     compute_two_way_pdps: bool = True,
     cluster_preprocessing: str = "diff",
@@ -87,12 +86,11 @@ def partial_dependence(
     :param num_clusters_extent: The minimum and maximum number of clusters to
         try when clustering the lines of ICE plots. Defaults to (2, 5).
     :type num_clusters_extent: tuple[int, int]
-    :param decision_tree_max_depth: The max depth of the decision tree
-        used to explain the clusters.
-    :type decision_tree_max_depth: int
-    :param decision_tree_ccp_alpha: The cost complexity pruning alpha value of
-        the decision tree used to explain the clusters.
-    :type decision_tree_ccp_alpha: float
+    :param decision_tree_params: The parameters to pass to an sklearn
+        DecisionTreeClassifier for explaining the clusters.
+        If None, defaults to { 'max_depth': 3, 'ccp_alpha': 0.01 }.
+        Note that `random_state` will be set separately.
+    :type decision_tree_params: dict | None
     :param mixed_shape_tolerance: Quantitative and ordinal one-way PDPs are labeled
         as having positive, negative, or mixed shapes. A lower value for this parameter
         leads to more PDPs being labeled as positive or negative and fewer being
@@ -148,6 +146,13 @@ def partial_dependence(
         if not path.parent.is_dir():
             raise OSError(f"Cannot write to {path.parent}")
 
+    # set default values
+
+    if decision_tree_params is None:
+        decision_tree_params = {"max_depth": 3, "ccp_alpha": 0.01}
+
+    # calculate feature metadata
+
     md = Metadata(
         df,
         resolution,
@@ -177,8 +182,7 @@ def partial_dependence(
             "num_clusters_extent": num_clusters_extent,
             "mixed_shape_tolerance": mixed_shape_tolerance,
             "cluster_preprocessing": cluster_preprocessing,
-            "decision_tree_max_depth": decision_tree_max_depth,
-            "decision_tree_ccp_alpha": decision_tree_ccp_alpha,
+            "decision_tree_params": decision_tree_params,
             "seed_sequence": seeds[i],
         }
         for i, feature in enumerate(md.features_to_plot)
@@ -342,8 +346,7 @@ def partial_dependence(
         "params": {
             "resolution": resolution,
             "num_clusters_extent": num_clusters_extent,
-            "decision_tree_max_depth": decision_tree_max_depth,
-            "decision_tree_ccp_alpha": decision_tree_ccp_alpha,
+            "decision_tree_params": decision_tree_params,
             "mixed_shape_tolerance": mixed_shape_tolerance,
             "compute_two_way_pdps": compute_two_way_pdps,
             "cluster_preprocessing": cluster_preprocessing,
@@ -365,8 +368,7 @@ def _calc_one_way_pd(
     num_clusters_extent,
     mixed_shape_tolerance,
     cluster_preprocessing,
-    decision_tree_max_depth,
-    decision_tree_ccp_alpha,
+    decision_tree_params,
     seed_sequence,
 ):
     random_state = RandomState(MT19937(seed_sequence))
@@ -400,8 +402,7 @@ def _calc_one_way_pd(
         md=md,
         num_clusters_extent=num_clusters_extent,
         cluster_preprocessing=cluster_preprocessing,
-        decision_tree_max_depth=decision_tree_max_depth,
-        decision_tree_ccp_alpha=decision_tree_ccp_alpha,
+        decision_tree_params=decision_tree_params,
         random_state=random_state,
     )
 
@@ -573,8 +574,7 @@ def _calculate_ice(
     md,
     num_clusters_extent,
     cluster_preprocessing,
-    decision_tree_max_depth,
-    decision_tree_ccp_alpha,
+    decision_tree_params,
     random_state,
 ):
     centered_ice_lines = ice_lines - ice_lines[:, 0].reshape(-1, 1)
@@ -637,8 +637,7 @@ def _calculate_ice(
             centered_pdp=centered_pdp,
             data=data,
             one_hot_encoded_col_name_to_feature=md.one_hot_encoded_col_name_to_feature,
-            decision_tree_max_depth=decision_tree_max_depth,
-            decision_tree_ccp_alpha=decision_tree_ccp_alpha,
+            decision_tree_params=decision_tree_params,
             random_state=random_state,
         )
 
@@ -672,8 +671,7 @@ def _get_clusters_info(
     centered_pdp,
     data,
     one_hot_encoded_col_name_to_feature,
-    decision_tree_max_depth,
-    decision_tree_ccp_alpha,
+    decision_tree_params,
     random_state,
 ):
     cluster_distance = np.float64(0)
@@ -714,8 +712,7 @@ def _get_clusters_info(
             X=data,
             y=y,
             one_hot_encoded_col_name_to_feature=one_hot_encoded_col_name_to_feature,
-            decision_tree_max_depth=decision_tree_max_depth,
-            decision_tree_ccp_alpha=decision_tree_ccp_alpha,
+            decision_tree_params=decision_tree_params,
             random_state=random_state,
         )
         for feat, imp in importances.items():
@@ -742,13 +739,11 @@ def _get_interacting_features(
     X,
     y,
     one_hot_encoded_col_name_to_feature,
-    decision_tree_max_depth,
-    decision_tree_ccp_alpha,
+    decision_tree_params,
     random_state,
 ):
     clf = DecisionTreeClassifier(
-        max_depth=decision_tree_max_depth,
-        ccp_alpha=decision_tree_ccp_alpha,
+        **decision_tree_params,
         random_state=random_state,
     )
     clf.fit(X, y)
