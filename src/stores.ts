@@ -27,7 +27,7 @@ import { getHighlightedBins, getNiceDomain } from './vis-utils';
  * @param model backbone model containing state synced between Python and JS
  * @returns Svelte store that is synced with the model.
  */
-function createSyncedWidget<T>(
+function createSyncedStore<T>(
   name_: string,
   value_: T,
   model: DOMWidgetModel
@@ -147,74 +147,74 @@ export let globalColorTwoWayInteraction: Readable<
 export function setStores(model: DOMWidgetModel): void {
   // ==== stores synced with Python ====
 
-  feature_names = createSyncedWidget<string[]>('feature_names', [], model);
-  feature_info = createSyncedWidget<Record<string, FeatureInfo>>(
+  feature_names = createSyncedStore<string[]>('feature_names', [], model);
+  feature_info = createSyncedStore<Record<string, FeatureInfo>>(
     'feature_info',
     {},
     model
   );
 
-  dataset = createSyncedWidget<Dataset>('dataset', {}, model);
+  dataset = createSyncedStore<Dataset>('dataset', {}, model);
 
-  labels = createSyncedWidget<number[]>('labels', [], model);
+  labels = createSyncedStore<number[]>('labels', [], model);
 
-  num_instances = createSyncedWidget<number>('num_instances', 0, model);
+  num_instances = createSyncedStore<number>('num_instances', 0, model);
 
-  one_way_pds = createSyncedWidget<OneWayPD[]>('one_way_pds', [], model);
-  feature_to_ice_lines = createSyncedWidget<Record<string, number[][]>>(
+  one_way_pds = createSyncedStore<OneWayPD[]>('one_way_pds', [], model);
+  feature_to_ice_lines = createSyncedStore<Record<string, number[][]>>(
     'feature_to_ice_lines',
     {},
     model
   );
-  two_way_pds = createSyncedWidget<TwoWayPD[]>('two_way_pds', [], model);
+  two_way_pds = createSyncedStore<TwoWayPD[]>('two_way_pds', [], model);
 
-  two_way_pdp_extent = createSyncedWidget<[number, number]>(
+  two_way_pdp_extent = createSyncedStore<[number, number]>(
     'two_way_pdp_extent',
     [0, 0],
     model
   );
-  two_way_interaction_extent = createSyncedWidget<[number, number]>(
+  two_way_interaction_extent = createSyncedStore<[number, number]>(
     'two_way_interaction_extent',
     [0, 0],
     model
   );
 
-  one_way_pdp_extent = createSyncedWidget<[number, number]>(
+  one_way_pdp_extent = createSyncedStore<[number, number]>(
     'one_way_pdp_extent',
     [0, 0],
     model
   );
-  ice_line_extent = createSyncedWidget<[number, number]>(
+  ice_line_extent = createSyncedStore<[number, number]>(
     'ice_line_extent',
     [0, 0],
     model
   );
-  ice_cluster_center_extent = createSyncedWidget<[number, number]>(
+  ice_cluster_center_extent = createSyncedStore<[number, number]>(
     'ice_cluster_center_extent',
     [0, 0],
     model
   );
-  centered_ice_line_extent = createSyncedWidget<[number, number]>(
+  centered_ice_line_extent = createSyncedStore<[number, number]>(
     'centered_ice_line_extent',
     [0, 0],
     model
   );
 
-  height = createSyncedWidget<number>('height', 600, model);
+  height = createSyncedStore<number>('height', 600, model);
 
-  highlighted_indices = createSyncedWidget<number[]>(
+  highlighted_indices = createSyncedStore<number[]>(
     'highlighted_indices',
     [],
     model
   );
 
-  two_way_to_calculate = createSyncedWidget<string[]>(
+  two_way_to_calculate = createSyncedStore<string[]>(
     'two_way_to_calculate',
     [],
     model
   );
 
-  cluster_update = createSyncedWidget<ClusterUpdate>(
+  cluster_update = createSyncedStore<ClusterUpdate>(
     'cluster_update',
     {},
     model
