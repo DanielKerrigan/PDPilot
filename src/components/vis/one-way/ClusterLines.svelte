@@ -19,6 +19,7 @@
     one_way_pds,
     cluster_update,
     feature_to_ice_lines,
+    highlighted_indices,
   } from '../../../stores';
   import MarginalHistogram from '../marginal/MarginalHistogram.svelte';
   import {
@@ -29,7 +30,11 @@
   import MarginalBarChart from '../marginal/MarginalBarChart.svelte';
   import cloneDeep from 'lodash.clonedeep';
   import { onMount, tick } from 'svelte';
-  import { centerIceLines, getClustering } from '../../../utils';
+  import {
+    centerIceLines,
+    getClustering,
+    areArraysEqual,
+  } from '../../../utils';
 
   export let pd: OneWayPD;
   export let width: number;
@@ -55,7 +60,7 @@
 
   // margin.top is space above each individual plot
   const margin = {
-    top: 10,
+    top: 16,
     right: 10,
     bottom: 32,
     left: 50,
@@ -406,6 +411,10 @@
     one_ways[featureIndex] = copyPd;
     $one_way_pds = one_ways;
   }
+
+  function onClickHighlightInstances(indices: number[]) {
+    $highlighted_indices = Array.from(indices);
+  }
 </script>
 
 <div class="cluster-lines-container">
@@ -533,14 +542,88 @@
     <canvas bind:this={canvas} />
     <svg class="svg-for-clusters" height={chartHeight} {width} bind:this={svg}>
       {#each clustersWithFilteredIndices as cluster}
-        <g transform="translate(0,{fy(cluster.id) ?? 0})">
-          <text
-            dominant-baseline="middle"
-            text-anchor="end"
-            font-size="10"
-            x={width - margin.right}
-            y={margin.top / 2}>{cluster.filteredIndices.length} instances</text
-          >
+        {@const indicesAreHighlighted = areArraysEqual(
+          cluster.filteredIndices,
+          $highlighted_indices
+        )}
+        <g class="cluster-group" transform="translate(0,{fy(cluster.id) ?? 0})">
+          <!-- add transparent rect so that :hover works for cluster-group -->
+          <rect {width} height={facetHeight} fill="transparent" stroke="none" />
+
+          <g>
+            <text
+              dominant-baseline="middle"
+              text-anchor="end"
+              font-size="10"
+              x={width - margin.right - 20}
+              y={margin.top / 2}
+              >{cluster.filteredIndices.length} instances</text
+            >
+
+            <g transform="translate({width - margin.right - 16})">
+              {#if indicesAreHighlighted}
+                <!-- check mark icon -->
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-check instances-highlighted-icon"
+                >
+                  <!-- add transparent rect for the tooltip -->
+                  <rect
+                    width={24}
+                    height={24}
+                    fill="transparent"
+                    stroke="none"
+                  />
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M5 12l5 5l10 -10" />
+                  <title>The instances in this chart are highlighted.</title>
+                </svg>
+              {:else}
+                <!-- highligther icon -->
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <!-- svelte-ignore a11y-no-static-element-interactions -->
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-highlight highlight-instances-icon"
+                  on:click={() =>
+                    onClickHighlightInstances(cluster.filteredIndices)}
+                >
+                  <!-- add transparent rect so that hover works -->
+                  <rect
+                    width={24}
+                    height={24}
+                    fill="transparent"
+                    stroke="none"
+                  />
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path
+                    d="M3 19h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4"
+                  />
+                  <path d="M12.5 5.5l4 4" />
+                  <path d="M4.5 13.5l4 4" />
+                  <path d="M21 15v4h-8l4 -4z" />
+                  <title>Highlight the instances in this chart</title>
+                </svg>
+              {/if}
+            </g>
+          </g>
+
           <YAxis scale={y} x={margin.left} label={'Centered prediction'} />
           <XAxis
             scale={x}
@@ -617,5 +700,19 @@
     position: absolute;
     top: 0;
     left: 0;
+  }
+
+  .icon-tabler-highlight {
+    cursor: pointer;
+    stroke: var(--blue);
+  }
+
+  .icon-tabler-highlight:hover {
+    stroke: var(--dark-blue);
+  }
+
+  .cluster-group:not(:hover) .icon-tabler-highlight,
+  .cluster-group:not(:hover) .icon-tabler-check {
+    display: none;
   }
 </style>
