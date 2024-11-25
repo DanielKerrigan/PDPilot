@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { Distribution, OneWayPD } from '../../../types';
-  import { centerIceLines } from '../../../utils';
+  import { centerIceLines, clamp } from '../../../utils';
   import { scaleLinear, scalePoint } from 'd3-scale';
+  import { range } from 'd3-array';
   import type { ScaleLinear, ScalePoint } from 'd3-scale';
   import { line as d3line } from 'd3-shape';
   import type { Line } from 'd3-shape';
@@ -17,6 +18,8 @@
     highlightedDistributions,
     brushedFeature,
     feature_to_ice_lines,
+    opacity,
+    highlightedIndicesSet,
   } from '../../../stores';
   import { select } from 'd3-selection';
   import type { Selection } from 'd3-selection';
@@ -31,6 +34,7 @@
   } from '../../../vis-utils';
   import MarginalBarChart from '../marginal/MarginalBarChart.svelte';
   import { onMount } from 'svelte';
+  import { drawICELines } from '../../../drawing';
 
   export let pd: OneWayPD;
   export let width: number;
@@ -96,10 +100,12 @@
   $: iceLines = center ? centeredIceLines : standardIceLines;
   $: pdpLine = center ? pd.ice.centered_pdp : pd.mean_predictions;
 
+  $: allIndices = range(standardIceLines.length);
+
   // canvas
 
   onMount(() => {
-    ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+    ctx = canvas.getContext('2d', { alpha: false }) as CanvasRenderingContext2D;
   });
 
   function drawIcePdp(
@@ -108,7 +114,8 @@
     xValues: number[],
     ctx: CanvasRenderingContext2D,
     line: Line<number>,
-    highlight: number[],
+    highlightedIndices: Set<number>,
+    allIndices: number[],
     x: ScaleLinear<number, number, never> | ScalePoint<number>,
     y: ScaleLinear<number, number, never>,
     iceLineWidth: number,
@@ -116,7 +123,7 @@
     showHighlights: boolean,
     width: number,
     height: number,
-    center: boolean
+    opacity: number
   ) {
     // TODO: is this check needed?
     if (
@@ -129,32 +136,38 @@
     }
     ctx.save();
 
-    ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, width, height);
 
-    // normal ice lines
+    // non-highlighted ice lines
 
-    ctx.lineWidth = iceLineWidth;
-    // same as css var(--gray-2)
-    ctx.strokeStyle = 'rgb(198, 198, 198)';
-    ctx.globalAlpha = 0.15;
+    const normalIndices =
+      showHighlights && highlightedIndices.size > 0
+        ? allIndices.filter((d) => !highlightedIndices.has(d))
+        : allIndices;
 
-    iceLines.forEach((d) => {
-      ctx.beginPath();
-      line(d);
-      ctx.stroke();
-    });
+    drawICELines(
+      ctx,
+      line,
+      iceLines,
+      normalIndices,
+      iceLineWidth,
+      'rgb(198, 198, 198)', // --gray-2
+      opacity
+    );
 
     // highlighted ice lines
 
-    if (showHighlights) {
-      ctx.strokeStyle = highlightColor;
-      ctx.globalAlpha = 0.3;
-
-      highlight.forEach((i) => {
-        ctx.beginPath();
-        line(iceLines[i]);
-        ctx.stroke();
-      });
+    if (showHighlights && highlightedIndices.size > 0) {
+      drawICELines(
+        ctx,
+        line,
+        iceLines,
+        highlightedIndices,
+        iceLineWidth,
+        highlightColor,
+        clamp(opacity * 2, 0, 1)
+      );
     }
 
     // pdp line
@@ -171,14 +184,14 @@
     // pdp circles
 
     if ('step' in x) {
+      ctx.beginPath();
       for (let i = 0; i < xValues.length; i++) {
         const cx = x(xValues[i]) ?? 0;
         const cy = y(pdpLine[i]);
-
-        ctx.beginPath();
+        ctx.moveTo(cx + radius, cy);
         ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
-        ctx.fill();
       }
+      ctx.fill();
     }
 
     ctx.restore();
@@ -197,7 +210,8 @@
       pd.x_values,
       ctx,
       line,
-      $highlighted_indices,
+      $highlightedIndicesSet,
+      allIndices,
       x,
       y,
       iceLineWidth,
@@ -205,7 +219,7 @@
       showHighlights,
       width,
       height,
-      center
+      $opacity
     );
   }
 
@@ -220,7 +234,8 @@
     pd.x_values,
     ctx,
     line,
-    $highlighted_indices,
+    $highlightedIndicesSet,
+    allIndices,
     x,
     y,
     iceLineWidth,
@@ -228,7 +243,7 @@
     showHighlights,
     width,
     height,
-    center
+    $opacity
   );
 
   // brushing

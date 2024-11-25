@@ -1,6 +1,6 @@
 import { test } from 'uvu';
 import * as assert from 'uvu/assert';
-import { isNumeric, areArraysEqual } from '../src/utils';
+import { isNumeric, areArraysEqual, atOrValue, clamp } from '../src/utils';
 
 test('is numeric', () => {
   assert.ok(isNumeric('0'));
@@ -108,6 +108,26 @@ test('are arrays equal', () => {
       areArraysEqual
     )
   );
+});
+
+test('atOrValue', () => {
+  assert.equal(atOrValue([4, 5, 6], 0), 4);
+  assert.equal(atOrValue([4, 5, 6], 1), 5);
+  assert.equal(atOrValue([4, 5, 6], 2), 6);
+  assert.equal(atOrValue(4, 0), 4);
+  assert.equal(atOrValue(4, 1), 4);
+  assert.equal(atOrValue(4, 2), 4);
+});
+
+test('clamp', () => {
+  assert.equal(clamp(5, 0, 10), 5);
+  assert.equal(clamp(5, -10, 10), 5);
+  assert.equal(clamp(5, 5, 10), 5);
+  assert.equal(clamp(5, 0, 5), 5);
+  assert.equal(clamp(-5, 0, 5), 0);
+  assert.equal(clamp(5, 10, 20), 10);
+  assert.equal(clamp(5, -10, -5), -5);
+  assert.equal(clamp(5, 1, 4), 4);
 });
 
 test.run();

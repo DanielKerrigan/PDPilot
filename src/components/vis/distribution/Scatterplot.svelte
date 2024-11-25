@@ -142,7 +142,7 @@
           .domain(colorDomain)
           .range(
             colorScheme === 'highlight'
-              ? ['rgb(145, 145, 145)', highlightColor]
+              ? ['#919191', highlightColor]
               : ['#db5c39', '#5c39db']
           );
 
@@ -302,7 +302,9 @@
 
   onMount(() => {
     if (canvas) {
-      ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+      ctx = canvas.getContext('2d', {
+        alpha: false,
+      }) as CanvasRenderingContext2D;
     }
   });
 

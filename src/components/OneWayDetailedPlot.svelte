@@ -15,11 +15,12 @@
     labels,
     num_instances,
     highlightedIndicesSet,
+    opacity,
   } from '../stores';
   import PDP from './PDP.svelte';
   import ClusterDescriptions from './vis/ice-clusters/ClusterDescriptions.svelte';
   import Scatterplot from './vis/distribution/Scatterplot.svelte';
-  import { getClustering } from '../utils';
+  import { clamp, getClustering } from '../utils';
   import SegmentedButton from './SegmentedButton.svelte';
 
   export let pd: OneWayPD;
@@ -170,7 +171,7 @@
             yAxisValueMap={{}}
             xDistribution={featureInfo.distribution}
             yDistribution={null}
-            opacity={0.5}
+            opacity={clamp($opacity * 2, 0, 1)}
             allowBrushing={true}
             showMarginalDistribution={true}
             marginTop={marginalPlotHeight + 3}

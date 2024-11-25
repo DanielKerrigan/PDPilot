@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 from ipywidgets import DOMWidget
 from numpy.random import MT19937, RandomState, SeedSequence
-from traitlets import Dict, Int, Unicode, observe
+from traitlets import Dict, Float, Int, Unicode, observe
 from traitlets import List as ListTraitlet
 
 from pdpilot._frontend import module_name, module_version
@@ -40,6 +40,11 @@ class PDPilotWidget(DOMWidget):
     :type seed: int | None, optional
     :param height: The height of the widget in pixels, defaults to 600.
     :type height: int, optional
+    :param opacity: The opacity to use when drawing ICE lines.
+        For scatter plots, raincloud plots, and highlighted ICE lines,
+        `min(2 * opacity, 1)` is used. Must be in the range (0, 1].
+        Defaults to 0.2. Setting this to 1 will enable faster rendering.
+    :type opacity: float, optional
     :raises OSError: Raised if ``pd_data`` is a str or Path and the file cannot be read.
     """
 
@@ -82,6 +87,7 @@ class PDPilotWidget(DOMWidget):
     centered_ice_line_extent = ListTraitlet([0, 0]).tag(sync=True)
 
     height = Int(600).tag(sync=True)
+    opacity = Float(0.2).tag(sync=True)
 
     highlighted_indices = ListTraitlet([]).tag(sync=True)
 
@@ -97,6 +103,7 @@ class PDPilotWidget(DOMWidget):
         pd_data: Union[str, Path, dict],
         seed: Union[int, None] = None,
         height: int = 600,
+        opacity: float = 0.2,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -139,6 +146,7 @@ class PDPilotWidget(DOMWidget):
         self.centered_ice_line_extent = pd_data["centered_ice_line_extent"]
 
         self.height = height
+        self.opacity = opacity
 
         self.labels = (
             labels.tolist() if isinstance(labels, (np.ndarray, pd.Series)) else labels

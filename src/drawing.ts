@@ -1,5 +1,5 @@
 import { getRaincloudData } from './vis-utils';
-import { max, groups, zip } from 'd3-array';
+import { max, groups, zip, range } from 'd3-array';
 import { scaleLinear } from 'd3-scale';
 import { area } from 'd3-shape';
 import type { RaincloudData, TwoWayPD } from './types';
@@ -10,6 +10,8 @@ import type {
   ScaleDiverging,
   ScaleOrdinal,
 } from 'd3-scale';
+import type { Line } from 'd3-shape';
+import { atOrValue } from './utils';
 
 export function drawHeatmap(
   data: TwoWayPD,
@@ -25,7 +27,8 @@ export function drawHeatmap(
 ): void {
   ctx.save();
 
-  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, width, height);
 
   for (let i = 0; i < data.x_values.length; i++) {
     const cx = data.x_values[i];
@@ -81,35 +84,32 @@ export function drawScatterplot(
 
   ctx.save();
 
-  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, width, height);
+
+  const I = range(xValues.length);
 
   if ('bandwidth' in x && 'bandwidth' in y) {
     // categorical scatterplot
 
-    ctx.globalAlpha = alpha;
-
     const inX = scaleLinear().domain([0, 1]).range([0, x.bandwidth()]);
     const inY = scaleLinear().domain([0, 1]).range([0, y.bandwidth()]);
 
-    for (let i = 0; i < xValues.length; i++) {
-      const rx = inX(randomPoints[i].x);
-      const ry = inY(randomPoints[i].y);
+    const xs = [];
+    const ys = [];
+    const colors = [];
 
-      ctx.strokeStyle = color(colorValues[i]);
-      ctx.beginPath();
-      ctx.arc(
-        (x(xValues[i]) ?? 0) + rx,
-        (y(yValues[i]) ?? 0) + ry,
-        radius,
-        0,
-        2 * Math.PI
-      );
-      ctx.stroke();
+    for (const i of I) {
+      xs.push((x(xValues[i]) ?? 0) + inX(randomPoints[i].x));
+      ys.push((y(yValues[i]) ?? 0) + inY(randomPoints[i].y));
+      colors.push(color(colorValues[i]));
     }
+
+    drawScatterPlotPoints(ctx, I, xs, ys, colors, radius, alpha);
   } else if ('bandwidth' in x && !('bandwidth' in y)) {
     if (x.bandwidth() >= minRainCloudSize) {
       // vertical raincloud plots
-      const grouped = groups(zip(xValues, yValues, colorValues), (g) => g[0]);
+      const grouped = groups(zip(xValues, yValues, colorValues), (d) => d[0]);
       grouped.forEach(([key, group]) => {
         ctx.translate(x(key) ?? 0, 0);
 
@@ -133,18 +133,25 @@ export function drawScatterplot(
       });
     } else {
       // vertical strip plots
-      for (let i = 0; i < xValues.length; i++) {
-        ctx.strokeStyle = color(colorValues[i]);
-        ctx.beginPath();
-        ctx.moveTo(x(xValues[i]) ?? 0, y(yValues[i]));
-        ctx.lineTo((x(xValues[i]) ?? 0) + x.bandwidth(), y(yValues[i]));
-        ctx.stroke();
+      const x1 = [];
+      const x2 = [];
+      const ys = [];
+      const colors = [];
+
+      for (const i of I) {
+        const x1Value = x(xValues[i]) ?? 0;
+        x1.push(x1Value);
+        x2.push(x1Value + x.bandwidth());
+        ys.push(y(yValues[i]));
+        colors.push(color(colorValues[i]));
       }
+
+      drawStrips(ctx, I, x1, x2, ys, ys, colors, alpha);
     }
   } else if (!('bandwidth' in x) && 'bandwidth' in y) {
     if (y.bandwidth() >= minRainCloudSize) {
       // horizontal raincloud plots
-      const grouped = groups(zip(xValues, yValues, colorValues), (g) => g[1]);
+      const grouped = groups(zip(xValues, yValues, colorValues), (d) => d[1]);
       grouped.forEach(([key, group]) => {
         ctx.translate(0, y(key) ?? 0);
 
@@ -168,28 +175,116 @@ export function drawScatterplot(
       });
     } else {
       // horizontal strip plots
-      for (let i = 0; i < xValues.length; i++) {
-        ctx.strokeStyle = color(colorValues[i]);
-        ctx.beginPath();
-        ctx.moveTo(x(xValues[i]), y(yValues[i]) ?? 0);
-        ctx.lineTo(x(xValues[i]), (y(yValues[i]) ?? 0) + y.bandwidth());
-        ctx.stroke();
+      const xs = [];
+      const y1 = [];
+      const y2 = [];
+      const colors = [];
+
+      for (const i of I) {
+        const y1Value = y(yValues[i]) ?? 0;
+        y1.push(y1Value);
+        y2.push(y1Value + y.bandwidth());
+        xs.push(x(xValues[i]));
+        colors.push(color(colorValues[i]));
       }
+
+      drawStrips(ctx, I, xs, xs, y1, y2, colors, alpha);
     }
   } else if (!('bandwidth' in x || 'bandwidth' in y)) {
     // scatterplot
 
-    ctx.globalAlpha = alpha;
+    const xs = [];
+    const ys = [];
+    const colors = [];
 
-    for (let i = 0; i < xValues.length; i++) {
-      ctx.strokeStyle = color(colorValues[i]);
-      ctx.beginPath();
-      ctx.arc(x(xValues[i]), y(yValues[i]), radius, 0, 2 * Math.PI);
-      ctx.stroke();
+    for (const i of I) {
+      xs.push(x(xValues[i]));
+      ys.push(y(yValues[i]));
+      colors.push(color(colorValues[i]));
     }
+
+    drawScatterPlotPoints(ctx, I, xs, ys, colors, radius, alpha);
   }
 
   ctx.restore();
+}
+
+function drawScatterPlotPoints(
+  ctx: CanvasRenderingContext2D,
+  I: number[],
+  xs: number[],
+  ys: number[],
+  colors: string[],
+  radius: number,
+  globalAlpha: number
+) {
+  ctx.globalAlpha = globalAlpha;
+  ctx.lineWidth = 1;
+
+  const colorToIndex: [string, number[]][] = groups(I, (i) => colors[i]);
+
+  if (globalAlpha === 1) {
+    for (const [color, indices] of colorToIndex) {
+      ctx.strokeStyle = color;
+
+      ctx.beginPath();
+
+      for (const i of indices) {
+        ctx.moveTo(xs[i] + radius, ys[i]);
+        ctx.arc(xs[i], ys[i], radius, 0, 2 * Math.PI);
+      }
+
+      ctx.stroke();
+    }
+  } else {
+    for (const i of I) {
+      ctx.strokeStyle = colors[i];
+      ctx.beginPath();
+      ctx.arc(xs[i], ys[i], radius, 0, 2 * Math.PI);
+      ctx.stroke();
+    }
+  }
+}
+
+function drawStrips(
+  ctx: CanvasRenderingContext2D,
+  I: number[],
+  x1: number[] | number,
+  x2: number[] | number,
+  y1: number[] | number,
+  y2: number[] | number,
+  color: string[] | string,
+  globalAlpha: number
+) {
+  ctx.globalAlpha = globalAlpha;
+  ctx.lineWidth = 1;
+
+  const colorToIndex: [string, number[]][] = groups(I, (i) =>
+    atOrValue(color, i)
+  );
+
+  if (globalAlpha === 1) {
+    for (const [color, indices] of colorToIndex) {
+      ctx.strokeStyle = color;
+
+      ctx.beginPath();
+
+      for (const i of indices) {
+        ctx.moveTo(atOrValue(x1, i), atOrValue(y1, i));
+        ctx.lineTo(atOrValue(x2, i), atOrValue(y2, i));
+      }
+
+      ctx.stroke();
+    }
+  } else {
+    for (const i of I) {
+      ctx.strokeStyle = atOrValue(color, i);
+      ctx.beginPath();
+      ctx.moveTo(atOrValue(x1, i), atOrValue(y1, i));
+      ctx.lineTo(atOrValue(x2, i), atOrValue(y2, i));
+      ctx.stroke();
+    }
+  }
 }
 
 export function drawHorizontalRaincloudPlot(
@@ -224,7 +319,8 @@ export function drawHorizontalRaincloudPlot(
 
   ctx.save();
 
-  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, width, height);
 
   // cloud
 
@@ -235,20 +331,21 @@ export function drawHorizontalRaincloudPlot(
 
   // rain
 
-  ctx.globalAlpha = alpha;
+  const I = range(data.values.length);
+  const colors =
+    typeof rainColor === 'function'
+      ? data.values.map(({ label }) => rainColor(label))
+      : rainColor;
+  const y1 = height / 2 + padding;
+  const y2 = height;
+  const xs = data.values.map(({ value }) => x(value));
 
-  data.values.forEach(({ value, label }) => {
-    ctx.beginPath();
-    ctx.strokeStyle =
-      typeof rainColor === 'function' ? rainColor(label) : rainColor;
-    ctx.moveTo(x(value), height / 2 + padding);
-    ctx.lineTo(x(value), height);
-    ctx.stroke();
-  });
+  drawStrips(ctx, I, xs, xs, y1, y2, colors, alpha);
 
   // lightning
 
   ctx.globalAlpha = 1;
+  ctx.lineWidth = 1;
   ctx.fillStyle = lightningColor;
   ctx.strokeStyle = 'white';
   ctx.beginPath();
@@ -291,7 +388,8 @@ export function drawVerticalRaincloudPlot(
 
   ctx.save();
 
-  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, width, height);
 
   // cloud
 
@@ -302,26 +400,60 @@ export function drawVerticalRaincloudPlot(
 
   // rain
 
-  ctx.globalAlpha = alpha;
+  const I = range(data.values.length);
+  const colors =
+    typeof rainColor === 'function'
+      ? data.values.map(({ label }) => rainColor(label))
+      : rainColor;
+  const x1 = width / 2 + padding;
+  const x2 = width;
+  const ys = data.values.map(({ value }) => y(value));
 
-  data.values.forEach(({ value, label }) => {
-    ctx.beginPath();
-    ctx.strokeStyle =
-      typeof rainColor === 'function' ? rainColor(label) : rainColor;
-    ctx.moveTo(width / 2 + padding, y(value));
-    ctx.lineTo(width, y(value));
-    ctx.stroke();
-  });
+  drawStrips(ctx, I, x1, x2, ys, ys, colors, alpha);
 
   // lightning
 
   ctx.globalAlpha = 1;
+  ctx.lineWidth = 1;
   ctx.fillStyle = lightningColor;
   ctx.strokeStyle = 'white';
   ctx.beginPath();
-  ctx.arc(width / 2, y(data.mean), 5, 0, 2 * Math.PI);
+  ctx.arc(width / 2, y(data.mean), 3, 0, 2 * Math.PI);
   ctx.fill();
   ctx.stroke();
 
   ctx.restore();
+}
+
+export function drawICELines(
+  ctx: CanvasRenderingContext2D,
+  line: Line<number>,
+  iceLines: number[][],
+  indices: number[] | Set<number>,
+  lineWidth: number,
+  strokeStyle: string,
+  globalAlpha: number
+) {
+  ctx.lineWidth = lineWidth;
+  ctx.strokeStyle = strokeStyle;
+  ctx.globalAlpha = globalAlpha;
+
+  // if opacity is set to 1, then we can be efficient
+  // and draw all of the lines in a single stroke.
+  // otherwise, we have to draw each line individually
+  // so that we can see darker colors where there is more
+  // overlap.
+  if (globalAlpha === 1) {
+    ctx.beginPath();
+    indices.forEach((i) => {
+      line(iceLines[i]);
+    });
+    ctx.stroke();
+  } else {
+    indices.forEach((i) => {
+      ctx.beginPath();
+      line(iceLines[i]);
+      ctx.stroke();
+    });
+  }
 }

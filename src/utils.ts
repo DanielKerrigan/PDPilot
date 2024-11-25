@@ -2,8 +2,10 @@ import { sum } from 'd3-array';
 import type { OneWayPD, Clustering } from './types';
 
 export {
-  isNumeric,
   areArraysEqual,
+  atOrValue,
+  clamp,
+  isNumeric,
   countsToPercents,
   getClustering,
   centerIceLines,
@@ -32,6 +34,17 @@ function areArraysEqual<T>(
   }
 
   return true;
+}
+
+/* If `a` is an array, return the value at the given `index`. Otherwise,
+return `a`.*/
+function atOrValue<T>(a: T[] | T, index: number): T {
+  return Array.isArray(a) ? a[index] : a;
+}
+
+/* Return `value` clamped to the range given by `low` and `high`. */
+function clamp(value: number, low: number, high: number): number {
+  return Math.min(Math.max(value, low), high);
 }
 
 /* https://stackoverflow.com/questions/175739/built-in-way-in-javascript-to-check-if-a-string-is-a-valid-number

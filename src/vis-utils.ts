@@ -214,8 +214,8 @@ function getRaincloudData(
 
   let densities: { x: number; density: number }[] = [];
 
-  // computing the KDE requires at least two data points
-  if (values.length > 1) {
+  // require at least two distinct values to compute the KDE
+  if (values.length > 1 && values.some((v) => v !== values[0])) {
     const kde = density1d(values, { pad: 0, bins: 32 });
     densities = Array.from(kde, ({ x, y }) => ({ x, density: y }));
   }

@@ -38,7 +38,9 @@
   // set up
 
   onMount(() => {
-    ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+    ctx = canvas.getContext('2d', {
+      alpha: false,
+    }) as CanvasRenderingContext2D;
   });
 
   // drawing
@@ -52,7 +54,9 @@
     colorHeight: number,
     marginLeft: number
   ) {
-    ctx.clearRect(0, 0, totalWidth, totalHeight);
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, totalWidth, totalHeight);
+
     for (let i = 0; i < colorWidth; i++) {
       ctx.fillStyle = interpolator(i / colorWidth);
       ctx.fillRect(i + marginLeft, 0, 1, colorHeight);

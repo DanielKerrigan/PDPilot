@@ -9,7 +9,12 @@
     stackOffsetNone,
     stackOrderReverse,
   } from 'd3-shape';
-  import { dataset, feature_info, num_instances } from '../../../stores';
+  import {
+    dataset,
+    feature_info,
+    num_instances,
+    opacity,
+  } from '../../../stores';
   import type { FeatureInfo, OneWayPD, RaincloudData } from '../../../types';
   import {
     categoricalColors,
@@ -26,7 +31,7 @@
   import type { Selection } from 'd3-selection';
   import type { D3BrushEvent, BrushBehavior } from 'd3-brush';
   import { createEventDispatcher, onMount, tick } from 'svelte';
-  import { getClustering } from '../../../utils';
+  import { clamp, getClustering } from '../../../utils';
   import { drawHorizontalRaincloudPlot } from '../../../drawing';
 
   export let pd: OneWayPD;
@@ -317,7 +322,9 @@
 
   onMount(() => {
     if (canvas) {
-      ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+      ctx = canvas.getContext('2d', {
+        alpha: false,
+      }) as CanvasRenderingContext2D;
     }
   });
 
@@ -336,7 +343,9 @@
     }
 
     ctx.save();
-    ctx.clearRect(0, 0, width, height);
+
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, width, height);
 
     featureData.forEach(({ feature, kind, data }) => {
       if (kind === 'categorical') {
@@ -361,7 +370,7 @@
           xScale,
           width,
           clusterY.bandwidth(),
-          0.5,
+          clamp($opacity * 2, 0, 1),
           color(cluster),
           'black',
           color(cluster)

@@ -20,6 +20,7 @@
     cluster_update,
     feature_to_ice_lines,
     highlighted_indices,
+    opacity,
   } from '../../../stores';
   import MarginalHistogram from '../marginal/MarginalHistogram.svelte';
   import {
@@ -35,6 +36,7 @@
     getClustering,
     areArraysEqual,
   } from '../../../utils';
+  import { drawICELines } from '../../../drawing';
 
   export let pd: OneWayPD;
   export let width: number;
@@ -144,7 +146,9 @@
   // canvas
 
   onMount(() => {
-    ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+    ctx = canvas.getContext('2d', {
+      alpha: false,
+    }) as CanvasRenderingContext2D;
   });
 
   function drawClusterLines(
@@ -157,7 +161,8 @@
     width: number,
     height: number,
     brushedIndices: Set<number>,
-    sourceClusterId: number
+    sourceClusterId: number,
+    opacity: number
   ) {
     // TODO: is this check needed?
     if (
@@ -170,25 +175,52 @@
     }
     ctx.save();
 
-    ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, width, height);
 
     clustersWithFilteredIndices.forEach((cluster) => {
       ctx.translate(0, fy(cluster.id) ?? 0);
 
       // cluster ice lines
 
-      ctx.lineWidth = 1.0;
-      ctx.globalAlpha = 0.25;
+      let coloredIndices: number[];
+      let backgroundIndices: number[];
 
-      cluster.filteredIndices.forEach((idx) => {
-        ctx.beginPath();
-        ctx.strokeStyle =
-          cluster.id === sourceClusterId && !brushedIndices.has(idx)
-            ? 'rgb(171, 171, 171)'
-            : light(cluster.id);
-        line(centeredIceLines[idx]);
-        ctx.stroke();
-      });
+      if (cluster.id === sourceClusterId) {
+        // this plot is being brushed
+        coloredIndices = Array.from(brushedIndices);
+        backgroundIndices = cluster.filteredIndices.filter(
+          (d) => !brushedIndices.has(d)
+        );
+      } else {
+        // this plot is not being brushed
+        coloredIndices = cluster.filteredIndices;
+        backgroundIndices = [];
+      }
+
+      if (backgroundIndices.length > 0) {
+        drawICELines(
+          ctx,
+          line,
+          centeredIceLines,
+          backgroundIndices,
+          1,
+          'rgb(171, 171, 171)',
+          opacity
+        );
+      }
+
+      if (coloredIndices.length > 0) {
+        drawICELines(
+          ctx,
+          line,
+          centeredIceLines,
+          coloredIndices,
+          1,
+          light(cluster.id),
+          opacity
+        );
+      }
 
       // pdp line
 
@@ -234,7 +266,8 @@
       width,
       chartHeight,
       brushedIndices,
-      sourceClusterId
+      sourceClusterId,
+      $opacity
     );
   }
 
@@ -253,7 +286,8 @@
     width,
     chartHeight,
     brushedIndices,
-    sourceClusterId
+    sourceClusterId,
+    $opacity
   );
 
   function setNumClusters(numClusters: number) {

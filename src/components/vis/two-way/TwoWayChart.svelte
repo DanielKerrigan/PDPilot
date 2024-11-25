@@ -120,7 +120,7 @@
           .range([heightExcludingLegend - margin.bottom, margin.top]);
 
   onMount(() => {
-    ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+    ctx = canvas.getContext('2d', { alpha: false }) as CanvasRenderingContext2D;
   });
 
   /*
