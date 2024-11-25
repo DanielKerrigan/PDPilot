@@ -45,6 +45,11 @@ class PDPilotWidget(DOMWidget):
         `min(2 * opacity, 1)` is used. Must be in the range (0, 1].
         Defaults to 0.2. Setting this to 1 will enable faster rendering.
     :type opacity: float, optional
+    :param brush_throttle_duration: The number of milliseconds between updates to
+        the visualizations when brushing the charts. A higher number results in
+        the visualizations being updated less frequently when a brush is moved.
+        Defaults to 100.
+    :type brush_throttle_duration: float, optional
     :raises OSError: Raised if ``pd_data`` is a str or Path and the file cannot be read.
     """
 
@@ -88,6 +93,7 @@ class PDPilotWidget(DOMWidget):
 
     height = Int(600).tag(sync=True)
     opacity = Float(0.2).tag(sync=True)
+    brush_throttle_duration = Int(100).tag(sync=True)
 
     highlighted_indices = ListTraitlet([]).tag(sync=True)
 
@@ -104,6 +110,7 @@ class PDPilotWidget(DOMWidget):
         seed: Union[int, None] = None,
         height: int = 600,
         opacity: float = 0.2,
+        brush_throttle_duration: int = 100,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -147,6 +154,7 @@ class PDPilotWidget(DOMWidget):
 
         self.height = height
         self.opacity = opacity
+        self.brush_throttle_duration = brush_throttle_duration
 
         self.labels = (
             labels.tolist() if isinstance(labels, (np.ndarray, pd.Series)) else labels

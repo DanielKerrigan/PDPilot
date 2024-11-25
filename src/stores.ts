@@ -92,6 +92,7 @@ export let centered_ice_line_extent: Writable<[number, number]>;
 
 export let height: Writable<number>;
 export let opacity: Writable<number>;
+export let brush_throttle_duration: Writable<number>;
 
 export let highlighted_indices: Writable<number[]>;
 
@@ -203,6 +204,11 @@ export function setStores(model: DOMWidgetModel): void {
 
   height = createSyncedStore<number>('height', 600, model);
   opacity = createSyncedStore<number>('opacity', 0.2, model);
+  brush_throttle_duration = createSyncedStore<number>(
+    'brush_throttle_duration',
+    100,
+    model
+  );
 
   highlighted_indices = createSyncedStore<number[]>(
     'highlighted_indices',

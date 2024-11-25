@@ -22,6 +22,7 @@
     brushingInProgress,
     highlightedDistributions,
     quasiRandomPoints,
+    brush_throttle_duration,
   } from '../../../stores';
   import type { Distribution } from '../../../types';
   import MarginalHistogram from '../marginal/MarginalHistogram.svelte';
@@ -32,6 +33,7 @@
   import { drawScatterplot } from '../../../drawing';
   import QuantitativeColorLegend from '../legends/QuantitativeColorLegend.svelte';
   import CategoricalColorLegend from '../legends/CategoricalColorLegend.svelte';
+  import throttle from 'lodash.throttle';
 
   export let width: number;
   export let height: number;
@@ -264,7 +266,7 @@
       ],
     ])
     .on('start', brushStart)
-    .on('brush', brushed)
+    .on('brush', throttle(brushed, $brush_throttle_duration))
     .on('end', brushEnd);
 
   let group: SVGGElement;

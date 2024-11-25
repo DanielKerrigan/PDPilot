@@ -20,6 +20,7 @@
     feature_to_ice_lines,
     opacity,
     highlightedIndicesSet,
+    brush_throttle_duration,
   } from '../../../stores';
   import { select } from 'd3-selection';
   import type { Selection } from 'd3-selection';
@@ -35,6 +36,7 @@
   import MarginalBarChart from '../marginal/MarginalBarChart.svelte';
   import { onMount } from 'svelte';
   import { drawICELines } from '../../../drawing';
+  import throttle from 'lodash.throttle';
 
   export let pd: OneWayPD;
   export let width: number;
@@ -312,7 +314,7 @@
       [width - margin.right, height - margin.bottom],
     ])
     .on('start', brushStart)
-    .on('brush', brushed)
+    .on('brush', throttle(brushed, $brush_throttle_duration))
     .on('end', brushEnd);
 
   let group: SVGGElement;

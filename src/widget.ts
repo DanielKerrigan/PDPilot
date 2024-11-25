@@ -32,6 +32,7 @@ export class PDPilotModel extends DOMWidgetModel {
       centered_ice_line_extent: [0, 0],
       height: 600,
       opacity: 0.2,
+      brush_throttle_duration: 100,
       highlighted_indices: [],
       two_way_to_calculate: [],
       cluster_update: {},

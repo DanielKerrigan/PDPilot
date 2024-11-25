@@ -14,6 +14,7 @@
     feature_info,
     num_instances,
     opacity,
+    brush_throttle_duration,
   } from '../../../stores';
   import type { FeatureInfo, OneWayPD, RaincloudData } from '../../../types';
   import {
@@ -33,6 +34,7 @@
   import { createEventDispatcher, onMount, tick } from 'svelte';
   import { clamp, getClustering } from '../../../utils';
   import { drawHorizontalRaincloudPlot } from '../../../drawing';
+  import throttle from 'lodash.throttle';
 
   export let pd: OneWayPD;
   export let features: string[];
@@ -291,7 +293,9 @@
         brushHeight / 2 + fy.bandwidth() - margin.bottom,
       ],
     ])
-    .on('start brush end', brushed);
+    .on('start', brushed)
+    .on('brush', throttle(brushed, $brush_throttle_duration))
+    .on('end', brushed);
 
   let group: SVGGElement | undefined;
   let selection:

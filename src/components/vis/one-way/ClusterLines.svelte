@@ -21,6 +21,7 @@
     feature_to_ice_lines,
     highlighted_indices,
     opacity,
+    brush_throttle_duration,
   } from '../../../stores';
   import MarginalHistogram from '../marginal/MarginalHistogram.svelte';
   import {
@@ -37,6 +38,7 @@
     areArraysEqual,
   } from '../../../utils';
   import { drawICELines } from '../../../drawing';
+  import throttle from 'lodash.throttle';
 
   export let pd: OneWayPD;
   export let width: number;
@@ -403,7 +405,7 @@
       [width - margin.right, facetHeight - margin.bottom],
     ])
     .on('start', brushStart)
-    .on('brush', brushed)
+    .on('brush', throttle(brushed, $brush_throttle_duration))
     .on('end', brushEnd);
 
   let svg: SVGElement;
