@@ -87,8 +87,9 @@
       xDistribution={xFeatureInfo.distribution}
       yDistribution={yFeatureInfo.distribution}
       opacity={1}
-      allowBrushing={false}
+      allowBrushing={true}
       showMarginalDistribution={true}
+      showHighlightedMarginalDistribution={false}
       marginTop={marginalPlotHeight + 3}
       marginRight={marginalPlotHeight + 3}
       {marginalPlotHeight}

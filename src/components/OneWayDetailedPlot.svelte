@@ -174,6 +174,7 @@
             opacity={clamp($opacity * 2, 0, 1)}
             allowBrushing={true}
             showMarginalDistribution={true}
+            showHighlightedMarginalDistribution={true}
             marginTop={marginalPlotHeight + 3}
             marginRight={marginalPlotHeight + 3}
             {marginalPlotHeight}

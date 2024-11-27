@@ -59,6 +59,7 @@
   export let opacity = 1;
   export let allowBrushing = false;
   export let showMarginalDistribution: boolean;
+  export let showHighlightedMarginalDistribution: boolean;
   export let marginTop = 0;
   export let marginRight = 0;
   export let marginalPlotHeight: number;
@@ -289,9 +290,10 @@
   }
 
   let highlightedDistribution: Distribution | undefined;
-  $: highlightedDistribution = allowBrushing
-    ? $highlightedDistributions.get(xLabel)
-    : undefined;
+  $: highlightedDistribution =
+    allowBrushing && showHighlightedMarginalDistribution
+      ? $highlightedDistributions.get(xLabel)
+      : undefined;
 
   $: showHighlightedDistribution =
     highlightedDistribution && $highlighted_indices.length > 0;
