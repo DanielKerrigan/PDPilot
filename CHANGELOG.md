@@ -1,7 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.6.1
 
+- Added brushing for scatter plots in the Detailed Plots tab for two-way plots.
 - Added throttling for the plot brushing to control how often the plots need to be redrawn. This is set through the `brush_throttle_duration` parameter in the `PDPilotWidget` class.
 - Added the `opacity` parameter for the `PDPilotWidget` class. This allows the user to set the opacity of the lines in the ICE plots. If the opacity is 1, we can draw paths of the same color in a single stroke, rather than one stroke for each path.
 - Added the ability to highlight all of the instances in a given cluster.
